@@ -280,6 +280,7 @@ for i, (_, r) in enumerate(eos_top.iterrows()):
         'season':         int(r['season']),
         'rating':         round(float(r['rating']), 3),
         'rating2':        round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
+        'rank2':          int(r['rank2']) if not pd.isna(r['rank2']) else None,
         'record':         clean(r['record']),
         'regular_record': reg,
         'playoff_record': playoff_record(r['record'], reg),

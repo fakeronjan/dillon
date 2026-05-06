@@ -328,6 +328,14 @@ function fmtRecordSmart(reg, playoff, fallback) {
   return fmtRecord(reg || fallback);
 }
 
+function fmtHottake(rating2, rank2) {
+  // Display HOTTAKE rating with the team's HOTTAKE rank in dimmed parens.
+  if (rating2 == null) return '—';
+  const r = rating2.toFixed(2);
+  if (rank2 == null) return r;
+  return `${r} <span style="color:#888;font-size:0.85em">(#${rank2})</span>`;
+}
+
 function finishBadge(sbStatus) {
   if (sbStatus === 2) return `<span title="Super Bowl Champion" style="font-size:14px">🏆</span>`;
   if (sbStatus === 1) return `<span title="Super Bowl Runner-Up" style="font-size:14px">🥈</span>`;
@@ -438,14 +446,14 @@ function renderStandings() {
   let displayRank = 1;
   const rows = teams.map(t => {
     const rk = (conf === 'all') ? t.rank : displayRank++;
-    const hottake = (t.rating2 != null) ? t.rating2.toFixed(2) : '—';
+    const hottake = fmtHottake(t.rating2, t.rank2);
     return `<tr>
       <td class="rank-cell">${rk}</td>
       <td class="team-cell">${t.team}</td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888">${t.conference}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
-      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44">${hottake}</td>
+      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
       <td class="last-match-cell">
         <span class="${resultClass(t.last_match)}">${t.last_match || '—'}</span>
       </td>
@@ -549,7 +557,7 @@ function renderTeamTable() {
   drawChart(rows, seasonFilter);
 
   const tableRows = [...rows].reverse().map(g => {
-    const hottake = (g.rating2 != null) ? g.rating2.toFixed(2) : '—';
+    const hottake = fmtHottake(g.rating2, g.rank2);
     const wkLabel = g.week_label || '';
     return `<tr>
     <td style="white-space:nowrap;color:#888;font-size:12px">${g.date}</td>
@@ -559,7 +567,7 @@ function renderTeamTable() {
     </td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
     <td>${ratingBar(g.rating)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44">${hottake}</td>
+    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
     <td class="rank-cell">${g.rank}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
@@ -667,7 +675,7 @@ function renderChampions() {
   function teamCell(t, bg) {
     if (!t) return `<td class="${bg}" colspan="4">—</td>`;
     const rating  = t.rating  != null ? t.rating.toFixed(2)  : '—';
-    const rating2 = t.rating2 != null ? t.rating2.toFixed(2) : '—';
+    const rating2 = fmtHottake(t.rating2, t.rank2);
     const rank    = t.rank    != null ? `#${t.rank}` : '—';
     const countStr = t.title_count
       ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.title_count} 🏆)</span>`
@@ -726,14 +734,14 @@ async function loadGoat() {
 function renderGoat() {
   let displayRank = 1;
   const rows = goatData.map(t => {
-    const hottake = (t.rating2 != null) ? t.rating2.toFixed(2) : '—';
+    const hottake = fmtHottake(t.rating2, t.rank2);
     return `<tr>
     <td class="rank-cell">${displayRank++}</td>
     <td style="text-align:center">${t.season}</td>
     <td class="team-cell">${t.team}</td>
     <td class="col-hide-mobile" style="font-size:11px;color:#888">${t.conference || ''}</td>
     <td>${ratingBar(t.rating)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44">${hottake}</td>
+    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
   </tr>`;
