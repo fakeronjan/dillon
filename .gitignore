@@ -1,0 +1,8 @@
+.DS_Store
+.swp
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+Backup*/
+loaded_NFL_games (backup*).csv
+loaded_NFL_games_archive_*.csv
