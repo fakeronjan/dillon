@@ -207,7 +207,11 @@ def compute_ratings(master_df, existing_ratings_df, window, label):
     df = pd.concat([existing_ratings_df] + new_frames, axis=0, sort=False).reset_index(drop=True)
     df['week'] = (df['season_week'] - df['season']) * 1000
     df.sort_values(['ranking_id', 'name'], inplace=True)
-    df.drop_duplicates(keep='first', inplace=True)
+    # Dedupe by (ranking_id, name) keeping the freshly computed row.
+    # The latest ranking_id is always recomputed (mid-week games like MNF/TNF),
+    # so we may have both an existing row and a new row for it. Without a
+    # subset, drop_duplicates misses these because float precision differs.
+    df.drop_duplicates(subset=['ranking_id', 'name'], keep='last', inplace=True)
     print(f'CSV of {label} ratings is ready!')
     return df
 
@@ -286,7 +290,9 @@ def compute_standings(master_df, existing_standings_df):
 
     df = pd.concat([existing_standings_df] + new_frames, axis=0, sort=False).reset_index(drop=True)
     df.sort_values(['ranking_id', 'name'], inplace=True)
-    df.drop_duplicates(keep='first', inplace=True)
+    # Same dedupe approach as compute_ratings — the latest ranking_id is always
+    # recomputed, so the existing row and new row coexist after concat.
+    df.drop_duplicates(subset=['ranking_id', 'name'], keep='last', inplace=True)
     print('CSV of standings is ready!')
     return df
 
