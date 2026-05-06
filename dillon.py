@@ -175,7 +175,9 @@ def compute_ratings(master_df, existing_ratings_df, window, label):
     new_frames = []
 
     for i in range(min_date_id, max_date_id + 1):
-        if min_ranked <= i <= max_ranked:
+        # Always recompute the latest cached week_id so mid-week games (MNF/TNF
+        # arriving after Sunday's run) get folded into that week's rating.
+        if min_ranked <= i < max_ranked:
             continue
 
         win = master_df[
@@ -240,7 +242,9 @@ def compute_standings(master_df, existing_standings_df):
     new_frames = []
 
     for i in range(min_date_id, max_date_id + 1):
-        if min_ranked <= i <= max_ranked:
+        # Always recompute the latest cached week_id so mid-week games (MNF/TNF
+        # arriving after Sunday's run) get folded into that week's rating.
+        if min_ranked <= i < max_ranked:
             continue
 
         slicer = df_for_calc[df_for_calc['cume_week_id'] <= i]
