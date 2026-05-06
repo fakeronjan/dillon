@@ -229,7 +229,7 @@
 <nav>
   <button class="active" data-tab="standings">Standings</button>
   <button data-tab="team-summary">Team Summary</button>
-  <button data-tab="league-history">Champions</button>
+  <button data-tab="league-history">Super Bowls</button>
   <button data-tab="goat">GOAT Table</button>
 </nav>
 
@@ -442,17 +442,14 @@ function renderStandings() {
   let teams = currentSnapshot.teams;
   if (conf !== 'all') teams = teams.filter(t => t.conference === conf);
 
-  // When filtered by conference, show conference rank; otherwise overall rank
-  let displayRank = 1;
   const rows = teams.map(t => {
-    const rk = (conf === 'all') ? t.rank : displayRank++;
     const hottake = fmtHottake(t.rating2, t.rank2);
     return `<tr>
-      <td class="rank-cell">${rk}</td>
       <td class="team-cell">${t.team}</td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888">${t.conference}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
+      <td class="rank-cell">${t.rank}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
       <td class="last-match-cell">
         <span class="${resultClass(t.last_match)}">${t.last_match || '—'}</span>
@@ -468,10 +465,11 @@ function renderStandings() {
   document.getElementById('standings-table-wrap').innerHTML = `
     <table>
       <thead><tr>
-        <th>#</th><th>Team</th>
+        <th>Team</th>
         <th class="col-hide-mobile">Conf</th>
         <th>W-L (Pct)</th>
         <th>REACT</th>
+        <th>#</th>
         <th class="col-hide-mobile">HOTTAKE</th>
         <th>Last Game</th>
         <th class="col-hide-mobile">Date</th>
@@ -567,8 +565,8 @@ function renderTeamTable() {
     </td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
     <td>${ratingBar(g.rating)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
     <td class="rank-cell">${g.rank}</td>
+    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
   }).join('');
@@ -579,8 +577,8 @@ function renderTeamTable() {
         <th>Date</th><th>Season · Week</th><th>Last Game</th>
         <th>W-L (Pct)</th>
         <th>REACT</th>
+        <th>#</th>
         <th class="col-hide-mobile">HOTTAKE</th>
-        <th>Rank</th>
         <th class="col-hide-mobile">Honors</th>
       </tr></thead>
       <tbody>${tableRows}</tbody>
@@ -684,8 +682,8 @@ function renderChampions() {
       : '';
     return `
       <td class="${bg} team-cell" style="white-space:nowrap">${t.team}${countStr}</td>
-      <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;color:#888;font-size:0.85em">${rank}</td>
       <td class="${bg} rating-cell" style="font-variant-numeric:tabular-nums">${rating}</td>
+      <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;color:#888;font-size:0.85em">${rank}</td>
       <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44">${rating2}</td>
       <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>`;
   }
@@ -704,14 +702,14 @@ function renderChampions() {
       <thead><tr>
         <th>Season</th>
         <th class="col-champ">Champion</th>
-        <th class="col-champ col-hide-mobile">Rank</th>
         <th class="col-champ">REACT</th>
+        <th class="col-champ col-hide-mobile">#</th>
         <th class="col-champ col-hide-mobile">HOTTAKE</th>
         <th class="col-champ col-hide-mobile">W-L</th>
         <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Final</th>
         <th class="col-ru">Runner-Up</th>
-        <th class="col-ru col-hide-mobile">Rank</th>
         <th class="col-ru">REACT</th>
+        <th class="col-ru col-hide-mobile">#</th>
         <th class="col-ru col-hide-mobile">HOTTAKE</th>
         <th class="col-ru col-hide-mobile">W-L</th>
       </tr></thead>
@@ -733,19 +731,15 @@ async function loadGoat() {
 
 function renderGoat() {
   let displayRank = 1;
-  const rows = goatData.map(t => {
-    const hottake = fmtHottake(t.rating2, t.rank2);
-    return `<tr>
+  const rows = goatData.map(t => `<tr>
     <td class="rank-cell">${displayRank++}</td>
     <td style="text-align:center">${t.season}</td>
     <td class="team-cell">${t.team}</td>
     <td class="col-hide-mobile" style="font-size:11px;color:#888">${t.conference || ''}</td>
     <td>${ratingBar(t.rating)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
-  </tr>`;
-  }).join('');
+  </tr>`).join('');
 
   document.getElementById('goat-table-wrap').innerHTML = `
     <table>
@@ -755,7 +749,6 @@ function renderGoat() {
         <th>Team</th>
         <th class="col-hide-mobile">Conf</th>
         <th>REACT</th>
-        <th class="col-hide-mobile">HOTTAKE</th>
         <th class="col-hide-mobile">W-L</th>
         <th class="col-hide-mobile">Honors</th>
       </tr></thead>
