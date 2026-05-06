@@ -319,13 +319,13 @@ function fmtRecordStacked(reg, playoff) {
 }
 
 function fmtRecordSmart(reg, playoff, fallback) {
-  // Standings/Team Summary: show playoff split once playoffs have started,
-  // otherwise W-L with win pct. `fallback` covers the case where the JSON
-  // pre-dates regular_record (e.g., during a CDN cache transition).
+  // Standings/Team Summary: always show regular-season W-L with win pct on top.
+  // For playoff teams, add playoff W-L on a new line (no parens).
+  const top = fmtRecord(reg || fallback);
   const pm = playoff ? playoff.match(/^(\d+)-(\d+)$/) : null;
   const hasPlayoffs = pm && (parseInt(pm[1]) + parseInt(pm[2]) > 0);
-  if (hasPlayoffs) return fmtRecordStacked(reg || fallback, playoff);
-  return fmtRecord(reg || fallback);
+  if (!hasPlayoffs) return top;
+  return `${top}<div style="font-size:10px;color:#888;font-weight:400;line-height:1.2">${playoff}</div>`;
 }
 
 function fmtHottake(rating2, rank2) {
