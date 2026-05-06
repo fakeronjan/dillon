@@ -350,7 +350,7 @@ function resultClass(match) {
   return '';
 }
 
-const BAR_MIN = -25, BAR_MAX = 25, BAR_RANGE = 50;
+const BAR_MIN = -20, BAR_MAX = 20, BAR_RANGE = 40;
 
 function ratingBar(rating) {
   const clipped = Math.max(BAR_MIN, Math.min(BAR_MAX, rating));
@@ -595,7 +595,7 @@ function drawChart(rows, seasonFilter) {
   const H = 180;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-  const CHART_MIN = -25, CHART_MAX = 25;
+  const CHART_MIN = -20, CHART_MAX = 20;
   const CTOP = 10, CBOT = 152;
 
   const px = (i) => (i / (rows.length - 1)) * (W - 20) + 10;
