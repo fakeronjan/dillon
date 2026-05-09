@@ -348,7 +348,7 @@ function fmtHottake(rating2, rank2) {
 }
 
 function finishBadge(sbStatus) {
-  if (sbStatus === 2) return `<span title="Super Bowl Champion" style="font-size:14px">🏆</span>`;
+  if (sbStatus === 2) return `<span title="Super Bowl Champion" style="font-size:14px">👑</span>`;
   if (sbStatus === 1) return `<span title="Super Bowl Runner-Up" style="font-size:14px">🥈</span>`;
   return '';
 }
@@ -719,7 +719,7 @@ function renderChampions() {
     const rating2 = fmtHottake(t.rating2, t.rank2);
     const rank    = t.rank    != null ? `${t.rank}` : '—';
     const countStr = t.title_count
-      ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.title_count} 🏆)</span>`
+      ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.title_count} 👑)</span>`
       : t.runner_up_count
       ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.runner_up_count} 🥈)</span>`
       : '';
