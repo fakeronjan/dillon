@@ -2,7 +2,7 @@ name: Update DILLON Ratings
 
 on:
   schedule:
-    - cron: '19 15 * * *'   # 15:19 UTC daily = 8:19 AM PDT (in-season) / 7:19 AM PST (off-season)
+    - cron: '53 15 * * *'   # 15:53 UTC daily — staggered +20 min after LOBO; pro-football-reference (sports-reference family, rate-limited)
   workflow_dispatch:        # allow manual trigger from GitHub UI
 
 permissions:
