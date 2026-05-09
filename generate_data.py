@@ -15,6 +15,7 @@ import json
 import os
 import re
 from bisect import bisect_right
+from datetime import datetime, timezone
 
 os.makedirs('docs/data/teams', exist_ok=True)
 os.makedirs('docs/data/seasons', exist_ok=True)
@@ -451,6 +452,7 @@ seasons_meta = {
     'seasons':    [int(s) for s in reversed(all_seasons)],
     'first_date': str(games['date'].min().date()),
     'last_date':  str(games['date'].max().date()),
+    'generated_at': datetime.now(timezone.utc).isoformat(),
 }
 with open('docs/data/seasons_index.json', 'w') as f:
     json.dump(seasons_meta, f, separators=(',', ':'))

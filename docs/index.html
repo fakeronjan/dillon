@@ -233,6 +233,7 @@
   <p class="subtitle">NFL Power Rankings</p>
   <p class="model-note">REACT (20-week) + HOTTAKE (10-week) ratings — considers strength of opponent, margin of result, and recency. ~+3 = contender; ~+10 = elite; ~+20 = generational (1985 Bears = 20.24).</p>
   <p class="updated" id="last-updated">Loading...</p>
+  <p class="updated" id="last-refreshed" style="font-size:11px;color:#999;margin-top:-4px"></p>
 </header>
 
 <nav>
@@ -434,6 +435,11 @@ async function initStandings() {
     const meta = await res.json();
     document.getElementById('last-updated').textContent =
       `Ratings include games from ${fmtDate(meta.first_date)} to ${fmtDate(meta.last_date)}`;
+    if (meta.generated_at) {
+      const refreshed = new Date(meta.generated_at);
+      document.getElementById('last-refreshed').textContent =
+        `Last refreshed: ${refreshed.toLocaleString(undefined, {dateStyle:'short', timeStyle:'short', timeZoneName:'short'})}`;
+    }
     const sel = document.getElementById('season-filter');
     meta.seasons.forEach(s => {
       const opt = document.createElement('option');
