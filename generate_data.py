@@ -121,6 +121,43 @@ def div(team):
     return TEAM_CONFERENCE.get(team, ('Other', 'Other'))[1]
 
 
+# ── Per-(team, season) conference overrides ──────────────────────────────────
+# Most NFL franchises have stayed in their conference forever, but a handful
+# of moves require season-aware lookup so historical Standings / Team Summary /
+# Champions / GOAT entries don't show the wrong conference for past seasons.
+#
+# Format: (team_name, first_season, last_season, conference, division)
+# - 1976+ realignment: Tampa Bay only spent its expansion year in AFC West
+#   before swapping with Seattle to NFC Central.
+# - 2002 realignment: Seahawks moved AFC West → NFC West when the league
+#   reorganized into 8 four-team divisions.
+# Cardinals NFC East → NFC West (2002) is a division-only change (always NFC)
+# and doesn't need an override here. Browns AFC Central → AFC North (2002)
+# similarly stays in AFC. Same for Steelers/Bengals/Ravens/Titans/Jaguars.
+CONF_OVERRIDES = [
+    ('Seattle Seahawks',      1976, 2001, 'AFC', 'West'),
+    ('Tampa Bay Buccaneers',  1976, 1976, 'AFC', 'West'),
+]
+
+
+def _override_for(team, season):
+    s = int(season)
+    for (t, y0, y1, c, d) in CONF_OVERRIDES:
+        if t == team and y0 <= s <= y1:
+            return (c, d)
+    return None
+
+
+def conf_for_season(team, season):
+    o = _override_for(team, season)
+    return o[0] if o else conf(team)
+
+
+def div_for_season(team, season):
+    o = _override_for(team, season)
+    return o[1] if o else div(team)
+
+
 def clean(val):
     if pd.isna(val):
         return ''
@@ -249,8 +286,8 @@ standings_data = {
             'rank':            int(r['rank']),
             'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
             'team':            r['name'],
-            'conference':      conf(r['name']),
-            'division':        div(r['name']),
+            'conference':      conf_for_season(r['name'], r['season']),
+            'division':        div_for_season(r['name'], r['season']),
             'rating':          round(float(r['rating']), 3),
             'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
             'record':          clean(r['record']),
@@ -275,8 +312,8 @@ for i, (_, r) in enumerate(eos_top.iterrows()):
     goat_data.append({
         'rank':           i + 1,
         'team':           r['name'],
-        'conference':     conf(r['name']),
-        'division':       div(r['name']),
+        'conference':     conf_for_season(r['name'], r['season']),
+        'division':       div_for_season(r['name'], r['season']),
         'season':         int(r['season']),
         'rating':         round(float(r['rating']), 3),
         'rating2':        round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
@@ -340,6 +377,7 @@ for team in all_teams:
                 'season_flag':       int(r['season_flag']),
                 'is_playoff':        int(is_playoff(season, r['season_week'])),
                 'sb_status':         int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
+                'conference':        conf_for_season(team, season),
             })
         seasons[int(season)] = entries
 
@@ -386,8 +424,8 @@ for season in all_seasons:
                 'rank':            int(r['rank']),
                 'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
                 'team':            r['name'],
-                'conference':      conf(r['name']),
-                'division':        div(r['name']),
+                'conference':      conf_for_season(r['name'], season),
+                'division':        div_for_season(r['name'], season),
                 'rating':          round(float(r['rating']), 3),
                 'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
                 'record':          clean(r['record']),
@@ -450,8 +488,8 @@ for season in sorted(df['season'].unique(), reverse=True):
         # NFL is single-elimination — no series, only the Super Bowl is one game.
         'champion': {
             'team':           cr['name'],
-            'conference':     conf(cr['name']),
-            'division':       div(cr['name']),
+            'conference':     conf_for_season(cr['name'], season),
+            'division':       div_for_season(cr['name'], season),
             'rating':         round(float(cr['rating']), 3),
             'rating2':        round(float(cr['rating2']), 3) if not pd.isna(cr['rating2']) else None,
             'rank':           int(cr['rank']),
@@ -462,8 +500,8 @@ for season in sorted(df['season'].unique(), reverse=True):
         },
         'runner_up': {
             'team':           rr['name'],
-            'conference':     conf(rr['name']),
-            'division':       div(rr['name']),
+            'conference':     conf_for_season(rr['name'], season),
+            'division':       div_for_season(rr['name'], season),
             'rating':         round(float(rr['rating']), 3),
             'rating2':        round(float(rr['rating2']), 3) if not pd.isna(rr['rating2']) else None,
             'rank':           int(rr['rank']),

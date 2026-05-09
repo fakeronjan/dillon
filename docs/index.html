@@ -608,7 +608,7 @@ function renderTeamTable() {
     <td class="rank-cell">${g.rank}</td>
     <td>${ratingBar(g.rating)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
-    <td class="col-hide-mobile" style="font-size:11px">${confBadge(data.conference, g.sb_status)}</td>
+    <td class="col-hide-mobile" style="font-size:11px">${confBadge(g.conference || data.conference, g.sb_status)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
   }).join('');
