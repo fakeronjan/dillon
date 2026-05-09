@@ -173,6 +173,7 @@
   }
   .finish-champion { background: #c8a84b; color: #1a6b8a; }
   .finish-runner   { background: #ddd; color: #444; }
+  .conf-pill       { background: #f4f4f4; color: #555; border: 1px solid #e8e8e8; }
 
   .last-match-cell {
     font-size: 12px;
@@ -352,6 +353,15 @@ function finishBadge(sbStatus) {
   return '';
 }
 
+function confBadge(conf, sbStatus) {
+  if (!conf) return '';
+  // sb_status >= 1 means the team made the SB = won the conference championship
+  if (sbStatus >= 1) {
+    return `<span class="finish-badge finish-champion" title="${conf} Champion">${conf} 🏆</span>`;
+  }
+  return `<span class="finish-badge conf-pill">${conf}</span>`;
+}
+
 // NFL season N corresponds to Super Bowl number (N - 1965).
 // e.g., 1997 season → SB XXXII (32 = 1997 - 1965).
 function romanNumeral(n) {
@@ -478,7 +488,7 @@ function renderStandings() {
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
       <td class="team-cell">${t.team}</td>
-      <td class="col-hide-mobile" style="font-size:11px;color:#888">${t.conference}</td>
+      <td class="col-hide-mobile">${confBadge(t.conference, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
@@ -598,6 +608,7 @@ function renderTeamTable() {
     <td class="rank-cell">${g.rank}</td>
     <td>${ratingBar(g.rating)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
+    <td class="col-hide-mobile" style="font-size:11px">${confBadge(data.conference, g.sb_status)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
   }).join('');
@@ -610,6 +621,7 @@ function renderTeamTable() {
         <th>Rank</th>
         <th>REACT</th>
         <th class="col-hide-mobile">HOTTAKE</th>
+        <th class="col-hide-mobile">Conf</th>
         <th class="col-hide-mobile">Honors</th>
       </tr></thead>
       <tbody>${tableRows}</tbody>
@@ -772,7 +784,7 @@ function renderGoat() {
     <td class="rank-cell">${displayRank++}</td>
     <td style="text-align:center">${t.season}</td>
     <td class="team-cell">${t.team}</td>
-    <td class="col-hide-mobile" style="font-size:11px;color:#888">${t.conference || ''}</td>
+    <td class="col-hide-mobile">${confBadge(t.conference, t.sb_status)}</td>
     <td>${ratingBar(t.rating)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
