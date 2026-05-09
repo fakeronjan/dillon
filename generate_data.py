@@ -173,18 +173,21 @@ def slug(name):
 df['is_game_day'] = (df['lastgame'] != 'Bye / No Game').astype(int)
 df['is_end_of_season'] = df['season_flag'].isin([1, 2]).astype(int)
 
-# Per-team forward-filled last game (so EOS rows that aren't game days still show prior game)
+# Per-(team, season) forward-filled last game. Keying by season prevents
+# cross-season carry-forward — at the start of a new season, teams that
+# haven't played yet correctly show empty rather than their previous-season
+# Super Bowl result.
 _last_game_history = {}
-for team, tdf in df[df['is_game_day'] == 1].sort_values('season_week').groupby('name'):
-    _last_game_history[team] = (
+for (team, season), tdf in df[df['is_game_day'] == 1].sort_values('season_week').groupby(['name', 'season']):
+    _last_game_history[(team, int(season))] = (
         list(tdf['season_week']),
         list(tdf['lastgame']),
         list(tdf['date']),
     )
 
 
-def last_game_as_of(team, sw):
-    entry = _last_game_history.get(team)
+def last_game_as_of(team, sw, season):
+    entry = _last_game_history.get((team, int(season)))
     if not entry:
         return ''
     sws, games_list, _ = entry
@@ -192,8 +195,8 @@ def last_game_as_of(team, sw):
     return games_list[idx] if idx >= 0 else ''
 
 
-def last_game_date_as_of(team, sw):
-    entry = _last_game_history.get(team)
+def last_game_date_as_of(team, sw, season):
+    entry = _last_game_history.get((team, int(season)))
     if not entry:
         return ''
     sws, _, dates = entry
@@ -292,7 +295,7 @@ standings_data = {
             'rating':          round(float(r['rating']), 3),
             'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
             'record':          clean(r['record']),
-            'last_match':      clean(r['lastgame']) if r['lastgame'] != 'Bye / No Game' else last_game_as_of(r['name'], r['season_week']),
+            'last_match':      clean(r['lastgame']) if r['lastgame'] != 'Bye / No Game' else last_game_as_of(r['name'], r['season_week'], r['season']),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
         }
         for _, r in latest.iterrows()
@@ -373,7 +376,7 @@ for team in all_teams:
                 'record':            clean(r['record']),
                 'regular_record':    reg,
                 'playoff_record':    po,
-                'last_match':        clean(r['lastgame']) if r['lastgame'] != 'Bye / No Game' else last_game_as_of(team, r['season_week']),
+                'last_match':        clean(r['lastgame']) if r['lastgame'] != 'Bye / No Game' else last_game_as_of(team, r['season_week'], season),
                 'is_end_of_season':  int(r['is_end_of_season']),
                 'season_flag':       int(r['season_flag']),
                 'is_playoff':        int(is_playoff(season, r['season_week'])),
@@ -432,8 +435,8 @@ for season in all_seasons:
                 'record':          clean(r['record']),
                 'regular_record':  reg,
                 'playoff_record':  po,
-                'last_match':      clean(r['lastgame']) if played_today else last_game_as_of(r['name'], snap_sw),
-                'last_match_date': snap_date if played_today else last_game_date_as_of(r['name'], snap_sw),
+                'last_match':      clean(r['lastgame']) if played_today else last_game_as_of(r['name'], snap_sw, season),
+                'last_match_date': snap_date if played_today else last_game_date_as_of(r['name'], snap_sw, season),
                 'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
             })
         snapshots.append({
