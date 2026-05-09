@@ -335,7 +335,7 @@ function fmtHottake(rating2, rank2) {
   if (rating2 == null) return '—';
   const r = rating2.toFixed(2);
   if (rank2 == null) return r;
-  return `${r} <span style="color:#888;font-size:0.85em">(#${rank2})</span>`;
+  return `${r} <span style="color:#888;font-size:0.85em">(${rank2})</span>`;
 }
 
 function finishBadge(sbStatus) {
@@ -697,7 +697,7 @@ function renderChampions() {
     if (!t) return `<td class="${bg}" colspan="4">—</td>`;
     const rating  = t.rating  != null ? t.rating.toFixed(2)  : '—';
     const rating2 = fmtHottake(t.rating2, t.rank2);
-    const rank    = t.rank    != null ? `#${t.rank}` : '—';
+    const rank    = t.rank    != null ? `${t.rank}` : '—';
     const countStr = t.title_count
       ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.title_count} 🏆)</span>`
       : t.runner_up_count
