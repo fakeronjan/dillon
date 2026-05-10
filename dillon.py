@@ -389,7 +389,7 @@ def assemble_final(master_df, react_df, hottake_df, standings_df):
     for col in ['winner_last_game', 'loser_last_game', 'winner', 'loser']:
         final_df[col] = final_df[col].fillna('')
 
-    final_df['lastgame']  = (final_df['winner_last_game'] + final_df['loser_last_game']).replace('', 'Bye / No Game')
+    final_df['lastgame']  = (final_df['winner_last_game'] + final_df['loser_last_game'])
     final_df['opponent']  = final_df['loser'] + final_df['winner']
 
     # Drop teams with no games yet (handles expansion / pre-merger lineage edge cases)

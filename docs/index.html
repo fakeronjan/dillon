@@ -350,10 +350,15 @@ function buildConfPills(containerId, current, onSelect) {
 }
 
 // ── Utilities ───────────────────────────────────────────────────────────────
+// Strip legacy "no game yet" placeholders so empty cells render as a single
+// dash via the standard `|| '-'` fallback at each call site.
+const _PLACEHOLDER_LM = new Set(['No match yet', 'No competitive match yet', 'No Game', 'Bye / No Game']);
+function displayMatch(s) { return (!s || _PLACEHOLDER_LM.has(s)) ? '' : s; }
+
 function fmtRecord(rec) {
   // NFL records can be "10-5" or "10-5-1" (W-L or W-L-T). Show win pct in dimmed parens.
   // Win pct counts ties as half-wins per NFL convention.
-  if (!rec || rec === '—') return rec || '—';
+  if (!rec || rec === '—') return '0-0';
   const m = rec.match(/^(\d+)-(\d+)(?:-(\d+))?$/);
   if (!m) return rec;
   const w = parseInt(m[1]);
@@ -368,7 +373,7 @@ function fmtRecord(rec) {
 function fmtRecordStacked(reg, playoff) {
   // Champions/GOAT: regular-season W-L (or W-L-T) with win pct on top.
   // For playoff teams, add playoff W-L on a new line (no parens).
-  if (!reg) return '—';
+  if (!reg || reg === '—') return '0-0';
   const top = fmtRecord(reg);
   const pm = playoff ? playoff.match(/^(\d+)-(\d+)$/) : null;
   const hasPlayoffs = pm && (parseInt(pm[1]) + parseInt(pm[2]) > 0);
@@ -551,7 +556,7 @@ function renderStandings() {
       <td>${ratingBar(t.rating)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
       <td class="last-match-cell">
-        <span class="${resultClass(t.last_match, isStale)}">${t.last_match || '-'}</span>
+        <span class="${resultClass(t.last_match, isStale)}">${displayMatch(t.last_match) || '-'}</span>
       </td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888;white-space:nowrap">${t.last_match_date || ''}</td>
       <td class="col-hide-mobile" style="text-align:center">${finishBadge(t.sb_status)}</td>
@@ -668,7 +673,7 @@ function renderTeamTable() {
     <td style="white-space:nowrap;color:#888;font-size:12px">${g.date}</td>
     <td style="font-size:11px;color:#555">${g.season} · ${wkLabel}</td>
     <td class="last-match-cell">
-      <span class="${resultClass(g.last_match)}">${g.last_match || '-'}</span>
+      <span class="${resultClass(g.last_match)}">${displayMatch(g.last_match) || '-'}</span>
     </td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
     <td class="rank-cell">${g.rank}</td>
