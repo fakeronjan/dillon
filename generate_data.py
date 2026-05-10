@@ -284,7 +284,7 @@ def snapshot_label(wk, flag):
     if flag == 1:
         return f'{base} · End of regular season'
     if flag == 2:
-        return f'{base} · End of season'
+        return f'{base} · End of playoffs'
     return base
 
 
