@@ -316,9 +316,12 @@ with open('docs/data/current_standings.json', 'w') as f:
     json.dump(standings_data, f, separators=(',', ':'))
 
 # ── 2. GOAT table ─────────────────────────────────────────────────────────────
-# Only fully-complete seasons (flag=2 = SB ended).
+# Only fully-complete seasons (flag=2 = SB ended) AND teams that reached the
+# Super Bowl (sb_status >= 1). GOAT is canonically "best championship-
+# contending teams" — strong regular-season teams that flamed out before the
+# Super Bowl are noise in this view.
 print("Writing goat_teams.json...")
-eos_all = df[df['season_flag'] == 2].copy()
+eos_all = df[(df['season_flag'] == 2) & (df['sb_status'] >= 1)].copy()
 eos_top = eos_all.sort_values('rating', ascending=False).head(50).reset_index(drop=True)
 
 goat_data = []
