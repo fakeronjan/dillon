@@ -122,6 +122,61 @@ def div(team):
     return TEAM_CONFERENCE.get(team, ('Other', 'Other'))[1]
 
 
+# ── Era-aware display names ─────────────────────────────────────────────────
+# dillon.py uses canonical (current) franchise names internally so a team's
+# rating is continuous across same-market rebrands. Historical UI views
+# (GOAT, Champions, Standings, per-team Season cells) should show what the
+# team was actually called at the time. Maps canonical → list of
+# (start_season, end_season_inclusive, display_name) ranges. 9999 = ongoing.
+NFL_TEAM_DISPLAY_HISTORY = {
+    'New England Patriots':  [(1970, 1970, 'Boston Patriots'),
+                              (1971, 9999, 'New England Patriots')],
+    'Washington Commanders': [(1970, 2019, 'Washington Redskins'),
+                              (2020, 2021, 'Washington Football Team'),
+                              (2022, 9999, 'Washington Commanders')],
+    'Arizona Cardinals':     [(1988, 1993, 'Phoenix Cardinals'),
+                              (1994, 9999, 'Arizona Cardinals')],
+    'Tennessee Titans':      [(1997, 1998, 'Tennessee Oilers'),
+                              (1999, 9999, 'Tennessee Titans')],
+}
+
+
+def display_name(canonical, season):
+    """Era-appropriate display name for the given canonical team and season."""
+    history = NFL_TEAM_DISPLAY_HISTORY.get(canonical)
+    if not history:
+        return canonical
+    s = int(season)
+    for start, end, name in history:
+        if start <= s <= end:
+            return name
+    return canonical
+
+
+def current_display_name(canonical):
+    """The team's most recent display name (used for dropdowns / current snapshot)."""
+    history = NFL_TEAM_DISPLAY_HISTORY.get(canonical)
+    if not history:
+        return canonical
+    return history[-1][2]
+
+
+def historical_display_names(canonical):
+    """Prior display names (most recent first), excluding the current name.
+    Used to render '(formerly X / Y)' hints in the Team Summary dropdown."""
+    history = NFL_TEAM_DISPLAY_HISTORY.get(canonical)
+    if not history:
+        return []
+    current = history[-1][2]
+    seen = {current}
+    out = []
+    for _, _, name in reversed(history[:-1]):
+        if name not in seen:
+            out.append(name)
+            seen.add(name)
+    return out
+
+
 # ── Per-(team, season) conference overrides ──────────────────────────────────
 # Most NFL franchises have stayed in their conference forever, but a handful
 # of moves require season-aware lookup so historical Standings / Team Summary /
@@ -301,6 +356,7 @@ standings_data = {
             'rank':            int(r['rank']),
             'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
             'team':            r['name'],
+            'display_name':    display_name(r['name'], r['season']),
             'conference':      conf_for_season(r['name'], r['season']),
             'division':        div_for_season(r['name'], r['season']),
             'rating':          round(float(r['rating']), 3),
@@ -330,6 +386,7 @@ for i, (_, r) in enumerate(eos_top.iterrows()):
     goat_data.append({
         'rank':           i + 1,
         'team':           r['name'],
+        'display_name':   display_name(r['name'], r['season']),
         'conference':     conf_for_season(r['name'], r['season']),
         'division':       div_for_season(r['name'], r['season']),
         'season':         int(r['season']),
@@ -360,6 +417,8 @@ for team in all_teams:
     team_slug = slug(team)
     teams_index.append({
         'name': team,
+        'display_name': current_display_name(team),
+        'historical_names': historical_display_names(team),
         'conference': conf(team),
         'division': div(team),
         'slug': team_slug,
@@ -383,6 +442,7 @@ for team in all_teams:
                 'season_week':       float(r['season_week']),
                 'week':              int(r['week']),
                 'week_label':        week_label(r['week']),
+                'display_name':      display_name(team, season),
                 'rating':            round(float(r['rating']), 3),
                 'rank':              int(r['rank']),
                 'rating2':           round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
@@ -442,6 +502,7 @@ for season in all_seasons:
                 'rank':            int(r['rank']),
                 'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
                 'team':            r['name'],
+                'display_name':    display_name(r['name'], season),
                 'conference':      conf_for_season(r['name'], season),
                 'division':        div_for_season(r['name'], season),
                 'rating':          round(float(r['rating']), 3),
@@ -507,6 +568,7 @@ for season in sorted(df['season'].unique(), reverse=True):
         # NFL is single-elimination — no series, only the Super Bowl is one game.
         'champion': {
             'team':           cr['name'],
+            'display_name':   display_name(cr['name'], season),
             'conference':     conf_for_season(cr['name'], season),
             'division':       div_for_season(cr['name'], season),
             'rating':         round(float(cr['rating']), 3),
@@ -519,6 +581,7 @@ for season in sorted(df['season'].unique(), reverse=True):
         },
         'runner_up': {
             'team':           rr['name'],
+            'display_name':   display_name(rr['name'], season),
             'conference':     conf_for_season(rr['name'], season),
             'division':       div_for_season(rr['name'], season),
             'rating':         round(float(rr['rating']), 3),

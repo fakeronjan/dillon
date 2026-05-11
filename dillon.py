@@ -30,6 +30,20 @@ WEEK_DIVISION   = 102
 WEEK_CONFCHAMP  = 103
 WEEK_SUPERBOWL  = 104
 
+# Same-market rebrand consolidation. Maps historical team names to current
+# canonical names so a single franchise's history reads as one team across
+# rebrands. RELOCATIONS are deliberately kept separate ("move the team =
+# lose the history" policy): Houston Oilers, Baltimore Colts, San Diego
+# Chargers, LA Raiders, Oakland Raiders, St. Louis Cardinals, St. Louis
+# Rams etc. all remain distinct from their post-move franchises.
+TEAM_ALIASES = {
+    'Boston Patriots':           'New England Patriots',
+    'Washington Redskins':       'Washington Commanders',
+    'Washington Football Team':  'Washington Commanders',
+    'Phoenix Cardinals':         'Arizona Cardinals',
+    'Tennessee Oilers':          'Tennessee Titans',
+}
+
 
 # =========================================================
 # SCRAPING
@@ -92,6 +106,12 @@ def prepare_game_data(raw_df):
 
     df['ptsw'] = pd.to_numeric(df['ptsw'])
     df['ptsl'] = pd.to_numeric(df['ptsl'])
+
+    # Apply same-market rebrand consolidation before any team-keyed work
+    # (margins, result strings, name_season, downstream merges). Old names
+    # show up rendered as the franchise's current name everywhere.
+    df['winner'] = df['winner'].replace(TEAM_ALIASES)
+    df['loser']  = df['loser'].replace(TEAM_ALIASES)
 
     # Margin and win flags (ties register 0.5 for both sides)
     df['marginw']  = df['ptsw'] - df['ptsl']

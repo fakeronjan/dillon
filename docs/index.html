@@ -547,7 +547,7 @@ function renderStandings() {
     const isStale = !!(prevDate && t.last_match_date && t.last_match_date <= prevDate);
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
-      <td class="team-cell">${t.team}</td>
+      <td class="team-cell">${t.display_name || t.team}</td>
       <td class="col-hide-mobile">${confBadge(t.conference, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
@@ -594,7 +594,12 @@ function populateTeamSelect() {
   filtered.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t.slug;
-    opt.textContent = t.name;
+    // For franchises that have changed names in the same market, append
+    // the prior names in parens so search-by-typing finds them too.
+    const priors = (t.historical_names || []);
+    opt.textContent = priors.length
+      ? `${t.name} (${priors.join(' / ')})`
+      : t.name;
     sel.appendChild(opt);
   });
 }
@@ -657,12 +662,20 @@ function renderTeamTable() {
 
   drawChart(rows, seasonFilter);
 
+  // For franchises that have changed names, show the era display name
+  // beneath the season number when it differs from the canonical (the
+  // team page's identity). Stays out of the way for unchanged franchises.
+  const canonical = data.team;
   const tableRows = [...rows].reverse().map(g => {
     const hottake = fmtHottake(g.rating2, g.rank2);
     const wkLabel = g.week_label || '';
+    const era = (g.display_name && g.display_name !== canonical) ? g.display_name : '';
+    const seasonCell = era
+      ? `${g.season} · ${wkLabel}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
+      : `${g.season} · ${wkLabel}`;
     return `<tr>
     <td style="white-space:nowrap;color:#888;font-size:12px">${g.date}</td>
-    <td style="font-size:11px;color:#555">${g.season} · ${wkLabel}</td>
+    <td style="font-size:11px;color:#555">${seasonCell}</td>
     <td class="last-match-cell">
       <span class="${resultClass(g.last_match)}">${displayMatch(g.last_match) || '-'}</span>
     </td>
@@ -785,7 +798,7 @@ function renderChampions() {
       ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.runner_up_count} 🥈)</span>`
       : '';
     return `
-      <td class="${bg} team-cell" style="white-space:nowrap">${t.team}${countStr}</td>
+      <td class="${bg} team-cell" style="white-space:nowrap">${t.display_name || t.team}${countStr}</td>
       <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;color:#888;font-size:0.85em">${rank}</td>
       <td class="${bg} rating-cell" style="font-variant-numeric:tabular-nums">${rating}</td>
       <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44">${rating2}</td>
@@ -847,7 +860,7 @@ function renderGoat() {
   const rows = teams.map(t => `<tr>
     <td class="rank-cell">${t.rank}</td>
     <td style="text-align:center">${t.season}</td>
-    <td class="team-cell">${t.team}</td>
+    <td class="team-cell">${t.display_name || t.team}</td>
     <td class="col-hide-mobile">${confBadge(t.conference, t.sb_status)}</td>
     <td>${ratingBar(t.rating)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
