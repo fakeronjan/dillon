@@ -647,47 +647,53 @@ for entry in reversed(champions):
 # linked. Counts here are the running totals AT THAT POINT IN TIME, independent
 # of the seeded counts above (which feed downstream rated rows).
 PRE_RATED_SB_ROWS = [
-    # SB V — Jan 1971 — season 1970
+    # SB V — Jan 1971 — season 1970 — first post-merger Super Bowl, no AFL
     {'sb_num': 'V', 'season': 1970, 'final_score': '16-13',
      'champion':  {'team': 'Baltimore Colts',    'title_count': 1, 'regular_record': '11-2-1', 'playoff_record': '3-0'},
      'runner_up': {'team': 'Dallas Cowboys',     'runner_up_count': 1, 'regular_record': '10-4', 'playoff_record': '2-1'}},
-    # SB IV — Jan 1970 — season 1969
+    # SB IV — Jan 1970 — season 1969 — last AFL season
     {'sb_num': 'IV', 'season': 1969, 'final_score': '23-7',
-     'champion':  {'team': 'Kansas City Chiefs', 'title_count': 1, 'regular_record': '11-3', 'playoff_record': '3-0'},
+     'champion':  {'team': 'Kansas City Chiefs', 'title_count': 1, 'regular_record': '11-3', 'playoff_record': '3-0', 'afl': True},
      'runner_up': {'team': 'Minnesota Vikings',  'runner_up_count': 1, 'regular_record': '12-2', 'playoff_record': '2-1'}},
     # SB III — Jan 1969 — season 1968
     {'sb_num': 'III', 'season': 1968, 'final_score': '16-7',
-     'champion':  {'team': 'New York Jets',      'title_count': 1, 'regular_record': '11-3', 'playoff_record': '2-0'},
+     'champion':  {'team': 'New York Jets',      'title_count': 1, 'regular_record': '11-3', 'playoff_record': '2-0', 'afl': True},
      'runner_up': {'team': 'Baltimore Colts',    'runner_up_count': 1, 'regular_record': '13-1', 'playoff_record': '2-1'}},
     # SB II — Jan 1968 — season 1967
     {'sb_num': 'II', 'season': 1967, 'final_score': '33-14',
      'champion':  {'team': 'Green Bay Packers',  'title_count': 2, 'regular_record': '9-4-1', 'playoff_record': '3-0'},
-     'runner_up': {'team': 'Oakland Raiders',    'runner_up_count': 1, 'regular_record': '13-1', 'playoff_record': '1-1'}},
+     'runner_up': {'team': 'Oakland Raiders',    'runner_up_count': 1, 'regular_record': '13-1', 'playoff_record': '1-1', 'afl': True}},
     # SB I — Jan 1967 — season 1966
     {'sb_num': 'I', 'season': 1966, 'final_score': '35-10',
      'champion':  {'team': 'Green Bay Packers',  'title_count': 1, 'regular_record': '12-2',   'playoff_record': '2-0'},
-     'runner_up': {'team': 'Kansas City Chiefs', 'runner_up_count': 1, 'regular_record': '11-2-1', 'playoff_record': '1-1'}},
+     'runner_up': {'team': 'Kansas City Chiefs', 'runner_up_count': 1, 'regular_record': '11-2-1', 'playoff_record': '1-1', 'afl': True}},
 ]
 
 for row in PRE_RATED_SB_ROWS:
+    champ_entry = {
+        'team':           row['champion']['team'],
+        'display_name':   row['champion']['team'],
+        'title_count':    row['champion']['title_count'],
+        'regular_record': row['champion']['regular_record'],
+        'playoff_record': row['champion']['playoff_record'],
+    }
+    if row['champion'].get('afl'):
+        champ_entry['afl'] = True
+    ru_entry = {
+        'team':            row['runner_up']['team'],
+        'display_name':    row['runner_up']['team'],
+        'runner_up_count': row['runner_up']['runner_up_count'],
+        'regular_record':  row['runner_up']['regular_record'],
+        'playoff_record':  row['runner_up']['playoff_record'],
+    }
+    if row['runner_up'].get('afl'):
+        ru_entry['afl'] = True
     champions.append({
-        'season':       row['season'],
-        'final_score':  row['final_score'],
-        'pre_rated':    True,
-        'champion': {
-            'team':           row['champion']['team'],
-            'display_name':   row['champion']['team'],
-            'title_count':    row['champion']['title_count'],
-            'regular_record': row['champion']['regular_record'],
-            'playoff_record': row['champion']['playoff_record'],
-        },
-        'runner_up': {
-            'team':            row['runner_up']['team'],
-            'display_name':    row['runner_up']['team'],
-            'runner_up_count': row['runner_up']['runner_up_count'],
-            'regular_record':  row['runner_up']['regular_record'],
-            'playoff_record':  row['runner_up']['playoff_record'],
-        },
+        'season':      row['season'],
+        'final_score': row['final_score'],
+        'pre_rated':   True,
+        'champion':    champ_entry,
+        'runner_up':   ru_entry,
     })
 
 with open('docs/data/champions.json', 'w') as f:

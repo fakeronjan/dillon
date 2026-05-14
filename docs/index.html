@@ -876,13 +876,16 @@ function renderChampions() {
       : t.runner_up_count
       ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.runner_up_count} 🥈)</span>`
       : '';
+    const aflStr = t.afl
+      ? ` <em style="font-weight:400;color:#666">AFL</em>`
+      : '';
     const label = t.display_name || t.team;
     if (preRated) {
       const recordCell = t.regular_record
         ? `<td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>`
         : `<td class="${bg} col-hide-mobile" style="color:#bbb;text-align:center">-</td>`;
       return `
-        <td class="${bg} team-cell" style="white-space:nowrap">${label}${countStr}</td>
+        <td class="${bg} team-cell" style="white-space:nowrap">${label}${aflStr}${countStr}</td>
         <td class="${bg} col-hide-mobile" style="color:#bbb;text-align:center">-</td>
         <td class="${bg} rating-cell" style="color:#bbb">-</td>
         <td class="${bg} rating-cell col-hide-mobile" style="color:#bbb">-</td>
