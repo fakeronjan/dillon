@@ -642,6 +642,50 @@ for entry in reversed(champions):
     entry['champion']['title_count']      = _champ_count[ct]
     entry['runner_up']['runner_up_count'] = _ru_count[rt]
 
+# Pre-rated Super Bowls (I-V, seasons 1966-1970): listed for completeness on
+# the Super Bowls tab. No ratings/ranks (data anchor is 1971); team cells aren't
+# linked. Counts here are the running totals AT THAT POINT IN TIME, independent
+# of the seeded counts above (which feed downstream rated rows).
+PRE_RATED_SB_ROWS = [
+    # SB V — Jan 1971 — season 1970
+    {'sb_num': 'V', 'season': 1970, 'final_score': '16-13',
+     'champion':  {'team': 'Baltimore Colts',    'title_count': 1},
+     'runner_up': {'team': 'Dallas Cowboys',     'runner_up_count': 1}},
+    # SB IV — Jan 1970 — season 1969
+    {'sb_num': 'IV', 'season': 1969, 'final_score': '23-7',
+     'champion':  {'team': 'Kansas City Chiefs', 'title_count': 1},
+     'runner_up': {'team': 'Minnesota Vikings',  'runner_up_count': 1}},
+    # SB III — Jan 1969 — season 1968
+    {'sb_num': 'III', 'season': 1968, 'final_score': '16-7',
+     'champion':  {'team': 'New York Jets',      'title_count': 1},
+     'runner_up': {'team': 'Baltimore Colts',    'runner_up_count': 1}},
+    # SB II — Jan 1968 — season 1967
+    {'sb_num': 'II', 'season': 1967, 'final_score': '33-14',
+     'champion':  {'team': 'Green Bay Packers',  'title_count': 2},
+     'runner_up': {'team': 'Oakland Raiders',    'runner_up_count': 1}},
+    # SB I — Jan 1967 — season 1966
+    {'sb_num': 'I', 'season': 1966, 'final_score': '35-10',
+     'champion':  {'team': 'Green Bay Packers',  'title_count': 1},
+     'runner_up': {'team': 'Kansas City Chiefs', 'runner_up_count': 1}},
+]
+
+for row in PRE_RATED_SB_ROWS:
+    champions.append({
+        'season':       row['season'],
+        'final_score':  row['final_score'],
+        'pre_rated':    True,
+        'champion': {
+            'team':         row['champion']['team'],
+            'display_name': row['champion']['team'],
+            'title_count':  row['champion']['title_count'],
+        },
+        'runner_up': {
+            'team':            row['runner_up']['team'],
+            'display_name':    row['runner_up']['team'],
+            'runner_up_count': row['runner_up']['runner_up_count'],
+        },
+    })
+
 with open('docs/data/champions.json', 'w') as f:
     json.dump({'NFL': champions}, f, separators=(',', ':'))
 
