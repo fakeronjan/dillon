@@ -902,11 +902,12 @@ function renderChampions() {
     const preRated = !!e.pre_rated;
     if (preRated) anyPreRated = true;
     const sb = superBowlRoman(e.season);
+    const sbSuffix = preRated ? ' <sup style="color:#888">†</sup>' : '';
     const seasonInner = sb
-      ? `${e.season}<div style="font-size:11px;color:#888;font-weight:400">(${sb})</div>`
-      : `${e.season}`;
+      ? `${e.season}<div style="font-size:11px;color:#888;font-weight:400">(${sb})${sbSuffix}</div>`
+      : `${e.season}${sbSuffix}`;
     const seasonTd = preRated
-      ? `<td class="season-cell" style="line-height:1.3">${seasonInner} <sup style="color:#888">†</sup></td>`
+      ? `<td class="season-cell" style="line-height:1.3">${seasonInner}</td>`
       : `<td class="season-cell linked" data-season-link="${e.season}" style="line-height:1.3">${seasonInner}</td>`;
     const rowStyle = preRated ? ' style="background:#fafafa"' : '';
     return `<tr${rowStyle}>
