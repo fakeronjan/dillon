@@ -435,6 +435,9 @@ function romanNumeral(n) {
 function superBowlRoman(season) {
   const n = parseInt(season, 10);
   if (!Number.isFinite(n) || n < 1966) return '';
+  // SB 50 (2015 season) was the only Super Bowl the NFL officially branded
+  // with an Arabic numeral instead of its roman numeral (L).
+  if (n === 2015) return '50';
   return romanNumeral(n - 1965);
 }
 
@@ -875,12 +878,15 @@ function renderChampions() {
       : '';
     const label = t.display_name || t.team;
     if (preRated) {
+      const recordCell = t.regular_record
+        ? `<td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>`
+        : `<td class="${bg} col-hide-mobile" style="color:#bbb;text-align:center">-</td>`;
       return `
         <td class="${bg} team-cell" style="white-space:nowrap">${label}${countStr}</td>
         <td class="${bg} col-hide-mobile" style="color:#bbb;text-align:center">-</td>
         <td class="${bg} rating-cell" style="color:#bbb">-</td>
         <td class="${bg} rating-cell col-hide-mobile" style="color:#bbb">-</td>
-        <td class="${bg} col-hide-mobile" style="color:#bbb;text-align:center">-</td>`;
+        ${recordCell}`;
     }
     const rating  = t.rating  != null ? t.rating.toFixed(2)  : '-';
     const rating2 = fmtHottake(t.rating2, t.rank2);
