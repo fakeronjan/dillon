@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DILLON — NFL Power Rankings</title>
+<title>DILLON - NFL Power Rankings</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -149,7 +149,7 @@
   }
   .team-cell { font-weight: 600; }
 
-  /* Clickable cells — deep-link to Team Summary / Standings */
+  /* Clickable cells - deep-link to Team Summary / Standings */
   .linked { cursor: pointer; }
   .linked:hover { text-decoration: underline; }
   .team-cell.linked, .team-link.linked { color: #1a6b8a; }
@@ -259,7 +259,7 @@
 <header>
   <h1>DILLON 🏈</h1>
   <p class="subtitle">NFL Power Rankings</p>
-  <p class="model-note">REACT (20-week) + HOTTAKE (10-week) ratings — considers strength of opponent, margin of result, and recency. Reads as approximate point-spread vs avg team. ~+3 = contender; ~+10 = elite; ~+20 = generational (1985 Bears = 20.65).</p>
+  <p class="model-note">REACT (20-week) + HOTTAKE (10-week) ratings - considers strength of opponent, margin of result, and recency. Reads as approximate point-spread vs avg team. ~+3 = contender; ~+10 = elite; ~+20 = generational (1985 Bears = 20.65).</p>
   <p class="updated" id="last-updated">Loading...</p>
   <p class="updated" id="last-refreshed" style="font-size:11px;color:#999;margin-top:-4px"></p>
 </header>
@@ -289,7 +289,7 @@
 <div id="team-summary" class="tab">
   <div class="conf-pills" id="ts-conf-pills"></div>
   <div class="controls">
-    <select id="team-select"><option value="">— Select a team —</option></select>
+    <select id="team-select"><option value="">- Select a team -</option></select>
     <select id="season-select"><option value="all">All seasons</option></select>
     <select id="date-type-select">
       <option value="all">All dates</option>
@@ -306,7 +306,7 @@
 <!-- ── CHAMPIONS (League History) ────────────────────────────────────────── -->
 <div id="league-history" class="tab">
   <p class="data-note">
-    Counts reflect Super Bowl titles only. Pre-Super Bowl NFL championships (1920-1965) and AFL championships are not included. Relocations are treated as separate franchises — e.g., the Baltimore Colts' 1 title (SB V, 1970) is not included in the Indianapolis Colts' count.
+    Counts reflect Super Bowl titles only. Pre-Super Bowl NFL championships (1920-1965) and AFL championships are not included. Relocations are treated as separate franchises - e.g., the Baltimore Colts' 1 title (SB V, 1970) is not included in the Indianapolis Colts' count.
   </p>
   <div id="history-table-wrap"><p class="loading">Loading champions...</p></div>
 </div>
@@ -361,7 +361,7 @@ function displayMatch(s) { return (!s || _PLACEHOLDER_LM.has(s)) ? '' : s; }
 function fmtRecord(rec) {
   // NFL records can be "10-5" or "10-5-1" (W-L or W-L-T). Show win pct in dimmed parens.
   // Win pct counts ties as half-wins per NFL convention.
-  if (!rec || rec === '—') return '0-0';
+  if (!rec || rec === '-') return '0-0';
   const m = rec.match(/^(\d+)-(\d+)(?:-(\d+))?$/);
   if (!m) return rec;
   const w = parseInt(m[1]);
@@ -376,7 +376,7 @@ function fmtRecord(rec) {
 function fmtRecordStacked(reg, playoff) {
   // Champions/GOAT: regular-season W-L (or W-L-T) with win pct on top.
   // For playoff teams, add playoff W-L on a new line (no parens).
-  if (!reg || reg === '—') return '0-0';
+  if (!reg || reg === '-') return '0-0';
   const top = fmtRecord(reg);
   const pm = playoff ? playoff.match(/^(\d+)-(\d+)$/) : null;
   const hasPlayoffs = pm && (parseInt(pm[1]) + parseInt(pm[2]) > 0);
@@ -396,7 +396,7 @@ function fmtRecordSmart(reg, playoff, fallback) {
 
 function fmtHottake(rating2, rank2) {
   // Display HOTTAKE rating with the team's HOTTAKE rank in dimmed parens.
-  if (rating2 == null) return '—';
+  if (rating2 == null) return '-';
   const r = rating2.toFixed(2);
   if (rank2 == null) return r;
   return `${r} <span style="color:#888;font-size:0.85em">(${rank2})</span>`;
@@ -668,7 +668,7 @@ function populateTeamSelect() {
   const filtered = tsConf === 'all'
     ? teamsIndex
     : teamsIndex.filter(t => t.conference === tsConf);
-  sel.innerHTML = '<option value="">— Select a team —</option>';
+  sel.innerHTML = '<option value="">- Select a team -</option>';
   filtered.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t.slug;
@@ -1010,7 +1010,7 @@ buildConfPills('standings-conf-pills', standingsConf, v => { standingsConf = v; 
 buildConfPills('ts-conf-pills',        tsConf,        v => { tsConf = v; populateTeamSelect(); });
 buildConfPills('goat-conf-pills',      goatConf,      v => { goatConf = v; renderGoat(); });
 // Load teams_index first so opponent/slug lookups are populated before any
-// table renders — avoids a double-render flash on initial page load.
+// table renders - avoids a double-render flash on initial page load.
 (async () => {
   await loadTeamsIndex();
   initStandings();
