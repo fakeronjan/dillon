@@ -70,6 +70,9 @@
 
   .tab { display: none; padding: 16px; max-width: 1100px; margin: 0 auto; }
   .tab.active { display: block; }
+  /* Super Bowls tab has 12 columns and overflows at 1100px — let it use
+     more of the available iframe width to avoid a horizontal scrollbar. */
+  #league-history.tab { max-width: 1320px; }
 
   .controls {
     display: flex;
