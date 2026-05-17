@@ -557,6 +557,27 @@ with open('docs/data/seasons_index.json', 'w') as f:
 print("Writing champions.json...")
 
 champions = []
+
+# Pre-SB snapshot lookup: week 103 is universally the snapshot taken AFTER the
+# conference championship and BEFORE the Super Bowl, across all rated seasons
+# (1971+). Used to evaluate matchup quality / closeness / upsets without the
+# circularity of letting the SB result itself colour the "going-in" rating.
+pre_sb_df = df[df['week'] == 103][['name', 'season', 'rating', 'rating2', 'rank', 'rank2', 'record']].copy()
+pre_sb_lookup = {(r['name'], int(r['season'])): r for _, r in pre_sb_df.iterrows()}
+
+def pre_sb_fields(name, season, reg_record):
+    """Return the pre-SB rating/rank/playoff_record block, or empty if missing."""
+    p = pre_sb_lookup.get((name, int(season)))
+    if p is None:
+        return {}
+    return {
+        'rating_pre':         round(float(p['rating']),  3),
+        'rating2_pre':        round(float(p['rating2']), 3) if not pd.isna(p['rating2']) else None,
+        'rank_pre':           int(p['rank']),
+        'rank2_pre':          int(p['rank2']) if not pd.isna(p['rank2']) else None,
+        'playoff_record_pre': playoff_record(clean(p['record']), reg_record),
+    }
+
 for season in sorted(df['season'].unique(), reverse=True):
     sdf = df[(df['season'] == season) & (df['season_flag'] == 2)]
     if sdf.empty:
@@ -596,6 +617,7 @@ for season in sorted(df['season'].unique(), reverse=True):
             'record':         clean(cr['record']),
             'regular_record': champ_reg,
             'playoff_record': playoff_record(cr['record'], champ_reg),
+            **pre_sb_fields(cr['name'], season, champ_reg),
         },
         'runner_up': {
             'team':           rr['name'],
@@ -609,6 +631,7 @@ for season in sorted(df['season'].unique(), reverse=True):
             'record':         clean(rr['record']),
             'regular_record': ru_reg,
             'playoff_record': playoff_record(rr['record'], ru_reg),
+            **pre_sb_fields(rr['name'], season, ru_reg),
         },
     })
 

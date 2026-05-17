@@ -234,9 +234,18 @@
   /* League History table */
   .col-champ  { background: #fffdf3; }
   .col-ru     { background: #fafafa; }
+  /* Sort-key column highlight in rankings sub-view: soft cream-yellow
+     tint with extra-bold text. Overrides col-champ/col-ru tints. */
+  .sort-col              { background: #fff8d0 !important; }
+  thead .sort-col        { background: #fff8d0 !important; color: #155a75 !important; }
+  .sort-col.rating-cell  { font-weight: 800; }
+  /* Row-group divider: thicker border separates pair-groups in the
+     Repeat Champs and Rematches tables (where each pair spans 2 rows). */
+  tbody tr.row-group-end { border-bottom: 2px solid #d0d0d0; }
   .season-cell { font-weight: 700; color: #1a6b8a; white-space: nowrap; }
   .divider-col { width: 4px; background: #e8e8e8; padding: 0; }
-  #history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #history-table-wrap,
+  #history-rank-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   #standings-table-wrap,
   #team-table-wrap,
@@ -349,10 +358,35 @@
 
 <!-- ── CHAMPIONS (League History) ────────────────────────────────────────── -->
 <div id="league-history" class="tab">
-  <p class="data-note">
-    Counts reflect Super Bowl titles only. Pre-Super Bowl NFL championships (1920-1965) and AFL championships are not included. Relocations are treated as separate franchises - e.g., the Baltimore Colts' 1 title (SB V, 1970) is not included in the Indianapolis Colts' count.
-  </p>
-  <div id="history-table-wrap"><p class="loading">Loading champions...</p></div>
+  <div class="conf-pills" id="history-view-pills">
+    <button class="active" data-hview="list">All Super Bowls</button>
+    <button data-hview="rankings">Lists</button>
+  </div>
+
+  <div id="history-list-view">
+    <p class="data-note">
+      Counts reflect Super Bowl titles only. Pre-Super Bowl NFL championships (1920-1965) and AFL championships are not included. Relocations are treated as separate franchises - e.g., the Baltimore Colts' 1 title (SB V, 1970) is not included in the Indianapolis Colts' count.
+    </p>
+    <div id="history-table-wrap"><p class="loading">Loading champions...</p></div>
+  </div>
+
+  <div id="history-rankings-view" style="display:none">
+    <div class="conf-pills" id="history-rank-pills">
+      <button class="active" data-rank="best-champs">Best champs</button>
+      <button data-rank="worst-champs">Worst champs</button>
+      <button data-rank="best-losers">Best losers</button>
+      <button data-rank="worst-losers">Worst losers</button>
+      <button data-rank="best-matchup">Best matchup</button>
+      <button data-rank="worst-matchup">Worst matchup</button>
+      <button data-rank="closest">Closest predicted</button>
+      <button data-rank="blowout">Biggest blowout</button>
+      <button data-rank="upset">Upsets</button>
+      <button data-rank="repeat-champs">Repeat champs</button>
+      <button data-rank="rematches">Rematches</button>
+    </div>
+    <p class="data-note" id="history-rank-note"></p>
+    <div id="history-rank-table-wrap"><p class="loading">Loading rankings...</p></div>
+  </div>
 </div>
 
 <!-- ── GOAT TABLE ───────────────────────────────────────────────────────── -->
@@ -998,6 +1032,339 @@ function renderChampions() {
     ${footnote}`;
   attachLinks();
 }
+
+// ── Super Bowl Rankings (sub-view of Super Bowls tab) ───────────────────────
+// All rankings are computed client-side from championsData; no extra fetch.
+// Pre-1971 SBs (no ratings) are excluded; SBs are sorted by REACT (in-season).
+// Layout mirrors the LIST view exactly: same team block, season cell, score
+// divider, col-champ/col-ru tinting — just sorted by a chosen metric.
+
+// 4-cell team block used in the rankings sub-view: team-name | rank | REACT | W-L.
+// HOTTAKE is intentionally dropped here (no ranking sorts on it) to save width.
+// Pre-rated/AFL cases are not handled — pre-1971 SBs are filtered out upstream.
+// `bg` is the column-group tint (col-champ for the LEFT slot, col-ru for the
+// RIGHT slot — slot semantics, not always champion/runner-up). `sortReact`
+// adds the sort-col highlight to the REACT cell for team-quality rankings.
+function rankTeamBlock(t, bg, season, sortReact) {
+  if (!t) return `<td class="${bg}" colspan="4">-</td>`;
+  const label = t.display_name || t.team;
+  const slug  = nameToSlug[t.team] || nameToSlug[label];
+  const countStr = t.title_count
+    ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.title_count} 👑)</span>`
+    : t.runner_up_count
+    ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.runner_up_count} 🥈)</span>`
+    : '';
+  const rating = t.rating != null ? t.rating.toFixed(2) : '-';
+  const rank   = t.rank   != null ? `${t.rank}` : '-';
+  const teamTd = slug
+    ? `<td class="${bg} team-cell linked" data-team-slug="${slug}" data-season="${season}" style="white-space:nowrap">${label}${countStr}</td>`
+    : `<td class="${bg} team-cell" style="white-space:nowrap">${label}${countStr}</td>`;
+  const reactClass = sortReact ? `${bg} rating-cell sort-col` : `${bg} rating-cell`;
+  return `
+    ${teamTd}
+    <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;color:#888;font-size:0.85em">${rank}</td>
+    <td class="${reactClass}" style="font-variant-numeric:tabular-nums">${rating}</td>
+    <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>`;
+}
+
+// Season cell matching the LIST view: year primary, SB roman dimmed beneath.
+function rankSeasonCell(e) {
+  const sb = superBowlRoman(e.season);
+  const inner = sb
+    ? `${e.season}<div style="font-size:11px;color:#888;font-weight:400">(${sb})</div>`
+    : `${e.season}`;
+  return `<td class="season-cell linked" data-season-link="${e.season}" style="line-height:1.3">${inner}</td>`;
+}
+
+function fmtSigned(n) { return (n >= 0 ? '+' : '') + n.toFixed(2); }
+
+// Matchup-evaluation rankings use the pre-SB snapshot (week 103) so the
+// "going in" framing isn't contaminated by the SB result itself. Team-quality
+// rankings (best/worst champs and losers) keep the EOS rating since that's
+// the canonical measure of how strong the team ultimately was.
+const PRE_SB_MODES = new Set(['best-matchup', 'worst-matchup', 'closest', 'blowout', 'upset']);
+
+function preSBView(team) {
+  return {
+    ...team,
+    rating:         team.rating_pre,
+    rating2:        team.rating2_pre,
+    rank:           team.rank_pre,
+    rank2:          team.rank2_pre,
+    playoff_record: team.playoff_record_pre,
+  };
+}
+
+function renderRankings(rankType) {
+  if (!championsData) return;
+  if (rankType === 'repeat-champs') return renderRepeatChamps();
+  if (rankType === 'rematches')     return renderRematches();
+  const entries = (championsData['NFL'] || []).filter(e =>
+    e.champion && e.runner_up &&
+    e.champion.rating != null && e.runner_up.rating != null
+  );
+
+  const isPreSB = PRE_SB_MODES.has(rankType);
+  const rows = entries.map(e => {
+    const c = isPreSB ? preSBView(e.champion)  : e.champion;
+    const r = isPreSB ? preSBView(e.runner_up) : e.runner_up;
+    return {
+      season:   e.season,
+      score:    e.final_score || '',
+      champ:    c,
+      loser:    r,
+      combined: c.rating + r.rating,
+      diff:     c.rating - r.rating,  // + = champ favored, - = upset
+    };
+  });
+
+  let sorted, note, mode;
+  switch (rankType) {
+    case 'best-champs':
+      sorted = [...rows].sort((a, b) => b.champ.rating - a.champ.rating).slice(0, 10);
+      note   = 'Top 10 champions by REACT rating. The strongest teams ever to win a Super Bowl.';
+      mode   = 'team-vs-opp';
+      break;
+    case 'worst-champs':
+      sorted = [...rows].sort((a, b) => a.champ.rating - b.champ.rating).slice(0, 10);
+      note   = 'Bottom 10 champions by REACT rating. The weakest teams ever to win a Super Bowl.';
+      mode   = 'team-vs-opp';
+      break;
+    case 'best-losers':
+      sorted = [...rows].sort((a, b) => b.loser.rating - a.loser.rating).slice(0, 10);
+      note   = 'Top 10 runner-ups by REACT rating. The strongest teams ever to lose a Super Bowl.';
+      mode   = 'loser-vs-champ';
+      break;
+    case 'worst-losers':
+      sorted = [...rows].sort((a, b) => a.loser.rating - b.loser.rating).slice(0, 10);
+      note   = 'Bottom 10 runner-ups by REACT rating. The weakest teams ever to lose a Super Bowl.';
+      mode   = 'loser-vs-champ';
+      break;
+    case 'best-matchup':
+      sorted = [...rows].sort((a, b) => b.combined - a.combined).slice(0, 10);
+      note   = 'Top 10 by combined pre-SB REACT rating. The highest-quality matchups on paper.';
+      mode   = 'matchup';
+      break;
+    case 'worst-matchup':
+      sorted = [...rows].sort((a, b) => a.combined - b.combined).slice(0, 10);
+      note   = 'Bottom 10 by combined pre-SB REACT rating. The lowest-quality matchups on paper.';
+      mode   = 'matchup';
+      break;
+    case 'closest':
+      sorted = [...rows].sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff)).slice(0, 10);
+      note   = 'Top 10 by smallest pre-SB rating gap. Signed diff is from the champion\'s POV (negative = upset).';
+      mode   = 'spread';
+      break;
+    case 'blowout':
+      sorted = [...rows].sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)).slice(0, 10);
+      note   = 'Top 10 by largest pre-SB rating gap. The biggest predicted mismatches, regardless of who actually won.';
+      mode   = 'spread';
+      break;
+    case 'upset':
+      sorted = rows.filter(r => r.diff < 0).sort((a, b) => a.diff - b.diff);
+      note   = `${sorted.length} Super Bowls where the model picked the loser by pre-SB rating. Sorted from biggest upset down.`;
+      mode   = 'spread';
+      break;
+    default:
+      sorted = []; note = ''; mode = 'team-vs-opp';
+  }
+
+  document.getElementById('history-rank-note').textContent = note;
+  document.getElementById('history-rank-table-wrap').innerHTML =
+    sorted.length ? renderRankingTable(sorted, mode) : '<p class="loading">No data.</p>';
+  attachLinks();
+}
+
+function renderRankingTable(rows, mode) {
+  // Mode-driven layout decisions:
+  //   loser-vs-champ: Runner-Up is the focal entity, put it in the LEFT slot
+  //                   so the eye lands on it; Champion moves to the right.
+  //   matchup/spread: Combined / Pred. Diff lives as the RIGHTMOST column,
+  //                   preserving "matchup then punchline" reading flow; the
+  //                   sort-col highlight makes it visually unmissable.
+  //   team-vs-opp:    Champion stays left; REACT in the left team's block is
+  //                   the sort-key and gets the sort-col highlight.
+  // col-champ class = LEFT slot styling, col-ru class = RIGHT slot styling.
+  // Slot semantics are positional here, not strictly "champion/runner-up".
+  const showCombined = (mode === 'matchup');
+  const showDiff     = (mode === 'spread');
+  const isPreSB      = showCombined || showDiff;
+  const loserFocal   = (mode === 'loser-vs-champ');
+  const leftLabel    = loserFocal ? 'Runner-Up' : 'Champion';
+  const rightLabel   = loserFocal ? 'Champion'  : 'Runner-Up';
+
+  // Compact pre-SB marker shown beneath the metric column headers.
+  const preTag = isPreSB
+    ? `<div style="font-size:9px;font-weight:400;opacity:0.65;letter-spacing:0.3px;text-transform:none">(pre-SB)</div>`
+    : '';
+
+  // Sort-key metric column (matchup/spread) lives at the rightmost position.
+  const metricHeader = showCombined
+    ? `<th class="sort-col">Combined${preTag}</th>`
+    : showDiff
+    ? `<th class="sort-col">Pred. Diff${preTag}</th>`
+    : '';
+
+  // For team-quality modes, the LEFT team's REACT column is the sort key.
+  const sortLeftReact = !isPreSB;
+  const leftReactHeader = sortLeftReact
+    ? `<th class="col-champ sort-col">REACT</th>`
+    : `<th class="col-champ">REACT${preTag}</th>`;
+
+  const head = `
+    <th>#</th>
+    <th>Season</th>
+    <th class="col-champ">${leftLabel}</th>
+    <th class="col-champ col-hide-mobile">Rank</th>
+    ${leftReactHeader}
+    <th class="col-champ col-hide-mobile">W-L</th>
+    <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Score</th>
+    <th class="col-ru">${rightLabel}</th>
+    <th class="col-ru col-hide-mobile">Rank</th>
+    <th class="col-ru">REACT${preTag}</th>
+    <th class="col-ru col-hide-mobile">W-L</th>
+    ${metricHeader}`;
+
+  const body = rows.map((e, i) => {
+    const leftTeam  = loserFocal ? e.loser : e.champ;
+    const rightTeam = loserFocal ? e.champ : e.loser;
+
+    let metricCell = '';
+    if (showCombined) {
+      metricCell = `<td class="sort-col rating-cell" style="font-variant-numeric:tabular-nums">${e.combined.toFixed(2)}</td>`;
+    } else if (showDiff) {
+      const color = e.diff >= 0 ? '#1a6b8a' : '#c2185b';
+      metricCell = `<td class="sort-col rating-cell" style="font-variant-numeric:tabular-nums;color:${color}">${fmtSigned(e.diff)}</td>`;
+    }
+
+    return `<tr>
+      <td class="rank-cell">${i + 1}</td>
+      ${rankSeasonCell(e)}
+      ${rankTeamBlock(leftTeam,  'col-champ', e.season, sortLeftReact)}
+      <td class="divider-col" style="text-align:center;font-size:11px;font-weight:600;white-space:nowrap;width:64px;padding:2px 4px;line-height:1.3">${e.score}</td>
+      ${rankTeamBlock(rightTeam, 'col-ru',    e.season, false)}
+      ${metricCell}
+    </tr>`;
+  }).join('');
+
+  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+// ── Repeat Champions & Rematches sub-views ──────────────────────────────────
+// Both reuse the Best-champs column structure (Season | Champ block | Score |
+// RU block) so the visual language is identical to the other rankings. Pairs
+// are visualised via the row-group-end border on the second row of each pair.
+// No # column — these views are chronological, not ranked by a metric.
+
+// Standard Best-champs-style header (used by repeat-champs and rematches).
+const PAIR_HEAD = `
+    <th>Season</th>
+    <th class="col-champ">Champion</th>
+    <th class="col-champ col-hide-mobile">Rank</th>
+    <th class="col-champ">REACT</th>
+    <th class="col-champ col-hide-mobile">W-L</th>
+    <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Score</th>
+    <th class="col-ru">Runner-Up</th>
+    <th class="col-ru col-hide-mobile">Rank</th>
+    <th class="col-ru">REACT</th>
+    <th class="col-ru col-hide-mobile">W-L</th>`;
+
+function pairRow(e, isPairEnd) {
+  const rowClass = isPairEnd ? ' class="row-group-end"' : '';
+  return `<tr${rowClass}>
+      ${rankSeasonCell(e)}
+      ${rankTeamBlock(e.champion,  'col-champ', e.season, false)}
+      <td class="divider-col" style="text-align:center;font-size:11px;font-weight:600;white-space:nowrap;width:64px;padding:2px 4px;line-height:1.3">${e.final_score || ''}</td>
+      ${rankTeamBlock(e.runner_up, 'col-ru',    e.season, false)}
+    </tr>`;
+}
+
+function renderRepeatChamps() {
+  const entries = [...(championsData['NFL'] || [])].sort((a, b) => a.season - b.season);
+  const pairs = [];
+  for (let i = 0; i < entries.length - 1; i++) {
+    const a = entries[i], b = entries[i + 1];
+    if (a.champion && b.champion &&
+        a.champion.team === b.champion.team &&
+        b.season - a.season === 1) {
+      pairs.push([a, b]);
+    }
+  }
+  pairs.reverse(); // newest first
+
+  document.getElementById('history-rank-note').textContent =
+    `${pairs.length} back-to-back Super Bowl wins. Same team wins SB(N) and SB(N+1).`;
+
+  if (!pairs.length) {
+    document.getElementById('history-rank-table-wrap').innerHTML = '<p class="loading">No back-to-back champions in this dataset.</p>';
+    return;
+  }
+
+  const body = pairs.map(([a, b]) => pairRow(a, false) + pairRow(b, true)).join('');
+  document.getElementById('history-rank-table-wrap').innerHTML =
+    `<table><thead><tr>${PAIR_HEAD}</tr></thead><tbody>${body}</tbody></table>`;
+  attachLinks();
+}
+
+function renderRematches() {
+  // Rated SBs only (1971+) — pre-rated rematches would lack REACT/W-L cells.
+  const entries = (championsData['NFL'] || []).filter(e =>
+    e.champion && e.runner_up &&
+    e.champion.rating != null && e.runner_up.rating != null
+  ).sort((a, b) => a.season - b.season);
+
+  const seen = new Set();
+  const rematches = [];
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const gap = entries[j].season - entries[i].season;
+      if (gap > 5) break;
+      const pi = [entries[i].champion.team, entries[i].runner_up.team].sort().join('|');
+      const pj = [entries[j].champion.team, entries[j].runner_up.team].sort().join('|');
+      if (pi !== pj) continue;
+      const key = `${pi}|${entries[i].season}|${entries[j].season}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rematches.push({ a: entries[i], b: entries[j] });
+    }
+  }
+  rematches.reverse(); // newest first (by latest meeting)
+
+  document.getElementById('history-rank-note').textContent =
+    `${rematches.length} Super Bowl rematches within 5 seasons. Same two teams meet again in the championship.`;
+
+  if (!rematches.length) {
+    document.getElementById('history-rank-table-wrap').innerHTML = '<p class="loading">No qualifying rematches.</p>';
+    return;
+  }
+
+  const body = rematches.map(({ a, b }) => pairRow(a, false) + pairRow(b, true)).join('');
+  document.getElementById('history-rank-table-wrap').innerHTML =
+    `<table><thead><tr>${PAIR_HEAD}</tr></thead><tbody>${body}</tbody></table>`;
+  attachLinks();
+}
+
+document.querySelectorAll('#history-view-pills button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#history-view-pills button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const view = btn.dataset.hview;
+    document.getElementById('history-list-view').style.display     = view === 'list'     ? '' : 'none';
+    document.getElementById('history-rankings-view').style.display = view === 'rankings' ? '' : 'none';
+    if (view === 'rankings') {
+      const active = document.querySelector('#history-rank-pills button.active');
+      renderRankings(active ? active.dataset.rank : 'best-champs');
+    }
+  });
+});
+
+document.querySelectorAll('#history-rank-pills button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#history-rank-pills button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRankings(btn.dataset.rank);
+  });
+});
 
 // ── GOAT Table ────────────────────────────────────────────────────────────────
 async function loadGoat() {
