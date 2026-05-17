@@ -1078,6 +1078,13 @@ function rankSeasonCell(e) {
 
 function fmtSigned(n) { return (n >= 0 ? '+' : '') + n.toFixed(2); }
 
+// Flip "W-L" to "L-W" — used when the loser is the focal team (left slot) so
+// the score reads from their POV: "22-19" becomes "19-22".
+function flipScore(s) {
+  const m = s && s.match(/^(\d+)-(\d+)$/);
+  return m ? `${m[2]}-${m[1]}` : s;
+}
+
 // Matchup-evaluation rankings use the pre-SB snapshot (week 103) so the
 // "going in" framing isn't contaminated by the SB result itself. Team-quality
 // rankings (best/worst champs and losers) keep the EOS rating since that's
@@ -1108,12 +1115,17 @@ function renderRankings(rankType) {
   const rows = entries.map(e => {
     const c = isPreSB ? preSBView(e.champion)  : e.champion;
     const r = isPreSB ? preSBView(e.runner_up) : e.runner_up;
+    // Matchup quality = max(REACT) + 2 * min(REACT). The 2x weight on the
+    // weaker team penalises lopsided matchups — a "great matchup" needs both
+    // teams to be strong, not just one elite team padding the combined.
+    const hi = Math.max(c.rating, r.rating);
+    const lo = Math.min(c.rating, r.rating);
     return {
       season:   e.season,
       score:    e.final_score || '',
       champ:    c,
       loser:    r,
-      combined: c.rating + r.rating,
+      quality:  hi + 2 * lo,
       diff:     c.rating - r.rating,  // + = champ favored, - = upset
     };
   });
@@ -1141,13 +1153,13 @@ function renderRankings(rankType) {
       mode   = 'loser-vs-champ';
       break;
     case 'best-matchup':
-      sorted = [...rows].sort((a, b) => b.combined - a.combined).slice(0, 10);
-      note   = 'Top 10 by combined pre-SB REACT rating. The highest-quality matchups on paper.';
+      sorted = [...rows].sort((a, b) => b.quality - a.quality).slice(0, 10);
+      note   = 'Top 10 by pre-SB matchup quality. Formula: max(REACT) + 2 × min(REACT), which weights the weaker team double to reward balanced strength over one-sided star power.';
       mode   = 'matchup';
       break;
     case 'worst-matchup':
-      sorted = [...rows].sort((a, b) => a.combined - b.combined).slice(0, 10);
-      note   = 'Bottom 10 by combined pre-SB REACT rating. The lowest-quality matchups on paper.';
+      sorted = [...rows].sort((a, b) => a.quality - b.quality).slice(0, 10);
+      note   = 'Bottom 10 by pre-SB matchup quality. Formula: max(REACT) + 2 × min(REACT), which weights the weaker team double to penalise lopsided matchups over evenly-mediocre ones.';
       mode   = 'matchup';
       break;
     case 'closest':
@@ -1200,7 +1212,7 @@ function renderRankingTable(rows, mode) {
 
   // Sort-key metric column (matchup/spread) lives at the rightmost position.
   const metricHeader = showCombined
-    ? `<th class="sort-col">Combined${preTag}</th>`
+    ? `<th class="sort-col">Quality${preTag}</th>`
     : showDiff
     ? `<th class="sort-col">Pred. Diff${preTag}</th>`
     : '';
@@ -1231,17 +1243,18 @@ function renderRankingTable(rows, mode) {
 
     let metricCell = '';
     if (showCombined) {
-      metricCell = `<td class="sort-col rating-cell" style="font-variant-numeric:tabular-nums">${e.combined.toFixed(2)}</td>`;
+      metricCell = `<td class="sort-col rating-cell" style="font-variant-numeric:tabular-nums">${e.quality.toFixed(2)}</td>`;
     } else if (showDiff) {
       const color = e.diff >= 0 ? '#1a6b8a' : '#c2185b';
       metricCell = `<td class="sort-col rating-cell" style="font-variant-numeric:tabular-nums;color:${color}">${fmtSigned(e.diff)}</td>`;
     }
 
+    const displayScore = loserFocal ? flipScore(e.score) : e.score;
     return `<tr>
       <td class="rank-cell">${i + 1}</td>
       ${rankSeasonCell(e)}
       ${rankTeamBlock(leftTeam,  'col-champ', e.season, sortLeftReact)}
-      <td class="divider-col" style="text-align:center;font-size:11px;font-weight:600;white-space:nowrap;width:64px;padding:2px 4px;line-height:1.3">${e.score}</td>
+      <td class="divider-col" style="text-align:center;font-size:11px;font-weight:600;white-space:nowrap;width:64px;padding:2px 4px;line-height:1.3">${displayScore}</td>
       ${rankTeamBlock(rightTeam, 'col-ru',    e.season, false)}
       ${metricCell}
     </tr>`;
