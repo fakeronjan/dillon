@@ -459,11 +459,93 @@ def _record_pct(rec):
     return (w + 0.5 * t) / g if g > 0 else 0.0
 
 
+# Regular-season-only games (decimal week < 0.101) for tiebreaker lookups.
+_rs_games = games[games['season_week'] - games['season'] < 0.101].copy()
+
+
+def _h2h_pct(season, team, opponents, rs_games):
+    """Win pct in head-to-head games between `team` and any team in `opponents`."""
+    sub = rs_games[
+        (rs_games['season'] == season)
+        & ((rs_games['home_team_name'] == team) | (rs_games['visitor_team_name'] == team))
+        & ((rs_games['home_team_name'].isin(opponents)) | (rs_games['visitor_team_name'].isin(opponents)))
+    ]
+    # Exclude self-vs-self (defensive; shouldn't happen).
+    sub = sub[~((sub['home_team_name'] == team) & (sub['visitor_team_name'] == team))]
+    if sub.empty:
+        return None
+    w = ((sub['winner'] == team) & (sub['is_tie'] == 0)).sum()
+    ties = (sub['is_tie'] == 1).sum() if 'is_tie' in sub.columns else 0
+    # Treat ties as half a win per NFL convention.
+    games_played = len(sub)
+    return (w + 0.5 * ties) / games_played if games_played else None
+
+
+def _div_record_pct(season, team, rs_games):
+    """Win pct in the team's intra-division games this season."""
+    div_peers = {
+        t for t in rs_games[rs_games['season'] == season]['home_team_name'].unique()
+        if conf_for_season(t, season) == conf_for_season(team, season)
+        and div_for_season(t, season) == div_for_season(team, season)
+        and t != team
+    }
+    if not div_peers:
+        return None
+    return _h2h_pct(season, team, div_peers, rs_games)
+
+
+def _conf_record_pct(season, team, rs_games):
+    """Win pct in the team's intra-conference games this season."""
+    conf_peers = {
+        t for t in rs_games[rs_games['season'] == season]['home_team_name'].unique()
+        if conf_for_season(t, season) == conf_for_season(team, season)
+        and t != team
+    }
+    if not conf_peers:
+        return None
+    return _h2h_pct(season, team, conf_peers, rs_games)
+
+
+def _resolve_division_tie(season, tied_teams, rs_games):
+    """Break a division tie using NFL-style tiebreakers (head-to-head, then
+    division record, then conference record). Alphabetical name as final
+    fallback. Returns the winning team name."""
+    if len(tied_teams) == 1:
+        return tied_teams[0]
+    s_int = int(season)
+    # 1) Head-to-head among tied teams
+    h2h = {t: _h2h_pct(s_int, t, [x for x in tied_teams if x != t], rs_games) for t in tied_teams}
+    if all(v is not None for v in h2h.values()):
+        best = max(h2h.values())
+        survivors = [t for t in tied_teams if h2h[t] == best]
+        if len(survivors) == 1:
+            return survivors[0]
+        tied_teams = survivors
+    # 2) Best record in division games
+    drec = {t: _div_record_pct(s_int, t, rs_games) for t in tied_teams}
+    if all(v is not None for v in drec.values()):
+        best = max(drec.values())
+        survivors = [t for t in tied_teams if drec[t] == best]
+        if len(survivors) == 1:
+            return survivors[0]
+        tied_teams = survivors
+    # 3) Best record in conference games
+    crec = {t: _conf_record_pct(s_int, t, rs_games) for t in tied_teams}
+    if all(v is not None for v in crec.values()):
+        best = max(crec.values())
+        survivors = [t for t in tied_teams if crec[t] == best]
+        if len(survivors) == 1:
+            return survivors[0]
+        tied_teams = survivors
+    # 4) Final fallback: alphabetical
+    return sorted(tied_teams)[0]
+
+
 # ── Division winners (per season + (conference, division)) ───────────────────
 # Tag the team with the best RS record in each (conference, division) at end
-# of regular season. Tie-breaker: alphabetical name (NFL's actual tiebreakers
-# are too complex to replicate — head-to-head, division record, common
-# opponents, etc. — and this badge is informational, not authoritative).
+# of regular season. Real NFL tiebreakers are 9 steps deep — we apply the first
+# three (head-to-head → division record → conference record) which resolve the
+# vast majority of historical ties; alphabetical name is the final fallback.
 _division_winners = set()  # set of (season, team) tuples
 for season, sub in df[df['season_flag'] == 1].groupby('season'):
     s_int = int(season)
@@ -474,9 +556,11 @@ for season, sub in df[df['season_flag'] == 1].groupby('season'):
     sub['_pct']  = sub['record'].apply(_record_pct)
     for (_cf, _dv), grp in sub.groupby(['_conf', '_div']):
         top = grp['_pct'].max()
-        winners = grp[grp['_pct'] == top].sort_values('name')
-        if not winners.empty:
-            _division_winners.add((s_int, winners.iloc[0]['name']))
+        tied = grp[grp['_pct'] == top]['name'].tolist()
+        if not tied:
+            continue
+        winner = tied[0] if len(tied) == 1 else _resolve_division_tie(s_int, tied, _rs_games)
+        _division_winners.add((s_int, winner))
 print(f"  {len(_division_winners)} division winners flagged.")
 
 
