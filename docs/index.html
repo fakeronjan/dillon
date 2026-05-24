@@ -739,7 +739,7 @@ function renderStandings() {
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
       ${teamTd}
-      <td class="col-hide-mobile">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
+      <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
@@ -895,7 +895,7 @@ function renderTeamTable() {
     <td class="rank-cell">${g.rank}</td>
     <td>${ratingBar(g.rating)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
-    <td class="col-hide-mobile" style="font-size:11px">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
+    <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
   }).join('');
@@ -1464,7 +1464,7 @@ function renderGoat() {
     <td class="rank-cell">${t.rank}</td>
     <td class="season-cell linked" data-season-link="${t.season}" style="text-align:center">${t.season}</td>
     ${teamTd}
-    <td class="col-hide-mobile">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
+    <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
     <td>${ratingBar(t.rating)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
@@ -1477,7 +1477,7 @@ function renderGoat() {
         <th style="text-align:center">All time rank</th>
         <th style="text-align:center">Season</th>
         <th>Team</th>
-        <th class="col-hide-mobile">Conf / Div</th>
+        <th class="col-hide-mobile">Conf</th>
         <th>REACT</th>
         <th class="col-hide-mobile">W-L</th>
         <th class="col-hide-mobile">Honors</th>
