@@ -394,6 +394,7 @@
 <!-- ── GOAT TABLE ───────────────────────────────────────────────────────── -->
 <div id="goat" class="tab">
   <p class="data-note">Top 50 single-season ratings · Data covers 1971 through the current season</p>
+  <div class="conf-pills" id="goat-mode-pills"></div>
   <div class="conf-pills" id="goat-conf-pills"></div>
   <div id="goat-table-wrap"><p class="loading">Loading GOAT table...</p></div>
 </div>
@@ -402,7 +403,8 @@
 const BASE = './data';
 let currentSeasonData = null;
 let currentSnapshot   = null;
-let goatData          = null;
+let goatDataRS        = null;
+let goatDataPS        = null;
 let teamsIndex        = null;
 let teamCache         = {};
 let nameToSlug        = {};  // canonical + historical name → slug, built from teamsIndex
@@ -412,6 +414,7 @@ const CONFERENCES = ['AFC', 'NFC'];
 let standingsConf = 'all';
 let tsConf        = 'all';
 let goatConf      = 'all';
+let goatMode      = 'ps';     // 'ps' (end of playoffs — championship contenders) or 'rs' (end of regular season)
 let tsView        = 'cross';  // 'cross' (all-season summary) or 'single' (one season, all game-days)
 
 function buildConfPills(containerId, current, onSelect, options) {
@@ -496,6 +499,20 @@ function confBadge(conf, sbStatus) {
     return `<span class="finish-badge finish-champion" title="${conf} Champion">${conf} 🏆</span>`;
   }
   return `<span class="finish-badge conf-pill">${conf}</span>`;
+}
+
+function confDivBadge(conf, divName, divisionWinner, sbStatus) {
+  // Two side-by-side pills: conference (highlighted if SB participant) and
+  // division (highlighted if RS division winner). Division pill only shows
+  // when we have a usable division name. Matches GRIFFEY's leagueBadge.
+  let html = confBadge(conf, sbStatus);
+  if (divName && divName !== 'Other') {
+    const divClass = divisionWinner ? 'finish-badge finish-champion' : 'finish-badge conf-pill';
+    const divIcon  = divisionWinner ? ' 🥇' : '';
+    const divTitle = divisionWinner ? `${divName} Division Winner` : divName;
+    html += ` <span class="${divClass}" title="${divTitle}">${divName}${divIcon}</span>`;
+  }
+  return html;
 }
 
 // NFL season N corresponds to Super Bowl number (N - 1965).
@@ -722,7 +739,7 @@ function renderStandings() {
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
       ${teamTd}
-      <td class="col-hide-mobile">${confBadge(t.conference, t.sb_status)}</td>
+      <td class="col-hide-mobile">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
@@ -878,7 +895,7 @@ function renderTeamTable() {
     <td class="rank-cell">${g.rank}</td>
     <td>${ratingBar(g.rating)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
-    <td class="col-hide-mobile" style="font-size:11px">${confBadge(g.conference || data.conference, g.sb_status)}</td>
+    <td class="col-hide-mobile" style="font-size:11px">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
   }).join('');
@@ -1418,8 +1435,12 @@ document.querySelectorAll('#history-rank-pills button').forEach(btn => {
 // ── GOAT Table ────────────────────────────────────────────────────────────────
 async function loadGoat() {
   try {
-    const res = await fetch(`${BASE}/goat_teams.json`);
-    goatData = await res.json();
+    const [r1, r2] = await Promise.all([
+      fetch(`${BASE}/goat_rs.json`),
+      fetch(`${BASE}/goat_ps.json`),
+    ]);
+    goatDataRS = await r1.json();
+    goatDataPS = await r2.json();
     renderGoat();
   } catch(e) {
     document.getElementById('goat-table-wrap').innerHTML =
@@ -1428,10 +1449,11 @@ async function loadGoat() {
 }
 
 function renderGoat() {
-  if (!goatData) return;
+  const data = goatMode === 'rs' ? goatDataRS : goatDataPS;
+  if (!data) return;
   const teams = goatConf === 'all'
-    ? goatData
-    : goatData.filter(t => t.conference === goatConf);
+    ? data
+    : data.filter(t => t.conference === goatConf);
   const rows = teams.map(t => {
     const label = t.display_name || t.team;
     const slug = nameToSlug[t.team] || nameToSlug[label];
@@ -1442,7 +1464,7 @@ function renderGoat() {
     <td class="rank-cell">${t.rank}</td>
     <td class="season-cell linked" data-season-link="${t.season}" style="text-align:center">${t.season}</td>
     ${teamTd}
-    <td class="col-hide-mobile">${confBadge(t.conference, t.sb_status)}</td>
+    <td class="col-hide-mobile">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
     <td>${ratingBar(t.rating)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
@@ -1455,7 +1477,7 @@ function renderGoat() {
         <th style="text-align:center">All time rank</th>
         <th style="text-align:center">Season</th>
         <th>Team</th>
-        <th class="col-hide-mobile">Conf</th>
+        <th class="col-hide-mobile">Conf / Div</th>
         <th>REACT</th>
         <th class="col-hide-mobile">W-L</th>
         <th class="col-hide-mobile">Honors</th>
@@ -1469,6 +1491,10 @@ function renderGoat() {
 buildConfPills('standings-conf-pills', standingsConf, v => { standingsConf = v; renderStandings(); });
 buildConfPills('ts-conf-pills',        tsConf,        v => { tsConf = v; populateTeamSelect(); });
 buildConfPills('goat-conf-pills',      goatConf,      v => { goatConf = v; renderGoat(); });
+buildConfPills('goat-mode-pills',      goatMode,      v => { goatMode = v; renderGoat(); }, [
+  { value: 'rs', label: 'End of regular season' },
+  { value: 'ps', label: 'End of playoffs' },
+]);
 buildConfPills('ts-view-pills', tsView, v => {
   tsView = v;
   document.getElementById('season-select').style.display   = (v === 'single') ? '' : 'none';

@@ -177,41 +177,129 @@ def historical_display_names(canonical):
     return out
 
 
-# ── Per-(team, season) conference overrides ──────────────────────────────────
-# Most NFL franchises have stayed in their conference forever, but a handful
-# of moves require season-aware lookup so historical Standings / Team Summary /
-# Champions / GOAT entries don't show the wrong conference for past seasons.
+# ── Per-(team, season) conference + division history ────────────────────────
+# Era-aware lookup so historical Standings / Team Summary / Champions / GOAT
+# entries show the actual conference + division a team played in that season.
 #
-# Format: (team_name, first_season, last_season, conference, division)
-# - 1976+ realignment: Tampa Bay only spent its expansion year in AFC West
-#   before swapping with Seattle to NFC Central.
-# - 2002 realignment: Seahawks moved AFC West → NFC West when the league
-#   reorganized into 8 four-team divisions.
-# Cardinals NFC East → NFC West (2002) is a division-only change (always NFC)
-# and doesn't need an override here. Browns AFC Central → AFC North (2002)
-# similarly stays in AFC. Same for Steelers/Bengals/Ravens/Titans/Jaguars.
-CONF_OVERRIDES = [
-    ('Seattle Seahawks',      1976, 2001, 'AFC', 'West'),
-    ('Tampa Bay Buccaneers',  1976, 1976, 'AFC', 'West'),
-]
+# Two major realignments:
+#   - 1976 expansion: Tampa Bay (AFC West) and Seattle (NFC West) for one year
+#     only, then swapped 1977 (TB → NFC Central, SEA → AFC West).
+#   - 2002 realignment: 6 divisions → 8 four-team divisions. AFC/NFC Central
+#     renamed to North; AFC South + NFC South created; multiple teams moved
+#     (Seahawks back to NFC, Cardinals NFC East → West, Bucs/Falcons/Saints
+#     to NFC South, Oilers/Titans/Jaguars to AFC South, Ravens to AFC North).
+#
+# Format: team_name → list of (first_season, last_season_inclusive, conf, division).
+# 9999 = ongoing. Division name has no conf prefix (e.g. 'East', not 'AFC East').
+TEAM_DIVISION_HISTORY = {
+    # AFC East — stable from 1970
+    'Buffalo Bills':            [(1970, 9999, 'AFC', 'East')],
+    'Miami Dolphins':           [(1970, 9999, 'AFC', 'East')],
+    'Boston Patriots':          [(1970, 1970, 'AFC', 'East')],
+    'New England Patriots':     [(1971, 9999, 'AFC', 'East')],
+    'New York Jets':            [(1970, 9999, 'AFC', 'East')],
+    # Colts: AFC East 1970-2001 (Baltimore until 1983, Indianapolis 1984+),
+    # moved to AFC South in 2002 realignment.
+    'Baltimore Colts':          [(1970, 1983, 'AFC', 'East')],
+    'Indianapolis Colts':       [(1984, 2001, 'AFC', 'East'),
+                                 (2002, 9999, 'AFC', 'South')],
+
+    # AFC Central (1970-2001) → AFC North (2002+)
+    'Cincinnati Bengals':       [(1970, 2001, 'AFC', 'Central'),
+                                 (2002, 9999, 'AFC', 'North')],
+    'Cleveland Browns':         [(1970, 1995, 'AFC', 'Central'),
+                                 # 1996-1998: franchise dormant (became Ravens; reactivated 1999)
+                                 (1999, 2001, 'AFC', 'Central'),
+                                 (2002, 9999, 'AFC', 'North')],
+    'Pittsburgh Steelers':      [(1970, 2001, 'AFC', 'Central'),
+                                 (2002, 9999, 'AFC', 'North')],
+    'Baltimore Ravens':         [(1996, 2001, 'AFC', 'Central'),
+                                 (2002, 9999, 'AFC', 'North')],
+
+    # AFC South (created 2002) — Houston/Tennessee lineage was AFC Central
+    'Houston Oilers':           [(1970, 1996, 'AFC', 'Central')],
+    'Tennessee Oilers':         [(1997, 1998, 'AFC', 'Central')],
+    'Tennessee Titans':         [(1999, 2001, 'AFC', 'Central'),
+                                 (2002, 9999, 'AFC', 'South')],
+    'Jacksonville Jaguars':     [(1995, 2001, 'AFC', 'Central'),
+                                 (2002, 9999, 'AFC', 'South')],
+    'Houston Texans':           [(2002, 9999, 'AFC', 'South')],
+
+    # AFC West — stable, with relocations within division
+    'Denver Broncos':           [(1970, 9999, 'AFC', 'West')],
+    'Kansas City Chiefs':       [(1970, 9999, 'AFC', 'West')],
+    'Oakland Raiders':          [(1970, 1981, 'AFC', 'West'),
+                                 (1995, 2019, 'AFC', 'West')],
+    'Los Angeles Raiders':      [(1982, 1994, 'AFC', 'West')],
+    'Las Vegas Raiders':        [(2020, 9999, 'AFC', 'West')],
+    'San Diego Chargers':       [(1970, 2016, 'AFC', 'West')],
+    'Los Angeles Chargers':     [(2017, 9999, 'AFC', 'West')],
+    # Seahawks: 1976 NFC West expansion year, 1977-2001 AFC West, 2002+ NFC West
+    'Seattle Seahawks':         [(1976, 1976, 'NFC', 'West'),
+                                 (1977, 2001, 'AFC', 'West'),
+                                 (2002, 9999, 'NFC', 'West')],
+
+    # NFC East — stable from 1970
+    'Dallas Cowboys':           [(1970, 9999, 'NFC', 'East')],
+    'New York Giants':          [(1970, 9999, 'NFC', 'East')],
+    'Philadelphia Eagles':      [(1970, 9999, 'NFC', 'East')],
+    'Washington Redskins':      [(1970, 2019, 'NFC', 'East')],
+    'Washington Football Team': [(2020, 2021, 'NFC', 'East')],
+    'Washington Commanders':    [(2022, 9999, 'NFC', 'East')],
+    # Cardinals: NFC East 1970-2001 (St. Louis until 1987, Phoenix 1988-1993,
+    # Arizona 1994+), moved to NFC West in 2002 realignment.
+    'St. Louis Cardinals':      [(1970, 1987, 'NFC', 'East')],
+    'Phoenix Cardinals':        [(1988, 1993, 'NFC', 'East')],
+    'Arizona Cardinals':        [(1994, 2001, 'NFC', 'East'),
+                                 (2002, 9999, 'NFC', 'West')],
+
+    # NFC Central (1970-2001) → NFC North (2002+)
+    'Chicago Bears':            [(1970, 2001, 'NFC', 'Central'),
+                                 (2002, 9999, 'NFC', 'North')],
+    'Detroit Lions':            [(1970, 2001, 'NFC', 'Central'),
+                                 (2002, 9999, 'NFC', 'North')],
+    'Green Bay Packers':        [(1970, 2001, 'NFC', 'Central'),
+                                 (2002, 9999, 'NFC', 'North')],
+    'Minnesota Vikings':        [(1970, 2001, 'NFC', 'Central'),
+                                 (2002, 9999, 'NFC', 'North')],
+    # Bucs: 1976 AFC West expansion year, 1977-2001 NFC Central, 2002+ NFC South
+    'Tampa Bay Buccaneers':     [(1976, 1976, 'AFC', 'West'),
+                                 (1977, 2001, 'NFC', 'Central'),
+                                 (2002, 9999, 'NFC', 'South')],
+
+    # NFC South (created 2002) — Falcons/Saints were NFC West, Bucs NFC Central
+    'Atlanta Falcons':          [(1970, 2001, 'NFC', 'West'),
+                                 (2002, 9999, 'NFC', 'South')],
+    'Carolina Panthers':        [(1995, 2001, 'NFC', 'West'),
+                                 (2002, 9999, 'NFC', 'South')],
+    'New Orleans Saints':       [(1970, 2001, 'NFC', 'West'),
+                                 (2002, 9999, 'NFC', 'South')],
+
+    # NFC West — Rams + 49ers (and Seahawks 1976, Bucs/etc handled above)
+    'Los Angeles Rams':         [(1970, 1994, 'NFC', 'West'),
+                                 (2016, 9999, 'NFC', 'West')],
+    'St. Louis Rams':           [(1995, 2015, 'NFC', 'West')],
+    'San Francisco 49ers':      [(1970, 9999, 'NFC', 'West')],
+}
 
 
-def _override_for(team, season):
+def _conf_div_for(team, season):
     s = int(season)
-    for (t, y0, y1, c, d) in CONF_OVERRIDES:
-        if t == team and y0 <= s <= y1:
-            return (c, d)
-    return None
+    history = TEAM_DIVISION_HISTORY.get(team)
+    if history:
+        for start, end, c, d in history:
+            if start <= s <= end:
+                return (c, d)
+    # Fallback: current-era mapping (for any team not yet in history dict).
+    return TEAM_CONFERENCE.get(team, ('Other', 'Other'))
 
 
 def conf_for_season(team, season):
-    o = _override_for(team, season)
-    return o[0] if o else conf(team)
+    return _conf_div_for(team, season)[0]
 
 
 def div_for_season(team, season):
-    o = _override_for(team, season)
-    return o[1] if o else div(team)
+    return _conf_div_for(team, season)[1]
 
 
 def clean(val):
@@ -361,6 +449,37 @@ def snapshot_label(wk, flag):
     return base
 
 
+def _record_pct(rec):
+    """Win pct from W-L or W-L-T record string. Ties count as half-wins."""
+    p = _parse_record(rec)
+    if not p:
+        return -1.0
+    w, l, t = p
+    g = w + l + t
+    return (w + 0.5 * t) / g if g > 0 else 0.0
+
+
+# ── Division winners (per season + (conference, division)) ───────────────────
+# Tag the team with the best RS record in each (conference, division) at end
+# of regular season. Tie-breaker: alphabetical name (NFL's actual tiebreakers
+# are too complex to replicate — head-to-head, division record, common
+# opponents, etc. — and this badge is informational, not authoritative).
+_division_winners = set()  # set of (season, team) tuples
+for season, sub in df[df['season_flag'] == 1].groupby('season'):
+    s_int = int(season)
+    sub = sub.copy()
+    sub['_conf'] = sub.apply(lambda r: conf_for_season(r['name'], s_int), axis=1)
+    sub['_div']  = sub.apply(lambda r: div_for_season(r['name'], s_int), axis=1)
+    sub = sub[(sub['_conf'] != 'Other') & (sub['_div'] != 'Other')]
+    sub['_pct']  = sub['record'].apply(_record_pct)
+    for (_cf, _dv), grp in sub.groupby(['_conf', '_div']):
+        top = grp['_pct'].max()
+        winners = grp[grp['_pct'] == top].sort_values('name')
+        if not winners.empty:
+            _division_winners.add((s_int, winners.iloc[0]['name']))
+print(f"  {len(_division_winners)} division winners flagged.")
+
+
 # ── 1. Current standings ─────────────────────────────────────────────────────
 print("Writing current_standings.json...")
 latest_id = int(df['ranking_id'].max())
@@ -377,6 +496,7 @@ standings_data = {
             'display_name':    display_name(r['name'], r['season']),
             'conference':      conf_for_season(r['name'], r['season']),
             'division':        div_for_season(r['name'], r['season']),
+            'division_winner': 1 if (int(r['season']), r['name']) in _division_winners else 0,
             'rating':          round(float(r['rating']), 3),
             'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
             'record':          clean(r['record']),
@@ -389,35 +509,47 @@ standings_data = {
 with open('docs/data/current_standings.json', 'w') as f:
     json.dump(standings_data, f, separators=(',', ':'))
 
-# ── 2. GOAT table ─────────────────────────────────────────────────────────────
-# Only fully-complete seasons (flag=2 = SB ended) AND teams that reached the
-# Super Bowl (sb_status >= 1). GOAT is canonically "best championship-
-# contending teams" — strong regular-season teams that flamed out before the
-# Super Bowl are noise in this view.
-print("Writing goat_teams.json...")
-eos_all = df[(df['season_flag'] == 2) & (df['sb_status'] >= 1)].copy()
-eos_top = eos_all.sort_values('rating', ascending=False).head(50).reset_index(drop=True)
+# ── 2. GOAT tables (RS + PS) ─────────────────────────────────────────────────
+# Two lists, mirroring GRIFFEY/SAKIC convention:
+#   - goat_rs.json: top 50 by end-of-regular-season rating (any team).
+#   - goat_ps.json: top 50 by end-of-postseason rating, restricted to teams
+#     that reached the Super Bowl (sb_status >= 1) so the list shows actual
+#     championship contenders, not playoff flameouts.
+GOAT_TOP_N = 50
+print("Writing goat_rs.json + goat_ps.json...")
 
-goat_data = []
-for i, (_, r) in enumerate(eos_top.iterrows()):
-    reg = _reg_record_lookup.get((r['name'], int(r['season'])), '')
-    goat_data.append({
-        'rank':           i + 1,
-        'team':           r['name'],
-        'display_name':   display_name(r['name'], r['season']),
-        'conference':     conf_for_season(r['name'], r['season']),
-        'division':       div_for_season(r['name'], r['season']),
-        'season':         int(r['season']),
-        'rating':         round(float(r['rating']), 3),
-        'rating2':        round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
-        'rank2':          int(r['rank2']) if not pd.isna(r['rank2']) else None,
-        'record':         clean(r['record']),
-        'regular_record': reg,
-        'playoff_record': playoff_record(r['record'], reg),
-        'sb_status':      int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
-    })
-with open('docs/data/goat_teams.json', 'w') as f:
-    json.dump(goat_data, f, separators=(',', ':'))
+
+def _build_goat(rows):
+    rows = rows.sort_values('rating', ascending=False).head(GOAT_TOP_N).reset_index(drop=True)
+    out = []
+    for i, (_, r) in enumerate(rows.iterrows()):
+        s = int(r['season'])
+        reg = _reg_record_lookup.get((r['name'], s), '')
+        out.append({
+            'rank':            i + 1,
+            'team':            r['name'],
+            'display_name':    display_name(r['name'], s),
+            'conference':      conf_for_season(r['name'], s),
+            'division':        div_for_season(r['name'], s),
+            'division_winner': 1 if (s, r['name']) in _division_winners else 0,
+            'season':          s,
+            'rating':          round(float(r['rating']), 3),
+            'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
+            'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
+            'record':          clean(r['record']),
+            'regular_record':  reg,
+            'playoff_record':  playoff_record(r['record'], reg),
+            'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
+        })
+    return out
+
+
+goat_rs = _build_goat(df[df['season_flag'] == 1].copy())
+goat_ps = _build_goat(df[(df['season_flag'] == 2) & (df['sb_status'] >= 1)].copy())
+with open('docs/data/goat_rs.json', 'w') as f:
+    json.dump(goat_rs, f, separators=(',', ':'))
+with open('docs/data/goat_ps.json', 'w') as f:
+    json.dump(goat_ps, f, separators=(',', ':'))
 
 # ── 3. Per-team JSON files ───────────────────────────────────────────────────
 print("Writing per-team JSON files...")
@@ -474,6 +606,8 @@ for team in all_teams:
                 'is_playoff':        int(is_playoff(season, r['season_week'])),
                 'sb_status':         int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
                 'conference':        conf_for_season(team, season),
+                'division':          div_for_season(team, season),
+                'division_winner':   1 if (int(season), team) in _division_winners else 0,
             })
         seasons[int(season)] = entries
 
@@ -523,6 +657,7 @@ for season in all_seasons:
                 'display_name':    display_name(r['name'], season),
                 'conference':      conf_for_season(r['name'], season),
                 'division':        div_for_season(r['name'], season),
+                'division_winner': 1 if (int(season), r['name']) in _division_winners else 0,
                 'rating':          round(float(r['rating']), 3),
                 'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
                 'record':          clean(r['record']),
@@ -609,7 +744,8 @@ for season in sorted(df['season'].unique(), reverse=True):
             'team':           cr['name'],
             'display_name':   display_name(cr['name'], season),
             'conference':     conf_for_season(cr['name'], season),
-            'division':       div_for_season(cr['name'], season),
+            'division':        div_for_season(cr['name'], season),
+            'division_winner': 1 if (int(season), cr['name']) in _division_winners else 0,
             'rating':         round(float(cr['rating']), 3),
             'rating2':        round(float(cr['rating2']), 3) if not pd.isna(cr['rating2']) else None,
             'rank':           int(cr['rank']),
@@ -623,7 +759,8 @@ for season in sorted(df['season'].unique(), reverse=True):
             'team':           rr['name'],
             'display_name':   display_name(rr['name'], season),
             'conference':     conf_for_season(rr['name'], season),
-            'division':       div_for_season(rr['name'], season),
+            'division':        div_for_season(rr['name'], season),
+            'division_winner': 1 if (int(season), rr['name']) in _division_winners else 0,
             'rating':         round(float(rr['rating']), 3),
             'rating2':        round(float(rr['rating2']), 3) if not pd.isna(rr['rating2']) else None,
             'rank':           int(rr['rank']),
