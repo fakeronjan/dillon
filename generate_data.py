@@ -399,6 +399,16 @@ _reg_record_lookup = {
     for _, row in df[df['season_flag'] == 1].iterrows()
 }
 
+# Final (post-playoff) record per (team, season) from season_flag == 2 snapshots.
+# Used so the GOAT-RS view can show each team's actual playoff outcome alongside
+# their regular-season record — mirrors GRIFFEY/SAKIC/COBI, where playoff_record
+# in goat_rs reflects how the team's playoffs ultimately went. Teams that
+# didn't make the playoffs fall back to their regular_record (giving "0-0").
+_final_record_lookup = {
+    (row['name'], int(row['season'])): row['record']
+    for _, row in df[df['season_flag'] == 2].iterrows()
+}
+
 
 def _parse_record(rec):
     """Parse 'W-L' or 'W-L-T'. Returns (wins, losses, ties)."""
@@ -609,6 +619,11 @@ def _build_goat(rows):
     for i, (_, r) in enumerate(rows.iterrows()):
         s = int(r['season'])
         reg = _reg_record_lookup.get((r['name'], s), '')
+        # For RS snapshots, r['record'] equals the regular-season record
+        # (no playoff games played yet), which would give playoff_record="0-0".
+        # Use the team's FINAL record so the surfaced playoff_record reflects
+        # their actual playoff outcome — matches GRIFFEY/SAKIC/COBI convention.
+        final_record = _final_record_lookup.get((r['name'], s), r['record'])
         out.append({
             'rank':            i + 1,
             'team':            r['name'],
@@ -622,7 +637,7 @@ def _build_goat(rows):
             'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
             'record':          clean(r['record']),
             'regular_record':  reg,
-            'playoff_record':  playoff_record(r['record'], reg),
+            'playoff_record':  playoff_record(final_record, reg),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
         })
     return out
