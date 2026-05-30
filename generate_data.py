@@ -613,6 +613,23 @@ GOAT_TOP_N = 50
 print("Writing goat_rs.json + goat_ps.json...")
 
 
+# Short / disrupted seasons — flagged on GOAT/Champions/Standings/TeamSummary
+# rows so the UI can tag them inline + footnote. 2020 NOT tagged: NFL played
+# full 16-game schedule despite COVID disruption.
+SHORT_SEASONS = {
+    1982: {
+        'tag': 'strike 9g',
+        'category': 'labor',
+        'note': 'The 1982 season was shortened to 9 games per team by a 57-day strike. Playoff format was expanded to 16 teams ("Super Bowl Tournament").',
+    },
+    1987: {
+        'tag': 'strike 15g',
+        'category': 'labor',
+        'note': 'Three weeks of the 1987 season were played by replacement players ("scab games") during a 24-day strike; one additional week was cancelled outright, ending the season at 15 games per team.',
+    },
+}
+
+
 def _build_goat(rows):
     rows = rows.sort_values('rating', ascending=False).head(GOAT_TOP_N).reset_index(drop=True)
     out = []
@@ -632,6 +649,10 @@ def _build_goat(rows):
             'division':        div_for_season(r['name'], s),
             'division_winner': 1 if (s, r['name']) in _division_winners else 0,
             'season':          s,
+            'short_season':          s in SHORT_SEASONS,
+            'short_season_tag':      SHORT_SEASONS.get(s, {}).get('tag', '')      if s in SHORT_SEASONS else '',
+            'short_season_category': SHORT_SEASONS.get(s, {}).get('category', '') if s in SHORT_SEASONS else '',
+            'short_season_note':     SHORT_SEASONS.get(s, {}).get('note', '')     if s in SHORT_SEASONS else '',
             'rating':          round(float(r['rating']), 3),
             'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
             'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
@@ -783,6 +804,10 @@ seasons_meta = {
     'first_date': str(games['date'].min().date()),
     'last_date':  str(games['date'].max().date()),
     'generated_at': datetime.now(timezone.utc).isoformat(),
+    'disrupted_seasons': {
+        str(year): {'tag': info['tag'], 'category': info['category'], 'note': info['note']}
+        for year, info in SHORT_SEASONS.items()
+    },
 }
 with open('docs/data/seasons_index.json', 'w') as f:
     json.dump(seasons_meta, f, separators=(',', ':'))
