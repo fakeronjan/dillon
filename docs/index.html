@@ -1615,7 +1615,7 @@ function renderGoat() {
       : `<td class="team-cell">${label}</td>`;
     return `<tr>
     <td class="rank-cell">${t.rank}</td>
-    <td class="season-cell linked" data-season-link="${t.season}" style="text-align:center">${t.season}</td>
+    <td class="season-cell linked" data-season-link="${t.season}">${t.season}</td>
     ${teamTd}
     <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
     <td>${ratingBar(t.rating)}</td>
