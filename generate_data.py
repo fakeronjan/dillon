@@ -722,6 +722,90 @@ from scipy.optimize import minimize
 
 REGULAR_SEASON_WEEKS = list(range(1, 19))  # weeks 1-18 (pre-2021 used 1-17)
 
+
+# Mathematical playoff elimination check — used to zero out teams whose
+# record makes a playoff berth literally impossible. A team is eliminated
+# iff BOTH conditions hold:
+#   - conf-teams-currently-ahead-of-T's-max-wins >= playoff_seeds  (can't be top-7)
+#   - 1+ division opponent currently has wins > T's max wins         (can't win division)
+# Winning a division earns a top-4 seed regardless of overall record, so
+# both paths must be blocked for elimination. This is conservative — it
+# only flags definite eliminations, never false positives.
+
+def _total_regular_season_games(season):
+    if season == 1982: return 9    # strike-shortened
+    if season == 1987: return 15   # strike + cancelled week
+    if season <= 1977: return 14
+    if season >= 2021: return 17
+    return 16
+
+def _playoff_seeds_per_conf(season):
+    if season == 1982: return 8    # expanded SB Tournament
+    if season <= 1977: return 4
+    if season <= 1989: return 5
+    if season <= 2019: return 6
+    return 7
+
+def _parse_wlt(rec):
+    if not isinstance(rec, str) or not rec:
+        return 0, 0, 0
+    parts = rec.split('-')
+    try:
+        if len(parts) == 2:
+            return int(parts[0]), int(parts[1]), 0
+        if len(parts) == 3:
+            return int(parts[0]), int(parts[1]), int(parts[2])
+    except ValueError:
+        pass
+    return 0, 0, 0
+
+
+def _eliminated_teams_at_snapshot(season, snap_df):
+    total_games = _total_regular_season_games(season)
+    seeds = _playoff_seeds_per_conf(season)
+
+    info = []
+    for _, r in snap_df.iterrows():
+        w, l, t = _parse_wlt(r.get('record', ''))
+        gp = w + l + t
+        gr = max(0, total_games - gp)
+        eff_w = w + 0.5 * t
+        info.append({
+            'team': r['name'],
+            'conf': conf_for_season(r['name'], season),
+            'div':  div_for_season(r['name'], season),
+            'wins': eff_w,
+            'max_wins': eff_w + gr,
+        })
+
+    eliminated = set()
+    for t_info in info:
+        T_max = t_info['max_wins']
+        ahead_conf = sum(1 for x in info
+                          if x['conf'] == t_info['conf']
+                          and x['team'] != t_info['team']
+                          and x['wins'] > T_max)
+        ahead_div = sum(1 for x in info
+                         if x['conf'] == t_info['conf']
+                         and x['div']  == t_info['div']
+                         and x['team'] != t_info['team']
+                         and x['wins'] > T_max)
+        if ahead_conf >= seeds and ahead_div >= 1:
+            eliminated.add(t_info['team'])
+    return eliminated
+
+
+# Pre-compute eliminated set per ranking_id (RS snapshots only). Cheap.
+print("  Computing mathematical playoff elimination per snapshot...")
+_eliminated_cache = {}
+for _rid in df[df['week'].isin(REGULAR_SEASON_WEEKS)]['ranking_id'].unique():
+    _snap = df[df['ranking_id'] == _rid]
+    _season_val = int(_snap['season'].iloc[0])
+    _elim = _eliminated_teams_at_snapshot(_season_val, _snap)
+    if _elim:
+        _eliminated_cache[int(_rid)] = _elim
+print(f"  Eliminated-team flags cached for {len(_eliminated_cache):,} snapshots")
+
 # Identify SB winners by season — the team flagged sb_champ at week 104.
 _sb_winners = {}
 for _season, _sdf in df.groupby('season'):
@@ -828,11 +912,18 @@ for _week_val, _week_data in _sb_train_df.groupby('week'):
         held = _week_data[mask_held]
         X_held = held[_FEATURES].to_numpy()
         probs = _predict_logistic(X_held, beta)
+        # Zero out mathematically eliminated teams, then renormalize.
+        rid = int(held['ranking_id'].iloc[0])
+        elim_set = _eliminated_cache.get(rid, set())
+        if elim_set:
+            for i, team in enumerate(held['team'].values):
+                if team in elim_set:
+                    probs[i] = 0.0
         total = probs.sum()
         if total > 0:
             probs = probs / total
-        for team, p, rid in zip(held['team'].values, probs, held['ranking_id'].values):
-            _sb_odds_cache[(int(rid), team)] = float(p)
+        for team, p, rid_val in zip(held['team'].values, probs, held['ranking_id'].values):
+            _sb_odds_cache[(int(rid_val), team)] = float(p)
 
     # Current/in-progress predictions: train on the full week dataset
     if not _sb_current_df.empty:
@@ -842,6 +933,12 @@ for _week_val, _week_data in _sb_train_df.groupby('week'):
             for _rid_val, rid_group in cur_at_week.groupby('ranking_id'):
                 X_cur = rid_group[_FEATURES].to_numpy()
                 probs = _predict_logistic(X_cur, beta_full)
+                # Same elimination step
+                elim_set = _eliminated_cache.get(int(_rid_val), set())
+                if elim_set:
+                    for i, team in enumerate(rid_group['team'].values):
+                        if team in elim_set:
+                            probs[i] = 0.0
                 total = probs.sum()
                 if total > 0:
                     probs = probs / total

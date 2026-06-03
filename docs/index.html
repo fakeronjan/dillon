@@ -755,11 +755,13 @@ function fmtOD(rating, rank) {
 }
 
 // Super Bowl odds (logistic-regression probability) formatted as percentage.
-// 0% (eliminated) renders as '-'; 100% (SB champion) drops the decimal.
+// 0% (eliminated) and rounds-to-0.0% render as '-'; 100% drops the decimal.
 function fmtSBOdds(odds) {
-  if (odds == null || odds === 0) return '-';
-  if (odds >= 1) return '100%';
-  return `${(odds * 100).toFixed(1)}%`;
+  if (odds == null) return '-';
+  const displayed = (odds * 100).toFixed(1);
+  if (displayed === '0.0') return '-';
+  if (parseFloat(displayed) >= 100) return '100%';
+  return `${displayed}%`;
 }
 
 function ratingBar(rating) {
