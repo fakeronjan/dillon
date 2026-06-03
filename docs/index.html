@@ -213,6 +213,8 @@
   .od-sub .od-label { color: #aaa; font-weight: 600; margin-right: 1px; }
   .od-sub .od-rank  { color: #aaa; font-size: 10px; margin-left: 2px; }
   .od-sub .od-sep   { color: #ccc; margin: 0 6px; }
+  .od-sub-stacked { line-height: 1.35; }
+  .od-sub-stacked > div { white-space: nowrap; }
   .rating-bar-track {
     width: 80px;
     height: 6px;
@@ -766,13 +768,21 @@ const BAR_MIN = -22, BAR_MAX = 22, BAR_RANGE = 44;
 
 // O/D sub-line shown beneath the REACT cell on Standings / Team Summary /
 // Champions tables. Returns '' if either O or D is missing (pre-rated seasons,
-// older snapshots from before the O/D engine landed).
-function odSubline(ratingO, rankO, ratingD, rankD) {
+// older snapshots from before the O/D engine landed). `stacked=true` lays
+// O and D on separate lines (used by Standings for a tighter horizontal
+// footprint); default packs them onto one inline row.
+function odSubline(ratingO, rankO, ratingD, rankD, stacked) {
   if (ratingO == null || ratingD == null) return '';
   const oStr = (ratingO >= 0 ? '+' : '') + ratingO.toFixed(2);
   const dStr = (ratingD >= 0 ? '+' : '') + ratingD.toFixed(2);
   const oRank = rankO != null ? `<span class="od-rank">(#${rankO})</span>` : '';
   const dRank = rankD != null ? `<span class="od-rank">(#${rankD})</span>` : '';
+  if (stacked) {
+    return `<div class="od-sub od-sub-stacked">
+      <div><span class="od-label">O</span>${oStr}${oRank}</div>
+      <div><span class="od-label">D</span>${dStr}${dRank}</div>
+    </div>`;
+  }
   return `<div class="od-sub"><span class="od-label">O</span>${oStr}${oRank}<span class="od-sep">·</span><span class="od-label">D</span>${dStr}${dRank}</div>`;
 }
 
@@ -923,7 +933,7 @@ function renderStandings() {
       ${teamTd}
       <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
-      <td>${ratingBar(t.rating)}${odSubline(t.rating_o, t.rank_o, t.rating_d, t.rank_d)}</td>
+      <td>${ratingBar(t.rating)}${odSubline(t.rating_o, t.rank_o, t.rating_d, t.rank_d, true)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
       <td class="last-match-cell">${renderLastMatch(t.last_match, season, isStale)}</td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888;white-space:nowrap">${t.last_match_date || ''}</td>
