@@ -495,7 +495,8 @@
 
 <!-- ── GOAT TABLE ───────────────────────────────────────────────────────── -->
 <div id="goat" class="tab">
-  <p class="data-note">Top 50 single-season ratings · Switch between end of regular season (all teams) and end of playoffs (Super Bowl participants only).</p>
+  <p class="data-note">Top 50 single-season ratings · Pick the metric (overall REACT, offense only, or defense only), then pick the snapshot (end of regular season vs. end of playoffs).</p>
+  <div class="conf-pills" id="goat-metric-pills"></div>
   <div class="conf-pills" id="goat-mode-pills"></div>
   <div class="conf-pills" id="goat-conf-pills"></div>
   <div id="goat-table-wrap"><p class="loading">Loading GOAT table...</p></div>
@@ -506,8 +507,12 @@
 const BASE = './data';
 let currentSeasonData = null;
 let currentSnapshot   = null;
-let goatDataRS        = null;
-let goatDataPS        = null;
+let goatDataRS        = null;  // REACT, RS-end
+let goatDataPS        = null;  // REACT, PS-end
+let goatDataRSO       = null;  // Offense, RS-end
+let goatDataRSD       = null;  // Defense, RS-end
+let goatDataPSO       = null;  // Offense, PS-end
+let goatDataPSD       = null;  // Defense, PS-end
 let teamsIndex        = null;
 let teamCache         = {};
 let nameToSlug        = {};  // canonical + historical name → slug, built from teamsIndex
@@ -518,6 +523,7 @@ let standingsConf = 'all';
 let tsConf        = 'all';
 let goatConf      = 'all';
 let goatMode      = 'ps';     // 'ps' (end of playoffs — championship contenders) or 'rs' (end of regular season)
+let goatMetric    = 'react';  // 'react' (overall) | 'o' (offense only) | 'd' (defense only)
 let tsView        = 'cross';  // 'cross' (all-season summary) or 'single' (one season, all game-days)
 
 function buildConfPills(containerId, current, onSelect, options) {
@@ -1642,12 +1648,20 @@ document.querySelectorAll('#history-rank-pills button').forEach(btn => {
 // ── GOAT Table ────────────────────────────────────────────────────────────────
 async function loadGoat() {
   try {
-    const [r1, r2] = await Promise.all([
+    const [r1, r2, r3, r4, r5, r6] = await Promise.all([
       fetch(`${BASE}/goat_rs.json`),
       fetch(`${BASE}/goat_ps.json`),
+      fetch(`${BASE}/goat_rs_o.json`),
+      fetch(`${BASE}/goat_rs_d.json`),
+      fetch(`${BASE}/goat_ps_o.json`),
+      fetch(`${BASE}/goat_ps_d.json`),
     ]);
-    goatDataRS = await r1.json();
-    goatDataPS = await r2.json();
+    goatDataRS  = await r1.json();
+    goatDataPS  = await r2.json();
+    goatDataRSO = await r3.json();
+    goatDataRSD = await r4.json();
+    goatDataPSO = await r5.json();
+    goatDataPSD = await r6.json();
     renderGoat();
   } catch(e) {
     document.getElementById('goat-table-wrap').innerHTML =
@@ -1655,8 +1669,33 @@ async function loadGoat() {
   }
 }
 
+// Pick the right (dataset, value-field, header-label) for the current
+// (metric, mode) combination.
+function goatPick() {
+  if (goatMetric === 'o') {
+    return {
+      data:    goatMode === 'rs' ? goatDataRSO : goatDataPSO,
+      field:   'rating_o',
+      header:  'Offense',
+    };
+  }
+  if (goatMetric === 'd') {
+    return {
+      data:    goatMode === 'rs' ? goatDataRSD : goatDataPSD,
+      field:   'rating_d',
+      header:  'Defense',
+    };
+  }
+  return {
+    data:    goatMode === 'rs' ? goatDataRS : goatDataPS,
+    field:   'rating',
+    header:  'REACT',
+  };
+}
+
 function renderGoat() {
-  const data = goatMode === 'rs' ? goatDataRS : goatDataPS;
+  const pick = goatPick();
+  const data = pick.data;
   if (!data) return;
   const teams = goatConf === 'all'
     ? data
@@ -1668,12 +1707,13 @@ function renderGoat() {
     const teamTd = slug
       ? `<td class="team-cell linked" data-team-slug="${slug}" data-season="${t.season}">${label}</td>`
       : `<td class="team-cell">${label}</td>`;
+    const val = t[pick.field];
     return `<tr>
     <td class="rank-cell">${t.rank}</td>
     <td class="season-cell linked" data-season-link="${t.season}">${t.season}</td>
     ${teamTd}
     <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
-    <td>${ratingBar(t.rating)}</td>
+    <td>${ratingBar(val)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
   </tr>`;
@@ -1686,7 +1726,7 @@ function renderGoat() {
         <th style="text-align:center">Season</th>
         <th>Team</th>
         <th class="col-hide-mobile">Conf</th>
-        <th>REACT</th>
+        <th>${pick.header}</th>
         <th class="col-hide-mobile">W-L</th>
         <th class="col-hide-mobile">Honors</th>
       </tr></thead>
@@ -1699,6 +1739,11 @@ function renderGoat() {
 buildConfPills('standings-conf-pills', standingsConf, v => { standingsConf = v; renderStandings(); });
 buildConfPills('ts-conf-pills',        tsConf,        v => { tsConf = v; populateTeamSelect(); });
 buildConfPills('goat-conf-pills',      goatConf,      v => { goatConf = v; renderGoat(); });
+buildConfPills('goat-metric-pills',    goatMetric,    v => { goatMetric = v; renderGoat(); }, [
+  { value: 'react', label: 'REACT (overall)' },
+  { value: 'o',     label: 'Offense only' },
+  { value: 'd',     label: 'Defense only' },
+]);
 buildConfPills('goat-mode-pills',      goatMode,      v => { goatMode = v; renderGoat(); }, [
   { value: 'rs', label: 'End of regular season' },
   { value: 'ps', label: 'End of playoffs' },

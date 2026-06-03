@@ -630,8 +630,8 @@ SHORT_SEASONS = {
 }
 
 
-def _build_goat(rows):
-    rows = rows.sort_values('rating', ascending=False).head(GOAT_TOP_N).reset_index(drop=True)
+def _build_goat(rows, sort_col='rating'):
+    rows = rows.sort_values(sort_col, ascending=False).head(GOAT_TOP_N).reset_index(drop=True)
     out = []
     for i, (_, r) in enumerate(rows.iterrows()):
         s = int(r['season'])
@@ -654,6 +654,8 @@ def _build_goat(rows):
             'short_season_category': SHORT_SEASONS.get(s, {}).get('category', '') if s in SHORT_SEASONS else '',
             'short_season_note':     SHORT_SEASONS.get(s, {}).get('note', '')     if s in SHORT_SEASONS else '',
             'rating':          round(float(r['rating']), 3),
+            'rating_o':        round(float(r['rating_o']), 3) if 'rating_o' in r and not pd.isna(r['rating_o']) else None,
+            'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
             'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
             'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
             'record':          clean(r['record']),
@@ -664,12 +666,24 @@ def _build_goat(rows):
     return out
 
 
-goat_rs = _build_goat(df[df['season_flag'] == 1].copy())
-goat_ps = _build_goat(df[(df['season_flag'] == 2) & (df['sb_status'] >= 1)].copy())
-with open('docs/data/goat_rs.json', 'w') as f:
-    json.dump(goat_rs, f, separators=(',', ':'))
-with open('docs/data/goat_ps.json', 'w') as f:
-    json.dump(goat_ps, f, separators=(',', ':'))
+# Six GOAT files: {REACT, Offense, Defense} × {RS-end, PS-end}. The PS-end
+# variants are restricted to Super Bowl participants (sb_status >= 1) so
+# the list shows actual championship contenders, not playoff flameouts.
+rs_rows = df[df['season_flag'] == 1].copy()
+ps_rows = df[(df['season_flag'] == 2) & (df['sb_status'] >= 1)].copy()
+
+goat_files = [
+    ('goat_rs.json',   rs_rows, 'rating'),    # REACT, RS-end (canonical)
+    ('goat_ps.json',   ps_rows, 'rating'),    # REACT, PS-end (canonical)
+    ('goat_rs_o.json', rs_rows, 'rating_o'),  # Offense, RS-end
+    ('goat_rs_d.json', rs_rows, 'rating_d'),  # Defense, RS-end
+    ('goat_ps_o.json', ps_rows, 'rating_o'),  # Offense, PS-end
+    ('goat_ps_d.json', ps_rows, 'rating_d'),  # Defense, PS-end
+]
+for fname, src, sort_col in goat_files:
+    payload = _build_goat(src, sort_col=sort_col)
+    with open(f'docs/data/{fname}', 'w') as f:
+        json.dump(payload, f, separators=(',', ':'))
 
 # ── 3. Per-team JSON files ───────────────────────────────────────────────────
 print("Writing per-team JSON files...")
