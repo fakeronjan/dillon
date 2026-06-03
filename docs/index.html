@@ -756,8 +756,7 @@ function fmtOD(rating, rank) {
 // Null for playoff snapshots + pre-rated era.
 function fmtSBOdds(odds) {
   if (odds == null) return '-';
-  if (odds >= 0.1) return `${(odds * 100).toFixed(1)}%`;
-  return `${(odds * 100).toFixed(2)}%`;
+  return `${(odds * 100).toFixed(1)}%`;
 }
 
 function ratingBar(rating) {
