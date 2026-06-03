@@ -1195,9 +1195,11 @@ function drawChart(rows, seasonFilter) {
   rows.forEach((r, i) => {
     if (!r.sb_status || r.week !== 104) return;
     const emoji = r.sb_status === 2 ? '👑' : '🥈';
+    const sbNum = superBowlRoman(r.season);
+    const sbPrefix = sbNum ? `SB ${sbNum} ` : '';
     const titleText = r.sb_status === 2
-      ? `Super Bowl Champion — ${r.season} season`
-      : `Super Bowl Runner-Up — ${r.season} season`;
+      ? `${sbPrefix}Champ (${r.season})`
+      : `${sbPrefix}Runner-Up (${r.season})`;
     const x = px(i);
     const y = Math.max(14, py(r.rating) - 12);
     trophies.push(
