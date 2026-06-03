@@ -1184,6 +1184,23 @@ function drawChart(rows, seasonFilter) {
     }
   });
 
+  // Super Bowl markers: 👑 for champion, 🥈 for runner-up, placed at
+  // the SB-game snapshot (week 104 — sb_status is set on EVERY snapshot
+  // of a SB-participating season, so we filter to just the final game).
+  // Emoji sits 14px above the point, clamped so it never clips above
+  // the chart top.
+  const trophies = [];
+  rows.forEach((r, i) => {
+    if (!r.sb_status || r.week !== 104) return;
+    const emoji = r.sb_status === 2 ? '👑' : '🥈';
+    const titleText = r.sb_status === 2
+      ? `Super Bowl Champion — ${r.season} season`
+      : `Super Bowl Runner-Up — ${r.season} season`;
+    const x = px(i);
+    const y = Math.max(14, py(r.rating) - 12);
+    trophies.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="14" text-anchor="middle" style="cursor:help"><title>${titleText}</title>${emoji}</text>`);
+  });
+
   svg.innerHTML = `
     <defs>
       <linearGradient id="lineGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H}">
@@ -1197,7 +1214,8 @@ function drawChart(rows, seasonFilter) {
           stroke="#ddd" stroke-width="1"/>
     ${ticks.join('')}
     ${xlabels.join('')}
-    <polyline points="${points}" fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linejoin="round"/>`;
+    <polyline points="${points}" fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${trophies.join('')}`;
 }
 
 document.getElementById('team-select').addEventListener('change', e => loadTeam(e.target.value));
