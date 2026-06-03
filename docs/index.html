@@ -965,7 +965,7 @@ function renderStandings() {
         <th>Rating</th>
         <th class="col-hide-mobile">Offense</th>
         <th class="col-hide-mobile">Defense</th>
-        <th class="col-hide-mobile" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year window (2023-2025)">HFA</th>
+        <th class="col-hide-mobile" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
         <th>Last Game</th>
         <th class="col-hide-mobile">Date</th>
       </tr></thead>
@@ -1138,6 +1138,9 @@ function renderTeamTable() {
     const seasonCell = era
       ? `${g.season}${badgeStr}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
       : `${g.season}${badgeStr}`;
+    const hfaCell = (g.hfa != null)
+      ? `<span class="rating-cell">${(g.hfa >= 0 ? '+' : '') + g.hfa.toFixed(2)}</span>`
+      : '<span style="color:#bbb">-</span>';
     return `<tr>
     <td style="white-space:nowrap;font-size:12px">${snapshotCell}</td>
     <td class="linked" data-season-link="${g.season}" style="font-size:11px;color:#555;text-align:center">${seasonCell}${tsView !== 'single' ? seasonTag(g.season) : ''}</td>
@@ -1147,6 +1150,7 @@ function renderTeamTable() {
     <td>${ratingBar(g.rating)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_o, g.rank_o)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_d, g.rank_d)}</td>
+    <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${hfaCell}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
   </tr>`;
   }).join('');
@@ -1160,6 +1164,7 @@ function renderTeamTable() {
         <th>Rating</th>
         <th class="col-hide-mobile">Offense</th>
         <th class="col-hide-mobile">Defense</th>
+        <th class="col-hide-mobile" title="Home field advantage: home-game margin premium beyond what Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
         <th class="col-hide-mobile">Conf</th>
       </tr></thead>
       <tbody>${tableRows}</tbody>
