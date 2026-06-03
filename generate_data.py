@@ -1110,6 +1110,99 @@ for _season, _winner in _sb_winners.items():
         _sb_odds_cache[(rid, team)] = 1.0 if team == _winner else 0.0
 
 
+# EOR playoff-field lock-in: at end of regular season we know EXACTLY who's
+# in the playoffs. For COMPLETED seasons that's trivial — read week 101+
+# games. For CURRENT in-progress at EOR (RS done, WC not played yet), we
+# derive the field directly from RS standings using division winners + top
+# wild cards by record. Either way, non-playoff teams get zeroed and the
+# remaining playoff field renormalizes to 100%.
+
+def _playoff_field_from_eor_standings(season):
+    """Derive the playoff field from end-of-RS standings. Works for any
+    season where the RS is complete (including current in-progress when
+    WC games haven't been played yet)."""
+    eor_rows = df[(df['season'] == season) & (df['last_week_of_regular_season'] == 1)]
+    if eor_rows.empty:
+        return set()
+
+    seeds = _playoff_seeds_per_conf(season)
+    div_winners_this_season = {t for (s, t) in _division_winners if s == season}
+
+    teams_info = []
+    for _, r in eor_rows.iterrows():
+        w, l, t = _parse_wlt(r.get('record', ''))
+        eff_w = w + 0.5 * t
+        teams_info.append({
+            'team':   r['name'],
+            'conf':   conf_for_season(r['name'], season),
+            'wins':   eff_w,
+            'rating': float(r['rating']) if not pd.isna(r['rating']) else 0.0,
+        })
+
+    playoff_field = set()
+    for conf in {t['conf'] for t in teams_info}:
+        conf_teams = [t for t in teams_info if t['conf'] == conf]
+        # Division winners always make the playoffs.
+        conf_div_winners = [t for t in conf_teams if t['team'] in div_winners_this_season]
+        for t in conf_div_winners:
+            playoff_field.add(t['team'])
+
+        # Wild cards: top non-div-winners by record (tied → higher Rating).
+        # 1982 strike season had no division winners (bracket format), so
+        # this fills all 8 conference seeds from the standings directly.
+        remaining = seeds - len(conf_div_winners)
+        if remaining > 0:
+            conf_non_div = [t for t in conf_teams if t['team'] not in div_winners_this_season]
+            conf_non_div.sort(key=lambda x: (-x['wins'], -x['rating']))
+            for t in conf_non_div[:remaining]:
+                playoff_field.add(t['team'])
+
+    return playoff_field
+
+
+def _resolve_playoff_field(season):
+    """Prefer the games-based field for completed seasons (100% accurate);
+    fall back to EOR standings derivation when no playoff games exist yet."""
+    from_games = _season_playoff_state.get(season, {}).get('playoff_teams', set())
+    if from_games:
+        return from_games
+    return _playoff_field_from_eor_standings(season)
+
+
+print("  Locking in EOR playoff field per season...")
+_eor_locked = 0
+for _season in sorted(set(int(s) for s, _ in df.groupby('season'))):
+    playoff_teams = _resolve_playoff_field(_season)
+    if not playoff_teams:
+        continue
+    eor_rows = df[(df['season'] == _season) & (df['last_week_of_regular_season'] == 1)]
+    if eor_rows.empty:
+        continue
+    eor_rid = int(eor_rows['ranking_id'].iloc[0])
+
+    snap_probs = {}
+    for team in eor_rows['name']:
+        p = _sb_odds_cache.get((eor_rid, team))
+        if p is not None:
+            snap_probs[team] = p
+    if not snap_probs:
+        continue
+
+    for team in list(snap_probs.keys()):
+        if team not in playoff_teams:
+            snap_probs[team] = 0.0
+
+    total = sum(snap_probs.values())
+    if total > 0:
+        for team in snap_probs:
+            snap_probs[team] = snap_probs[team] / total
+
+    for team, p in snap_probs.items():
+        _sb_odds_cache[(eor_rid, team)] = float(p)
+    _eor_locked += 1
+print(f"  EOR locked-in: {_eor_locked} seasons")
+
+
 print(f"  Total SB-odds predictions cached: {len(_sb_odds_cache):,} (snapshot, team) pairs")
 
 
