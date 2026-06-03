@@ -198,6 +198,21 @@
     align-items: center;
     gap: 8px;
   }
+  /* O/D sub-line shown beneath REACT cells on Standings / Team Summary /
+     Champions. Keeps the dimension breakdown attached to the headline
+     rating instead of consuming two extra columns. */
+  .od-sub {
+    font-size: 11px;
+    color: #888;
+    font-weight: 400;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    letter-spacing: 0.1px;
+  }
+  .od-sub .od-label { color: #aaa; font-weight: 600; margin-right: 1px; }
+  .od-sub .od-rank  { color: #aaa; font-size: 10px; margin-left: 2px; }
+  .od-sub .od-sep   { color: #ccc; margin: 0 6px; }
   .rating-bar-track {
     width: 80px;
     height: 6px;
@@ -749,6 +764,18 @@ function attachLinks() {
 
 const BAR_MIN = -22, BAR_MAX = 22, BAR_RANGE = 44;
 
+// O/D sub-line shown beneath the REACT cell on Standings / Team Summary /
+// Champions tables. Returns '' if either O or D is missing (pre-rated seasons,
+// older snapshots from before the O/D engine landed).
+function odSubline(ratingO, rankO, ratingD, rankD) {
+  if (ratingO == null || ratingD == null) return '';
+  const oStr = (ratingO >= 0 ? '+' : '') + ratingO.toFixed(2);
+  const dStr = (ratingD >= 0 ? '+' : '') + ratingD.toFixed(2);
+  const oRank = rankO != null ? `<span class="od-rank">(#${rankO})</span>` : '';
+  const dRank = rankD != null ? `<span class="od-rank">(#${rankD})</span>` : '';
+  return `<div class="od-sub"><span class="od-label">O</span>${oStr}${oRank}<span class="od-sep">·</span><span class="od-label">D</span>${dStr}${dRank}</div>`;
+}
+
 function ratingBar(rating) {
   const clipped = Math.max(BAR_MIN, Math.min(BAR_MAX, rating));
   let leftPct, widthPct;
@@ -891,20 +918,12 @@ function renderStandings() {
     const teamTd = slug
       ? `<td class="team-cell linked" data-team-slug="${slug}" data-season="${season}">${label}</td>`
       : `<td class="team-cell">${label}</td>`;
-    const offCell = (t.rating_o != null)
-      ? `<span class="rating-cell">${t.rating_o.toFixed(2)}</span><span style="font-size:10px;color:#888;margin-left:4px">(#${t.rank_o})</span>`
-      : '-';
-    const defCell = (t.rating_d != null)
-      ? `<span class="rating-cell">${t.rating_d.toFixed(2)}</span><span style="font-size:10px;color:#888;margin-left:4px">(#${t.rank_d})</span>`
-      : '-';
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
       ${teamTd}
       <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
-      <td>${ratingBar(t.rating)}</td>
-      <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${offCell}</td>
-      <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${defCell}</td>
+      <td>${ratingBar(t.rating)}${odSubline(t.rating_o, t.rank_o, t.rating_d, t.rank_d)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
       <td class="last-match-cell">${renderLastMatch(t.last_match, season, isStale)}</td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888;white-space:nowrap">${t.last_match_date || ''}</td>
@@ -923,8 +942,6 @@ function renderStandings() {
         <th class="col-hide-mobile">Conf</th>
         <th>W-L (Pct)</th>
         <th>REACT</th>
-        <th class="col-hide-mobile">Offense</th>
-        <th class="col-hide-mobile">Defense</th>
         <th class="col-hide-mobile">HOTTAKE</th>
         <th>Last Game</th>
         <th class="col-hide-mobile">Date</th>
@@ -1066,21 +1083,13 @@ function renderTeamTable() {
     const seasonCell = era
       ? `${g.season} · ${wkLabel}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
       : `${g.season} · ${wkLabel}`;
-    const offCell = (g.rating_o != null)
-      ? `<span class="rating-cell">${g.rating_o.toFixed(2)}</span><span style="font-size:10px;color:#888;margin-left:4px">(#${g.rank_o})</span>`
-      : '-';
-    const defCell = (g.rating_d != null)
-      ? `<span class="rating-cell">${g.rating_d.toFixed(2)}</span><span style="font-size:10px;color:#888;margin-left:4px">(#${g.rank_d})</span>`
-      : '-';
     return `<tr>
     <td style="white-space:nowrap;color:#888;font-size:12px">${g.date}</td>
     <td class="linked" data-season-link="${g.season}" style="font-size:11px;color:#555;text-align:center">${seasonCell}${tsView !== 'single' ? seasonTag(g.season) : ''}</td>
     <td class="last-match-cell">${renderLastMatch(g.last_match, g.season, !!g._isStale)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
     <td class="rank-cell">${g.rank}</td>
-    <td>${ratingBar(g.rating)}</td>
-    <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${offCell}</td>
-    <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${defCell}</td>
+    <td>${ratingBar(g.rating)}${odSubline(g.rating_o, g.rank_o, g.rating_d, g.rank_d)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44;white-space:nowrap">${hottake}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
     <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
@@ -1094,8 +1103,6 @@ function renderTeamTable() {
         <th>W-L (Pct)</th>
         <th>Rank</th>
         <th>REACT</th>
-        <th class="col-hide-mobile">Offense</th>
-        <th class="col-hide-mobile">Defense</th>
         <th class="col-hide-mobile">HOTTAKE</th>
         <th class="col-hide-mobile">Conf</th>
         <th class="col-hide-mobile">Honors</th>
@@ -1190,7 +1197,7 @@ function renderChampions() {
   }
 
   function teamCell(t, bg, season, preRated) {
-    if (!t) return `<td class="${bg}" colspan="6">-</td>`;
+    if (!t) return `<td class="${bg}" colspan="4">-</td>`;
     const countStr = t.title_count
       ? ` <span style="color:#888;font-size:0.85em;font-weight:400">(${t.title_count} 👑)</span>`
       : t.runner_up_count
@@ -1209,19 +1216,11 @@ function renderChampions() {
         <td class="${bg} col-hide-mobile" style="color:#bbb;text-align:center">-</td>
         <td class="${bg} rating-cell" style="color:#bbb">-</td>
         <td class="${bg} rating-cell col-hide-mobile" style="color:#bbb">-</td>
-        <td class="${bg} rating-cell col-hide-mobile" style="color:#bbb">-</td>
-        <td class="${bg} rating-cell col-hide-mobile" style="color:#bbb">-</td>
         ${recordCell}`;
     }
     const rating  = t.rating  != null ? t.rating.toFixed(2)  : '-';
     const rating2 = fmtHottake(t.rating2, t.rank2);
     const rank    = t.rank    != null ? `${t.rank}` : '-';
-    const offCell = (t.rating_o != null)
-      ? `${t.rating_o.toFixed(2)}<span style="font-size:10px;color:#888;margin-left:3px">(#${t.rank_o})</span>`
-      : '-';
-    const defCell = (t.rating_d != null)
-      ? `${t.rating_d.toFixed(2)}<span style="font-size:10px;color:#888;margin-left:3px">(#${t.rank_d})</span>`
-      : '-';
     const slug = nameToSlug[t.team] || nameToSlug[label];
     const teamTd = slug
       ? `<td class="${bg} team-cell linked" data-team-slug="${slug}" data-season="${season}" style="white-space:nowrap">${label}${countStr}</td>`
@@ -1229,9 +1228,7 @@ function renderChampions() {
     return `
       ${teamTd}
       <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;color:#888;font-size:0.85em">${rank}</td>
-      <td class="${bg} rating-cell" style="font-variant-numeric:tabular-nums">${rating}</td>
-      <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${offCell}</td>
-      <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${defCell}</td>
+      <td class="${bg} rating-cell" style="font-variant-numeric:tabular-nums">${rating}${odSubline(t.rating_o, t.rank_o, t.rating_d, t.rank_d)}</td>
       <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;color:#a44">${rating2}</td>
       <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>`;
   }
@@ -1271,16 +1268,12 @@ function renderChampions() {
         <th class="col-champ">Champion</th>
         <th class="col-champ col-hide-mobile">Rank</th>
         <th class="col-champ">REACT</th>
-        <th class="col-champ col-hide-mobile">Offense</th>
-        <th class="col-champ col-hide-mobile">Defense</th>
         <th class="col-champ col-hide-mobile">HOTTAKE</th>
         <th class="col-champ col-hide-mobile">W-L</th>
         <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Score</th>
         <th class="col-ru">Runner-Up</th>
         <th class="col-ru col-hide-mobile">Rank</th>
         <th class="col-ru">REACT</th>
-        <th class="col-ru col-hide-mobile">Offense</th>
-        <th class="col-ru col-hide-mobile">Defense</th>
         <th class="col-ru col-hide-mobile">HOTTAKE</th>
         <th class="col-ru col-hide-mobile">W-L</th>
       </tr></thead>
