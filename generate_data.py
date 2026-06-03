@@ -848,7 +848,172 @@ for _week_val, _week_data in _sb_train_df.groupby('week'):
                 for team, p in zip(rid_group['team'].values, probs):
                     _sb_odds_cache[(int(_rid_val), team)] = float(p)
 
-print(f"  SB-odds predictions cached for {len(_sb_odds_cache):,} (snapshot, team) pairs")
+print(f"  RS SB-odds predictions cached for {len(_sb_odds_cache):,} (snapshot, team) pairs")
+
+
+# ── Playoff SB odds (per-round LR + alive-set logic) ─────────────────────────
+# Extends SB odds through the playoff snapshots (weeks 101-104). Teams who
+# lost in earlier playoff rounds are explicitly zeroed out; alive teams
+# get model predictions normalized so their probabilities sum to 100%.
+#
+# Alive sets are derived from games — playoff_teams = anyone who played in
+# week 101+ that season; alive[week] = playoff_teams minus everyone who
+# lost in any week up to and including this one. Works perfectly for
+# completed seasons. For current in-progress at snap 101 (WC done, DR not
+# played), bye teams won't appear in playoff_teams until DR — accepted
+# limitation, fixed once DR games are scrape-able.
+
+print("Computing playoff SB odds (rounds 101-103 + post-SB 104)...")
+PLAYOFF_WEEKS = [101, 102, 103, 104]
+PLAYOFF_TRAIN_WEEKS = [101, 102, 103]  # 104 is direct assignment from SB winner
+
+def _playoff_state(season_games_df):
+    pg = season_games_df[season_games_df['week'].isin(PLAYOFF_WEEKS)]
+    if pg.empty:
+        return {'playoff_teams': set(), 'alive_by_week': {}}
+    playoff_teams = set(pg['home_team_name']) | set(pg['visitor_team_name'])
+    eliminated = set()
+    alive_by_week = {}
+    for week in sorted({int(w) for w in pg['week'].unique() if int(w) in PLAYOFF_WEEKS}):
+        for _, g in pg[pg['week'] == week].iterrows():
+            if g['home_pts'] > g['visitor_pts']:
+                eliminated.add(g['visitor_team_name'])
+            elif g['visitor_pts'] > g['home_pts']:
+                eliminated.add(g['home_team_name'])
+        alive_by_week[week] = playoff_teams - eliminated
+    return {'playoff_teams': playoff_teams, 'alive_by_week': alive_by_week}
+
+_season_playoff_state = {int(s): _playoff_state(sub) for s, sub in games.groupby('season')}
+
+# Build playoff training rows — alive teams at each playoff snapshot
+_playoff_train_rows = []
+for _, _r in df[df['week'].isin(PLAYOFF_TRAIN_WEEKS)].iterrows():
+    _season = int(_r['season'])
+    if _season not in _sb_winners:
+        continue
+    state = _season_playoff_state.get(_season, {}).get('alive_by_week', {})
+    alive_at_week = state.get(int(_r['week']), set())
+    if _r['name'] not in alive_at_week:
+        continue
+    if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
+        continue
+    _hfa = _hfa_val(_snapshot_hfa_cache.get(int(_r['ranking_id']), {}), _r['name'])
+    if _hfa is None:
+        continue
+    _playoff_train_rows.append({
+        'season':     _season,
+        'week':       int(_r['week']),
+        'ranking_id': int(_r['ranking_id']),
+        'team':       _r['name'],
+        'rating_o':   float(_r['rating_o']),
+        'rating_d':   float(_r['rating_d']),
+        'hfa':        float(_hfa),
+        'won_sb':     1 if _r['name'] == _sb_winners[_season] else 0,
+    })
+_playoff_train_df = pd.DataFrame(_playoff_train_rows)
+print(f"  Playoff training rows (alive teams only): {len(_playoff_train_df):,}")
+
+
+def _zero_eliminated(rid, season, week_val):
+    """Mark eliminated (in playoff field but not alive at this week) as 0%."""
+    state = _season_playoff_state.get(season, {})
+    playoff_teams = state.get('playoff_teams', set())
+    alive_at_week = state.get('alive_by_week', {}).get(week_val, set())
+    for team in playoff_teams - alive_at_week:
+        _sb_odds_cache[(rid, team)] = 0.0
+
+
+for _week_val, _week_data in _playoff_train_df.groupby('week'):
+    if len(_week_data) < 30 or _week_data['won_sb'].sum() < 3:
+        continue
+    X_all = _week_data[_FEATURES].to_numpy()
+    y_all = _week_data['won_sb'].to_numpy()
+
+    # LOO for each historical season at this playoff week
+    for _season in _week_data['season'].unique():
+        mask_in = _week_data['season'] != _season
+        mask_held = _week_data['season'] == _season
+        beta = _fit_logistic(X_all[mask_in.values], y_all[mask_in.values])
+
+        held = _week_data[mask_held]
+        X_held = held[_FEATURES].to_numpy()
+        probs = _predict_logistic(X_held, beta)
+        total = probs.sum()
+        if total > 0:
+            probs = probs / total
+        rid = int(held['ranking_id'].iloc[0])
+        for team, p in zip(held['team'].values, probs):
+            _sb_odds_cache[(rid, team)] = float(p)
+        _zero_eliminated(rid, int(_season), int(_week_val))
+
+    # Current/in-progress predictions: train on full history, predict for
+    # current-season's alive teams at this playoff week (if any).
+    if _sb_current_df is not None and not _sb_current_df.empty:
+        pass  # handled below in a separate loop using game-aware alive set
+
+# Current/in-progress playoff predictions: identify alive teams from
+# game results, predict using full-history model.
+_current_playoff_seasons = sorted(set(int(s) for s, _ in df.groupby('season')
+                                     if int(s) not in _sb_winners))
+for _season in _current_playoff_seasons:
+    state = _season_playoff_state.get(_season, {})
+    if not state.get('playoff_teams'):
+        continue
+    for _week_val in PLAYOFF_TRAIN_WEEKS:
+        alive_at_week = state.get('alive_by_week', {}).get(_week_val, set())
+        if not alive_at_week:
+            continue
+        # Find snapshot for this (season, week)
+        snap_df = df[(df['season'] == _season) & (df['week'] == _week_val)]
+        if snap_df.empty:
+            continue
+        rid = int(snap_df['ranking_id'].iloc[0])
+        # Build feature matrix for alive teams from snap_df
+        feature_rows = []
+        feature_teams = []
+        for _, _r in snap_df.iterrows():
+            if _r['name'] not in alive_at_week:
+                continue
+            if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
+                continue
+            _hfa = _hfa_val(_snapshot_hfa_cache.get(rid, {}), _r['name'])
+            if _hfa is None:
+                continue
+            feature_rows.append([float(_r['rating_o']), float(_r['rating_d']), float(_hfa)])
+            feature_teams.append(_r['name'])
+        if not feature_rows:
+            continue
+        # Fit on full historical playoff data at this week, predict for current alive teams
+        train_at_week = _playoff_train_df[_playoff_train_df['week'] == _week_val]
+        if len(train_at_week) < 30 or train_at_week['won_sb'].sum() < 3:
+            continue
+        beta = _fit_logistic(
+            train_at_week[_FEATURES].to_numpy(),
+            train_at_week['won_sb'].to_numpy(),
+        )
+        X_cur = np.array(feature_rows)
+        probs = _predict_logistic(X_cur, beta)
+        total = probs.sum()
+        if total > 0:
+            probs = probs / total
+        for team, p in zip(feature_teams, probs):
+            _sb_odds_cache[(rid, team)] = float(p)
+        _zero_eliminated(rid, _season, _week_val)
+
+
+# Snapshot 104 (post-SB): direct assignment — SB winner gets 100%, every
+# other team that made the playoffs gets 0%, non-playoff teams stay absent.
+for _season, _winner in _sb_winners.items():
+    wk104 = df[(df['season'] == _season) & (df['week'] == 104)]
+    if wk104.empty:
+        continue
+    rid = int(wk104['ranking_id'].iloc[0])
+    playoff_teams = _season_playoff_state.get(_season, {}).get('playoff_teams', set())
+    for team in playoff_teams:
+        _sb_odds_cache[(rid, team)] = 1.0 if team == _winner else 0.0
+
+
+print(f"  Total SB-odds predictions cached: {len(_sb_odds_cache):,} (snapshot, team) pairs")
 
 
 def _sb_odds_val(ranking_id, team):
