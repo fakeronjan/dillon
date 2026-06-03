@@ -195,8 +195,10 @@
   }
   .rating-bar-wrap {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 3px;
+    min-width: 80px;
   }
   .rating-bar-track {
     width: 80px;
@@ -753,9 +755,10 @@ function fmtOD(rating, rank) {
 }
 
 // Super Bowl odds (logistic-regression probability) formatted as percentage.
-// Null for playoff snapshots + pre-rated era.
+// 0% (eliminated) renders as '-'; 100% (SB champion) drops the decimal.
 function fmtSBOdds(odds) {
-  if (odds == null) return '-';
+  if (odds == null || odds === 0) return '-';
+  if (odds >= 1) return '100%';
   return `${(odds * 100).toFixed(1)}%`;
 }
 
