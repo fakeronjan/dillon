@@ -132,47 +132,6 @@
   .disrupted-note .short-season-tag { margin-left: 0; margin-right: 4px; }
   .disrupted-note-bottom { margin-top: 12px; margin-bottom: 0; }
   .season-tag-line { margin-top: 3px; line-height: 1; }
-
-  /* Small profile panel shown above the Team Summary chart when a team is
-     selected. Currently surfaces home field advantage; will expand as more
-     team-level diagnostics ship. */
-  .team-profile-panel {
-    background: #fffdf3;
-    border-left: 3px solid #1a6b8a;
-    padding: 10px 14px;
-    margin-bottom: 14px;
-    font-size: 13px;
-    color: #333;
-    border-radius: 3px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    align-items: baseline;
-  }
-  .team-profile-panel .profile-stat {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-  }
-  .team-profile-panel .profile-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #888;
-    font-weight: 600;
-  }
-  .team-profile-panel .profile-value {
-    font-variant-numeric: tabular-nums;
-    font-size: 16px;
-    font-weight: 700;
-    color: #1a6b8a;
-  }
-  .team-profile-panel .profile-context {
-    font-size: 11px;
-    color: #888;
-    margin-left: auto;
-    font-style: italic;
-  }
   .season-tag-line .short-season-tag { margin-left: 0; }
   .conf-pills button {
     background: #fff;
@@ -493,7 +452,6 @@
     </select>
   </div>
   <div class="disrupted-note" id="team-summary-disrupted-note" style="display:none"></div>
-  <div id="team-hfa-panel" style="display:none"></div>
   <div id="chart-wrap" style="display:none">
     <svg id="season-chart"></svg>
   </div>
@@ -935,9 +893,6 @@ function renderStandings() {
     const teamTd = slug
       ? `<td class="team-cell linked" data-team-slug="${slug}" data-season="${season}">${label}</td>`
       : `<td class="team-cell">${label}</td>`;
-    const hfa = (t.hfa != null)
-      ? `<span class="rating-cell">${(t.hfa >= 0 ? '+' : '') + t.hfa.toFixed(2)}</span>`
-      : '<span style="color:#bbb">-</span>';
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
       ${teamTd}
@@ -946,7 +901,7 @@ function renderStandings() {
       <td>${ratingBar(t.rating)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_o, t.rank_o)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_d, t.rank_d)}</td>
-      <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${hfa}</td>
+      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.hfa, t.hfa_rank)}</td>
       <td class="last-match-cell">${renderLastMatch(t.last_match, season, isStale)}</td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888;white-space:nowrap">${t.last_match_date || ''}</td>
     </tr>`;
@@ -1046,32 +1001,8 @@ async function loadTeam(slug) {
 
 function renderTeamTable() {
   const slug = document.getElementById('team-select').value;
-  if (!slug || !teamCache[slug]) {
-    document.getElementById('team-hfa-panel').style.display = 'none';
-    return;
-  }
+  if (!slug || !teamCache[slug]) return;
   const data = teamCache[slug];
-
-  // Profile panel: surfaces team-level diagnostics that don't change snapshot
-  // to snapshot. Today: just HFA; will grow as Consistency / SB-odds ship.
-  const teamMeta = (teamsIndex || []).find(t => t.slug === slug);
-  const panel = document.getElementById('team-hfa-panel');
-  if (teamMeta && teamMeta.hfa != null) {
-    const hfa = teamMeta.hfa;
-    const sign = hfa >= 0 ? '+' : '';
-    const teamName = teamMeta.display_name || teamMeta.name;
-    panel.className = 'team-profile-panel';
-    panel.innerHTML = `
-      <div class="profile-stat">
-        <span class="profile-label">${teamName} · Home Field Advantage</span>
-        <span class="profile-value">${sign}${hfa.toFixed(2)} pts</span>
-      </div>
-      <div class="profile-context">3-year window (2023-2025) · home margin premium beyond what the team's Rating predicts</div>
-    `;
-    panel.style.display = '';
-  } else {
-    panel.style.display = 'none';
-  }
 
   let rows = [];
   const seasons = Object.keys(data.seasons).sort();
@@ -1138,9 +1069,6 @@ function renderTeamTable() {
     const seasonCell = era
       ? `${g.season}${badgeStr}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
       : `${g.season}${badgeStr}`;
-    const hfaCell = (g.hfa != null)
-      ? `<span class="rating-cell">${(g.hfa >= 0 ? '+' : '') + g.hfa.toFixed(2)}</span>`
-      : '<span style="color:#bbb">-</span>';
     return `<tr>
     <td style="white-space:nowrap;font-size:12px">${snapshotCell}</td>
     <td class="linked" data-season-link="${g.season}" style="font-size:11px;color:#555;text-align:center">${seasonCell}${tsView !== 'single' ? seasonTag(g.season) : ''}</td>
@@ -1150,7 +1078,7 @@ function renderTeamTable() {
     <td>${ratingBar(g.rating)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_o, g.rank_o)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_d, g.rank_d)}</td>
-    <td class="col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${hfaCell}</td>
+    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.hfa, g.hfa_rank)}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
   </tr>`;
   }).join('');

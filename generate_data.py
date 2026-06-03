@@ -619,9 +619,10 @@ _all_hfa_games['hfa_contribution'] = (
 print(f"  HFA-eligible games: {len(_all_hfa_games):,}")
 
 def _hfa_snapshot(season, ranking_id):
-    """Return {team: hfa_value} for the 3-year window ending at this snapshot.
-    Window includes prior 2 seasons in full + games from the snapshot's season
-    up to (and including) the snapshot's ranking_id."""
+    """Return {team: {'hfa': float, 'rank': int}} for the 3-year window ending
+    at this snapshot. Window includes prior 2 seasons in full + games from the
+    snapshot's season up to (and including) the snapshot's ranking_id. Rank is
+    computed within this snapshot (1 = highest HFA in the league)."""
     window_seasons = list(range(int(season) - _HFA_WINDOW + 1, int(season) + 1))
     win = _all_hfa_games[
         _all_hfa_games['season'].isin(window_seasons)
@@ -630,11 +631,13 @@ def _hfa_snapshot(season, ranking_id):
     if win.empty:
         return {}
     g = win.groupby('home_team_name')['hfa_contribution'].agg(['mean', 'size'])
-    return {
-        team: round(float(row['mean']), 2)
-        for team, row in g.iterrows()
-        if row['size'] >= _MIN_HOME_GAMES
-    }
+    g = g[g['size'] >= _MIN_HOME_GAMES].copy()
+    if g.empty:
+        return {}
+    g['hfa'] = g['mean'].round(2)
+    g['rank'] = g['hfa'].rank(ascending=False, method='min').astype(int)
+    return {team: {'hfa': float(row['hfa']), 'rank': int(row['rank'])}
+            for team, row in g.iterrows()}
 
 # Pre-compute snapshot HFA for every ranking_id so per-season + per-team
 # writers share the cache. ~1100 snapshot computations; runs in seconds.
@@ -648,6 +651,17 @@ for _rid in sorted(_snapshot_seasons):
 
 # Latest-snapshot HFA used by current_standings.json + teams_index.json.
 _hfa_lookup = _snapshot_hfa_cache.get(_LATEST_RID, {})
+
+def _hfa_val(snap_hfa, team):
+    """Extract just the hfa value from a snapshot's hfa dict; None if missing."""
+    rec = snap_hfa.get(team)
+    return rec['hfa'] if rec else None
+
+def _hfa_rk(snap_hfa, team):
+    """Extract the hfa rank from a snapshot's hfa dict; None if missing."""
+    rec = snap_hfa.get(team)
+    return rec['rank'] if rec else None
+
 _hfa_window_label = f"{_LATEST_SEASON - _HFA_WINDOW + 1}-{_LATEST_SEASON}"
 print(f"  Cached HFA for {len(_snapshot_hfa_cache):,} snapshots; "
       f"latest snapshot has HFA for {len(_hfa_lookup)} teams "
@@ -676,7 +690,8 @@ standings_data = {
             'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
             'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
             'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
-            'hfa':             _hfa_lookup.get(r['name']),
+            'hfa':             _hfa_val(_hfa_lookup, r['name']),
+            'hfa_rank':        _hfa_rk(_hfa_lookup, r['name']),
             'record':          clean(r['record']),
             'last_match':      era_aware_last_match(clean(r['lastgame']) if _played(r['lastgame']) else last_game_as_of(r['name'], r['season_week'], r['season']), r['season']),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
@@ -788,7 +803,6 @@ for team in all_teams:
         'conference': conf(team),
         'division': div(team),
         'slug': team_slug,
-        'hfa': _hfa_lookup.get(team),
     })
 
     seasons = {}
@@ -817,7 +831,8 @@ for team in all_teams:
                 'rating_d':          round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':            int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':            int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
-                'hfa':               snap_hfa.get(team),
+                'hfa':               _hfa_val(snap_hfa, team),
+                'hfa_rank':          _hfa_rk(snap_hfa, team),
                 'record':            clean(r['record']),
                 'regular_record':    reg,
                 'playoff_record':    po,
@@ -886,7 +901,8 @@ for season in all_seasons:
                 'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
-                'hfa':             snap_hfa.get(r['name']),
+                'hfa':             _hfa_val(snap_hfa, r['name']),
+                'hfa_rank':        _hfa_rk(snap_hfa, r['name']),
                 'record':          clean(r['record']),
                 'regular_record':  reg,
                 'playoff_record':  po,
