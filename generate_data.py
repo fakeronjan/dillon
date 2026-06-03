@@ -16,6 +16,7 @@ import numpy as np
 import json
 import os
 import re
+import collections
 from bisect import bisect_right
 from datetime import datetime, timezone
 
@@ -221,7 +222,12 @@ TEAM_DIVISION_HISTORY = {
     # AFC South (created 2002) — Houston/Tennessee lineage was AFC Central
     'Houston Oilers':           [(1970, 1996, 'AFC', 'Central')],
     'Tennessee Oilers':         [(1997, 1998, 'AFC', 'Central')],
-    'Tennessee Titans':         [(1999, 2001, 'AFC', 'Central'),
+    # 'Tennessee Titans' is the DILLON-canonical name for Tennessee Oilers
+    # (1997-1998) too via the TEAM_ALIASES collapse in dillon.py, so its
+    # history must cover the AFC-Central Oilers era as well — otherwise
+    # 1997/1998 'Tennessee Titans' rows fall through to the modern AFC South
+    # fallback and corrupt playoff-field derivation.
+    'Tennessee Titans':         [(1997, 2001, 'AFC', 'Central'),
                                  (2002, 9999, 'AFC', 'South')],
     'Jacksonville Jaguars':     [(1995, 2001, 'AFC', 'Central'),
                                  (2002, 9999, 'AFC', 'South')],
@@ -252,7 +258,11 @@ TEAM_DIVISION_HISTORY = {
     # Arizona 1994+), moved to NFC West in 2002 realignment.
     'St. Louis Cardinals':      [(1970, 1987, 'NFC', 'East')],
     'Phoenix Cardinals':        [(1988, 1993, 'NFC', 'East')],
-    'Arizona Cardinals':        [(1994, 2001, 'NFC', 'East'),
+    # DILLON's TEAM_ALIASES collapses Phoenix Cardinals into 'Arizona
+    # Cardinals', so its history must cover the Phoenix-era NFC East years
+    # too (otherwise 1988-1993 rows fall through to the modern NFC West
+    # fallback).
+    'Arizona Cardinals':        [(1988, 2001, 'NFC', 'East'),
                                  (2002, 9999, 'NFC', 'West')],
 
     # NFC Central (1970-2001) → NFC North (2002+)
@@ -493,6 +503,219 @@ def _h2h_pct(season, team, opponents, rs_games):
     return (w + 0.5 * ties) / games_played if games_played else None
 
 
+def _common_opponents(season, teams, rs_games):
+    """Intersection of every team's opponent set this season. None if <4 common."""
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    if season_games.empty:
+        return None
+    team_opps = {}
+    for t in teams:
+        opps = set()
+        opps.update(season_games[season_games['home_team_name'] == t]['visitor_team_name'])
+        opps.update(season_games[season_games['visitor_team_name'] == t]['home_team_name'])
+        opps.discard(t)
+        # Also exclude the tied teams themselves — common-games is vs OTHER common opps.
+        opps -= set(teams)
+        team_opps[t] = opps
+    if not team_opps:
+        return None
+    common = set.intersection(*team_opps.values())
+    if len(common) < 4:
+        return None
+    return common
+
+
+def _common_games_pct(season, team, common_opps, rs_games):
+    if not common_opps:
+        return None
+    return _h2h_pct(season, team, common_opps, rs_games)
+
+
+# Pre-compute every team's full-season W-L% across all their RS games,
+# used by Strength-of-Victory and Strength-of-Schedule tiebreakers.
+def _build_season_records(season, rs_games):
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    teams = set(season_games['home_team_name']) | set(season_games['visitor_team_name'])
+    records = {}
+    for t in teams:
+        team_games = season_games[
+            (season_games['home_team_name'] == t) | (season_games['visitor_team_name'] == t)
+        ]
+        if team_games.empty:
+            continue
+        w = ((team_games['winner'] == t) & (team_games['is_tie'] == 0)).sum()
+        ties = (team_games['is_tie'] == 1).sum() if 'is_tie' in team_games.columns else 0
+        n = len(team_games)
+        records[t] = (w + 0.5 * ties) / n if n > 0 else 0.0
+    return records
+
+
+def _strength_of_victory(season, team, season_records, rs_games):
+    """Avg W-L% of teams `team` beat this season."""
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    won = season_games[
+        ((season_games['home_team_name'] == team) & (season_games['home_pts'] > season_games['visitor_pts']))
+        | ((season_games['visitor_team_name'] == team) & (season_games['visitor_pts'] > season_games['home_pts']))
+    ]
+    opps = []
+    for _, g in won.iterrows():
+        opp = g['visitor_team_name'] if g['home_team_name'] == team else g['home_team_name']
+        opps.append(opp)
+    if not opps:
+        return 0.0
+    pcts = [season_records.get(o, 0.0) for o in opps]
+    return sum(pcts) / len(pcts)
+
+
+def _strength_of_schedule(season, team, season_records, rs_games):
+    """Avg W-L% of every opponent `team` played this season (won or lost)."""
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    played = season_games[
+        (season_games['home_team_name'] == team) | (season_games['visitor_team_name'] == team)
+    ]
+    opps = []
+    for _, g in played.iterrows():
+        opp = g['visitor_team_name'] if g['home_team_name'] == team else g['home_team_name']
+        opps.append(opp)
+    if not opps:
+        return 0.0
+    pcts = [season_records.get(o, 0.0) for o in opps]
+    return sum(pcts) / len(pcts)
+
+
+_pts_rankings_cache = {}
+
+
+def _build_pts_rankings(season, rs_games):
+    """Build per-team points-for/points-against totals and the
+    combined-ranking values used by NFL tiebreaker steps 7-8."""
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    all_teams = set(season_games['home_team_name']) | set(season_games['visitor_team_name'])
+
+    pts_all = {t: [0, 0] for t in all_teams}  # [PS, PA]
+    pts_conf = {t: [0, 0] for t in all_teams}
+
+    for _, g in season_games.iterrows():
+        h, v = g['home_team_name'], g['visitor_team_name']
+        h_pts, v_pts = int(g['home_pts']), int(g['visitor_pts'])
+        same_conf = conf_for_season(h, s) == conf_for_season(v, s)
+        if h in pts_all:
+            pts_all[h][0] += h_pts
+            pts_all[h][1] += v_pts
+            if same_conf:
+                pts_conf[h][0] += h_pts
+                pts_conf[h][1] += v_pts
+        if v in pts_all:
+            pts_all[v][0] += v_pts
+            pts_all[v][1] += h_pts
+            if same_conf:
+                pts_conf[v][0] += v_pts
+                pts_conf[v][1] += h_pts
+
+    by_conf = collections.defaultdict(list)
+    for t in all_teams:
+        by_conf[conf_for_season(t, s)].append(t)
+
+    rankings = {}
+    # Conference combined PS+PA rank (lower is better)
+    for conf, teams in by_conf.items():
+        ps_sorted = sorted(teams, key=lambda t: -pts_conf[t][0])
+        ps_rank = {t: i + 1 for i, t in enumerate(ps_sorted)}
+        pa_sorted = sorted(teams, key=lambda t: pts_conf[t][1])
+        pa_rank = {t: i + 1 for i, t in enumerate(pa_sorted)}
+        for t in teams:
+            rankings.setdefault(t, {})['conf_combined'] = ps_rank[t] + pa_rank[t]
+
+    # League-wide combined PS+PA rank
+    all_list = list(all_teams)
+    ps_sorted = sorted(all_list, key=lambda t: -pts_all[t][0])
+    ps_rank = {t: i + 1 for i, t in enumerate(ps_sorted)}
+    pa_sorted = sorted(all_list, key=lambda t: pts_all[t][1])
+    pa_rank = {t: i + 1 for i, t in enumerate(pa_sorted)}
+    for t in all_list:
+        rankings.setdefault(t, {})['all_combined'] = ps_rank[t] + pa_rank[t]
+        rankings[t]['pts_all'] = tuple(pts_all[t])
+        rankings[t]['pts_conf'] = tuple(pts_conf[t])
+
+    return rankings
+
+
+def _get_pts_rankings(season, rs_games):
+    if season not in _pts_rankings_cache:
+        _pts_rankings_cache[season] = _build_pts_rankings(season, rs_games)
+    return _pts_rankings_cache[season]
+
+
+def _common_games_net_pts(season, team, common_opps, rs_games):
+    """Net points (scored - allowed) in games vs common opponents."""
+    if not common_opps:
+        return 0
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    net = 0
+    for _, g in season_games.iterrows():
+        if g['home_team_name'] == team and g['visitor_team_name'] in common_opps:
+            net += int(g['home_pts']) - int(g['visitor_pts'])
+        elif g['visitor_team_name'] == team and g['home_team_name'] in common_opps:
+            net += int(g['visitor_pts']) - int(g['home_pts'])
+    return net
+
+
+def _apply_points_based_cascade(season, tied_teams, rs_games):
+    """Steps 7-10 of NFL tiebreaker cascade (shared by division + wild card):
+      7. Conference combined PS+PA ranking (lower is better)
+      8. League combined PS+PA ranking
+      9. Best net points in common games (>=4 common opponents)
+     10. Best net points in all games
+     Then alphabetical fallback. Returns single winner."""
+    survivors = list(tied_teams)
+    if len(survivors) == 1:
+        return survivors[0]
+    rankings = _get_pts_rankings(int(season), rs_games)
+
+    # 7. Conference combined ranking (lower = better)
+    cc = {t: rankings.get(t, {}).get('conf_combined', 999) for t in survivors}
+    best = min(cc.values())
+    survivors2 = [t for t in survivors if cc[t] == best]
+    if 0 < len(survivors2) < len(survivors):
+        if len(survivors2) == 1: return survivors2[0]
+        survivors = survivors2
+
+    # 8. All-games combined ranking
+    ac = {t: rankings.get(t, {}).get('all_combined', 999) for t in survivors}
+    best = min(ac.values())
+    survivors2 = [t for t in survivors if ac[t] == best]
+    if 0 < len(survivors2) < len(survivors):
+        if len(survivors2) == 1: return survivors2[0]
+        survivors = survivors2
+
+    # 9. Net points common games
+    common = _common_opponents(int(season), survivors, rs_games)
+    if common:
+        np_common = {t: _common_games_net_pts(int(season), t, common, rs_games) for t in survivors}
+        best = max(np_common.values())
+        survivors2 = [t for t in survivors if np_common[t] == best]
+        if 0 < len(survivors2) < len(survivors):
+            if len(survivors2) == 1: return survivors2[0]
+            survivors = survivors2
+
+    # 10. Net points all games
+    np_all = {t: rankings.get(t, {}).get('pts_all', (0, 0))[0]
+              - rankings.get(t, {}).get('pts_all', (0, 0))[1] for t in survivors}
+    best = max(np_all.values())
+    survivors2 = [t for t in survivors if np_all[t] == best]
+    if 0 < len(survivors2) < len(survivors):
+        if len(survivors2) == 1: return survivors2[0]
+        survivors = survivors2
+
+    return sorted(survivors)[0]
+
+
 def _div_record_pct(season, team, rs_games):
     """Win pct in the team's intra-division games this season."""
     div_peers = {
@@ -519,38 +742,87 @@ def _conf_record_pct(season, team, rs_games):
 
 
 def _resolve_division_tie(season, tied_teams, rs_games):
-    """Break a division tie using NFL-style tiebreakers (head-to-head, then
-    division record, then conference record). Alphabetical name as final
-    fallback. Returns the winning team name."""
+    """Break a division tie using the NFL division-tiebreaker cascade:
+       1. Head-to-head
+       2. Best record in division games
+       3. Best record in common games (>=4 common opponents)
+       4. Best record in conference games
+       5. Strength of victory
+       6. Strength of schedule
+       7. Alphabetical fallback
+    Returns the winning team name."""
     if len(tied_teams) == 1:
         return tied_teams[0]
     s_int = int(season)
-    # 1) Head-to-head among tied teams
+
+    def _apply(pcts):
+        if not pcts or any(v is None for v in pcts.values()):
+            return None
+        best = max(pcts.values())
+        survivors = [t for t in tied_teams if pcts[t] == best]
+        if 0 < len(survivors) < len(tied_teams):
+            return survivors
+        return None
+
+    # 1) Head-to-head
     h2h = {t: _h2h_pct(s_int, t, [x for x in tied_teams if x != t], rs_games) for t in tied_teams}
-    if all(v is not None for v in h2h.values()):
-        best = max(h2h.values())
-        survivors = [t for t in tied_teams if h2h[t] == best]
+    survivors = _apply(h2h)
+    if survivors is not None:
         if len(survivors) == 1:
             return survivors[0]
         tied_teams = survivors
-    # 2) Best record in division games
+
+    # 2) Division record
     drec = {t: _div_record_pct(s_int, t, rs_games) for t in tied_teams}
-    if all(v is not None for v in drec.values()):
-        best = max(drec.values())
-        survivors = [t for t in tied_teams if drec[t] == best]
+    survivors = _apply(drec)
+    if survivors is not None:
         if len(survivors) == 1:
             return survivors[0]
         tied_teams = survivors
-    # 3) Best record in conference games
+
+    # 3) Common games (>=4 common opponents)
+    common = _common_opponents(s_int, tied_teams, rs_games)
+    if common:
+        cg = {t: _common_games_pct(s_int, t, common, rs_games) for t in tied_teams}
+        survivors = _apply(cg)
+        if survivors is not None:
+            if len(survivors) == 1:
+                return survivors[0]
+            tied_teams = survivors
+
+    # 4) Conference record
     crec = {t: _conf_record_pct(s_int, t, rs_games) for t in tied_teams}
-    if all(v is not None for v in crec.values()):
-        best = max(crec.values())
-        survivors = [t for t in tied_teams if crec[t] == best]
+    survivors = _apply(crec)
+    if survivors is not None:
         if len(survivors) == 1:
             return survivors[0]
         tied_teams = survivors
-    # 4) Final fallback: alphabetical
-    return sorted(tied_teams)[0]
+
+    # 5) Strength of victory
+    season_records = _season_records_cache.get(s_int)
+    if season_records is None:
+        season_records = _build_season_records(s_int, rs_games)
+        _season_records_cache[s_int] = season_records
+    sov = {t: _strength_of_victory(s_int, t, season_records, rs_games) for t in tied_teams}
+    survivors = _apply(sov)
+    if survivors is not None:
+        if len(survivors) == 1:
+            return survivors[0]
+        tied_teams = survivors
+
+    # 6) Strength of schedule
+    sos = {t: _strength_of_schedule(s_int, t, season_records, rs_games) for t in tied_teams}
+    survivors = _apply(sos)
+    if survivors is not None:
+        if len(survivors) == 1:
+            return survivors[0]
+        tied_teams = survivors
+
+    # 7-10) Points-based cascade (combined ranking, net points)
+    return _apply_points_based_cascade(s_int, tied_teams, rs_games)
+
+
+_season_records_cache = {}
 
 
 # ── Division winners (per season + (conference, division)) ───────────────────
@@ -1117,10 +1389,107 @@ for _season, _winner in _sb_winners.items():
 # wild cards by record. Either way, non-playoff teams get zeroed and the
 # remaining playoff field renormalizes to 100%.
 
+def _all_pairs_played(season, teams, rs_games):
+    """True iff every pair of teams in the group played at least one game
+    against each other this season. Required for NFL's h2h-sweep rule."""
+    s = int(season)
+    season_games = rs_games[rs_games['season'] == s]
+    for i, t1 in enumerate(teams):
+        for t2 in teams[i + 1:]:
+            played = season_games[
+                ((season_games['home_team_name'] == t1) & (season_games['visitor_team_name'] == t2))
+                | ((season_games['home_team_name'] == t2) & (season_games['visitor_team_name'] == t1))
+            ]
+            if played.empty:
+                return False
+    return True
+
+
+def _pick_top_wild_card(season, pool, rs_games):
+    """Pick the single top team from a tied pool using the NFL wild-card
+    tiebreaker cascade. Each step splits the surviving group; if a step
+    cannot apply (missing data), continue to the next."""
+    s_int = int(season)
+    if len(pool) == 1:
+        return pool[0]
+
+    # Step 1: cull to one rep per division (using division tiebreaker).
+    by_div = collections.defaultdict(list)
+    for t in pool:
+        by_div[div_for_season(t, s_int)].append(t)
+    reps = []
+    for teams in by_div.values():
+        reps.append(teams[0] if len(teams) == 1
+                    else _resolve_division_tie(s_int, teams, rs_games))
+    if len(reps) == 1:
+        return reps[0]
+
+    def _filter(survivors, pcts):
+        if not pcts or any(v is None for v in pcts.values()):
+            return survivors
+        best = max(pcts.values())
+        winners = [t for t in survivors if pcts[t] == best]
+        return winners if winners else survivors
+
+    survivors = reps
+
+    # Step 2: head-to-head sweep — only applicable when ALL teams in the
+    # group played each other. Otherwise the rule is explicitly skipped
+    # (NFL: "applicable only if one team beat all others or lost to all").
+    if _all_pairs_played(s_int, survivors, rs_games):
+        h2h = {t: _h2h_pct(s_int, t, [x for x in survivors if x != t], rs_games) for t in survivors}
+        survivors = _filter(survivors, h2h)
+        if len(survivors) == 1: return survivors[0]
+
+    # Step 3: best conference record
+    cr = {t: _conf_record_pct(s_int, t, rs_games) for t in survivors}
+    survivors = _filter(survivors, cr)
+    if len(survivors) == 1: return survivors[0]
+
+    # Step 4: common games (>=4 common opponents)
+    common = _common_opponents(s_int, survivors, rs_games)
+    if common:
+        cg = {t: _common_games_pct(s_int, t, common, rs_games) for t in survivors}
+        survivors = _filter(survivors, cg)
+        if len(survivors) == 1: return survivors[0]
+
+    # Steps 5-6: strength of victory, strength of schedule
+    season_records = _season_records_cache.get(s_int)
+    if season_records is None:
+        season_records = _build_season_records(s_int, rs_games)
+        _season_records_cache[s_int] = season_records
+
+    sov = {t: _strength_of_victory(s_int, t, season_records, rs_games) for t in survivors}
+    survivors = _filter(survivors, sov)
+    if len(survivors) == 1: return survivors[0]
+
+    sos = {t: _strength_of_schedule(s_int, t, season_records, rs_games) for t in survivors}
+    survivors = _filter(survivors, sos)
+    if len(survivors) == 1: return survivors[0]
+
+    # Steps 7-10: points-based cascade (combined ranking, net points)
+    return _apply_points_based_cascade(s_int, survivors, rs_games)
+
+
+def _resolve_wild_card_tie(season, tied_teams, num_to_pick, rs_games):
+    """Pick `num_to_pick` teams from a tied pool, one at a time. Each pick
+    redoes the full cull-and-cascade against the remaining pool — that's
+    the actual NFL behavior, otherwise multiple non-div-winners from the
+    same division can never both make the playoffs."""
+    if len(tied_teams) <= num_to_pick:
+        return list(tied_teams)
+    picked = []
+    pool = list(tied_teams)
+    while len(picked) < num_to_pick and pool:
+        top = _pick_top_wild_card(season, pool, rs_games)
+        picked.append(top)
+        pool.remove(top)
+    return picked
+
+
 def _playoff_field_from_eor_standings(season):
-    """Derive the playoff field from end-of-RS standings. Works for any
-    season where the RS is complete (including current in-progress when
-    WC games haven't been played yet)."""
+    """Derive the playoff field from end-of-RS standings using division
+    winners + the NFL wild-card tiebreaker cascade for the remaining slots."""
     eor_rows = df[(df['season'] == season) & (df['last_week_of_regular_season'] == 1)]
     if eor_rows.empty:
         return set()
@@ -1128,34 +1497,51 @@ def _playoff_field_from_eor_standings(season):
     seeds = _playoff_seeds_per_conf(season)
     div_winners_this_season = {t for (s, t) in _division_winners if s == season}
 
+    # Build per-team info with raw W-L for proper tiebreaker-friendly pct.
     teams_info = []
     for _, r in eor_rows.iterrows():
         w, l, t = _parse_wlt(r.get('record', ''))
         eff_w = w + 0.5 * t
+        n_games = w + l + t
+        pct = (eff_w / n_games) if n_games > 0 else 0.0
         teams_info.append({
-            'team':   r['name'],
-            'conf':   conf_for_season(r['name'], season),
-            'wins':   eff_w,
-            'rating': float(r['rating']) if not pd.isna(r['rating']) else 0.0,
+            'team': r['name'],
+            'conf': conf_for_season(r['name'], season),
+            'wins': eff_w,
+            'pct':  pct,
         })
 
     playoff_field = set()
     for conf in {t['conf'] for t in teams_info}:
         conf_teams = [t for t in teams_info if t['conf'] == conf]
-        # Division winners always make the playoffs.
         conf_div_winners = [t for t in conf_teams if t['team'] in div_winners_this_season]
-        for t in conf_div_winners:
-            playoff_field.add(t['team'])
+        playoff_field.update(t['team'] for t in conf_div_winners)
 
-        # Wild cards: top non-div-winners by record (tied → higher Rating).
-        # 1982 strike season had no division winners (bracket format), so
-        # this fills all 8 conference seeds from the standings directly.
         remaining = seeds - len(conf_div_winners)
-        if remaining > 0:
-            conf_non_div = [t for t in conf_teams if t['team'] not in div_winners_this_season]
-            conf_non_div.sort(key=lambda x: (-x['wins'], -x['rating']))
-            for t in conf_non_div[:remaining]:
-                playoff_field.add(t['team'])
+        if remaining <= 0:
+            continue
+
+        # Non-div-winners sorted by win pct descending; walk down picking
+        # groups, applying the wild-card cascade within each tied group.
+        non_div = [t for t in conf_teams if t['team'] not in div_winners_this_season]
+        non_div.sort(key=lambda x: -x['pct'])
+
+        i = 0
+        slots_left = remaining
+        while slots_left > 0 and i < len(non_div):
+            current_pct = non_div[i]['pct']
+            j = i
+            while j < len(non_div) and non_div[j]['pct'] == current_pct:
+                j += 1
+            tied = [non_div[k]['team'] for k in range(i, j)]
+            if len(tied) <= slots_left:
+                playoff_field.update(tied)
+                slots_left -= len(tied)
+            else:
+                picked = _resolve_wild_card_tie(season, tied, slots_left, _rs_games)
+                playoff_field.update(picked)
+                slots_left = 0
+            i = j
 
     return playoff_field
 
@@ -1167,6 +1553,33 @@ def _resolve_playoff_field(season):
     if from_games:
         return from_games
     return _playoff_field_from_eor_standings(season)
+
+
+# DEBUG: validate the standings-based derivation against the games-based ground
+# truth across every completed season. Helps catch tiebreaker logic drift.
+if os.environ.get('VALIDATE_PLAYOFF_FIELD'):
+    print()
+    print("Validating standings-derived playoff field against games-based truth...")
+    n_perfect = 0
+    n_mismatch = 0
+    mismatch_seasons = []
+    for _season, _state in _season_playoff_state.items():
+        truth_set = _state.get('playoff_teams', set())
+        if not truth_set:
+            continue
+        derived = _playoff_field_from_eor_standings(_season)
+        missing = truth_set - derived
+        extra = derived - truth_set
+        if not missing and not extra:
+            n_perfect += 1
+        else:
+            n_mismatch += 1
+            mismatch_seasons.append((_season, sorted(missing), sorted(extra)))
+    print(f"  Perfect match: {n_perfect}")
+    print(f"  Mismatches: {n_mismatch}")
+    for season, missing, extra in mismatch_seasons:
+        print(f"    {season}: missing={missing}  extra={extra}")
+    print()
 
 
 print("  Locking in EOR playoff field per season...")
