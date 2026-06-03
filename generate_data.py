@@ -575,6 +575,52 @@ for season, sub in df[df['season_flag'] == 1].groupby('season'):
 print(f"  {len(_division_winners)} division winners flagged.")
 
 
+# ── Team-specific home field advantage (3-year window) ──────────────────────
+# For each team T over the last 3 completed seasons, compute their home margin
+# premium over what their rating gap alone would predict:
+#
+#   h_T = mean over T's home games of: (home_pts - away_pts) - (T_rating - opp_rating)
+#
+# Where ratings are the team's rating GOING INTO the game (prior snapshot).
+# Excludes neutral-site games. League-wide mean lands near the global 2.5
+# constant; altitude / cold-weather / loud-dome teams sit above, soft-market
+# teams below. 3-year window strikes the best balance of stability and recency
+# (per diagnostic review 2026-06-03; 1yr too noisy, 5yr too era-blended).
+
+print("Computing team home field advantage (3-year window)...")
+_LATEST_SEASON = int(df['season'].max())
+_HFA_WINDOW = 3
+_hfa_seasons = list(range(_LATEST_SEASON - _HFA_WINDOW + 1, _LATEST_SEASON + 1))
+
+_hfa_games = games[(games['is_neutral'] == 0) & (games['season'].isin(_hfa_seasons))].copy()
+_rsorted = df.sort_values(['name', 'ranking_id']).copy()
+_rsorted['rating_prior'] = _rsorted.groupby('name')['rating'].shift(1)
+_rating_prior_lookup = _rsorted.set_index(['name', 'season', 'week'])['rating_prior'].to_dict()
+
+def _prior_rating(name, season, week):
+    return _rating_prior_lookup.get((name, int(season), int(week)))
+
+_hfa_games['home_rating'] = _hfa_games.apply(
+    lambda g: _prior_rating(g['home_team_name'], g['season'], g['week']), axis=1)
+_hfa_games['away_rating'] = _hfa_games.apply(
+    lambda g: _prior_rating(g['visitor_team_name'], g['season'], g['week']), axis=1)
+_hfa_games = _hfa_games.dropna(subset=['home_rating', 'away_rating']).copy()
+_hfa_games['hfa_contribution'] = (
+    (_hfa_games['home_pts'] - _hfa_games['visitor_pts'])
+    - (_hfa_games['home_rating'] - _hfa_games['away_rating'])
+)
+
+_team_hfa = (
+    _hfa_games.groupby('home_team_name')['hfa_contribution']
+    .agg(['mean', 'size'])
+    .reset_index()
+    .rename(columns={'home_team_name': 'team', 'mean': 'hfa', 'size': 'n_home'})
+)
+_hfa_lookup = {r['team']: round(float(r['hfa']), 2) for _, r in _team_hfa.iterrows()}
+_hfa_window_label = f"{_hfa_seasons[0]}-{_hfa_seasons[-1]}"
+print(f"  HFA computed for {len(_hfa_lookup)} teams over seasons {_hfa_window_label}")
+
+
 # ── 1. Current standings ─────────────────────────────────────────────────────
 print("Writing current_standings.json...")
 latest_id = int(df['ranking_id'].max())
@@ -583,6 +629,7 @@ latest_date = str(latest['date'].iloc[0]) if not latest.empty else ''
 
 standings_data = {
     'updated': latest_date,
+    'hfa_window': _hfa_window_label,
     'teams': [
         {
             'rank':            int(r['rank']),
@@ -596,6 +643,7 @@ standings_data = {
             'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
             'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
             'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
+            'hfa':             _hfa_lookup.get(r['name']),
             'record':          clean(r['record']),
             'last_match':      era_aware_last_match(clean(r['lastgame']) if _played(r['lastgame']) else last_game_as_of(r['name'], r['season_week'], r['season']), r['season']),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
@@ -707,6 +755,7 @@ for team in all_teams:
         'conference': conf(team),
         'division': div(team),
         'slug': team_slug,
+        'hfa': _hfa_lookup.get(team),
     })
 
     seasons = {}
