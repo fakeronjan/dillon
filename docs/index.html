@@ -1188,7 +1188,9 @@ function drawChart(rows, seasonFilter) {
   // the SB-game snapshot (week 104 — sb_status is set on EVERY snapshot
   // of a SB-participating season, so we filter to just the final game).
   // Emoji sits 14px above the point, clamped so it never clips above
-  // the chart top.
+  // the chart top. Each marker is wrapped in a <g> with a transparent
+  // hit-rect — bare <text> emojis have flaky hover hit-testing across
+  // browsers, the rect gives a stable target for the <title> tooltip.
   const trophies = [];
   rows.forEach((r, i) => {
     if (!r.sb_status || r.week !== 104) return;
@@ -1198,7 +1200,13 @@ function drawChart(rows, seasonFilter) {
       : `Super Bowl Runner-Up — ${r.season} season`;
     const x = px(i);
     const y = Math.max(14, py(r.rating) - 12);
-    trophies.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="14" text-anchor="middle" style="cursor:help"><title>${titleText}</title>${emoji}</text>`);
+    trophies.push(
+      `<g style="cursor:help">
+        <title>${titleText}</title>
+        <rect x="${(x - 9).toFixed(1)}" y="${(y - 12).toFixed(1)}" width="18" height="18" fill="transparent"/>
+        <text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="14" text-anchor="middle" pointer-events="none">${emoji}</text>
+      </g>`
+    );
   });
 
   svg.innerHTML = `
