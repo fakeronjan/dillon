@@ -909,11 +909,6 @@ function renderStandings() {
     const lastGameCell = t.last_match_date
       ? `${lastGameHtml}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${t.last_match_date}</div>`
       : lastGameHtml;
-    // SB Odds column only shows for the current/latest season per spec.
-    const showSBOdds = (currentSeasonData && currentSeasonData.season == latestSeason);
-    const sbOddsCell = showSBOdds
-      ? `<td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${fmtSBOdds(t.sb_odds)}</td>`
-      : '';
     return `<tr>
       <td class="rank-cell">${t.rank}</td>
       ${teamTd}
@@ -923,18 +918,13 @@ function renderStandings() {
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_o, t.rank_o)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_d, t.rank_d)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.hfa, t.hfa_rank)}</td>
-      ${sbOddsCell}
+      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${fmtSBOdds(t.sb_odds)}</td>
       <td class="last-match-cell">${lastGameCell}</td>
     </tr>`;
   }).join('');
 
   document.getElementById('standings-count').textContent =
     `${teams.length} team${teams.length !== 1 ? 's' : ''}`;
-
-  const showSBOddsHeader = (currentSeasonData && currentSeasonData.season == latestSeason);
-  const sbOddsHeader = showSBOddsHeader
-    ? `<th class="col-hide-mobile" title="Probability of winning the Super Bowl, given current Offense / Defense / HFA. Trained on every other season's snapshots at this same week. League-wide probabilities sum to 100%.">SB Odds</th>`
-    : '';
 
   document.getElementById('standings-table-wrap').innerHTML = `
     <table>
@@ -947,7 +937,7 @@ function renderStandings() {
         <th class="col-hide-mobile">Offense</th>
         <th class="col-hide-mobile">Defense</th>
         <th class="col-hide-mobile" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
-        ${sbOddsHeader}
+        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) at this snapshot. Trained on every other season's snapshots at this same week (leave-one-out). League-wide probabilities sum to 100%.">SB Odds</th>
         <th>Last Game</th>
       </tr></thead>
       <tbody>${rows}</tbody>
