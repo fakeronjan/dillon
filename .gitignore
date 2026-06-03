@@ -6,3 +6,4 @@ __pycache__/
 Backup*/
 loaded_NFL_games (backup*).csv
 loaded_NFL_games_archive_*.csv
+*.pre-od-bak

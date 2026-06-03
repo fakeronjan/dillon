@@ -256,7 +256,99 @@ def _solve_wls(window_df, weighting_mode, margin_transform, margin_cap):
     return out
 
 
-def compute_ratings(master_df, existing_ratings_df, window, label):
+def _solve_wls_od(window_df, weighting_mode, hca_off_share=0.5):
+    """
+    Solve for team OFFENSIVE + DEFENSIVE WLS ratings (Massey-style split).
+
+    Each game contributes 2 rows:
+      home_O - visitor_D = home_pts - mu - hca * off_share
+      visitor_O - home_D = visitor_pts - mu + hca * def_share
+
+    Where mu = league mean points / team / game across the window, so O and D
+    are centered on zero. hca_off_share allocates the home-field advantage
+    between offense (h_off) and defense (h_def). 0.5 = 50/50 split.
+
+    Parameter vector layout: [O_1..O_n, D_1..D_n]. Two zero-sum constraint
+    rows pin both vectors. A team's net contribution to point margin is
+    REACT_team = O_team + D_team; the home-vs-visitor margin then satisfies
+    margin = (home_REACT - visitor_REACT) + HCA, matching the single-rating
+    solver's interpretation.
+
+    No half-equation cap on first pass (the single-rating solver's MARGIN_CAP
+    operates on net margin, which has no clean per-side analog). If garbage-
+    time blowouts contaminate rankings we can revisit.
+    """
+    teams = sorted(set(window_df["home_team_name"]) | set(window_df["visitor_team_name"]))
+    team_idx = {t: i for i, t in enumerate(teams)}
+    n_teams = len(teams)
+    n_games = len(window_df)
+
+    home_pts    = window_df["home_pts"].to_numpy(dtype=float)
+    visitor_pts = window_df["visitor_pts"].to_numpy(dtype=float)
+    hca         = window_df["hca"].to_numpy(dtype=float)
+    weights     = window_df["date_weight"].to_numpy(dtype=float)
+    home_names    = window_df["home_team_name"].to_numpy()
+    visitor_names = window_df["visitor_team_name"].to_numpy()
+
+    mu = (home_pts.sum() + visitor_pts.sum()) / (2 * n_games)
+    h_off_share = float(hca_off_share)
+    h_def_share = 1.0 - h_off_share
+
+    # 2 rows per game + 2 zero-sum constraint rows
+    X = np.zeros((2 * n_games + 2, 2 * n_teams))
+    y = np.zeros(2 * n_games + 2)
+    w = np.zeros(2 * n_games + 2)
+
+    for i in range(n_games):
+        h_idx = team_idx[home_names[i]]
+        v_idx = team_idx[visitor_names[i]]
+        # Half-equation: home_O - visitor_D = home_pts - mu - hca*h_off_share
+        X[2*i,     h_idx]              = 1.0          # +home_O
+        X[2*i,     n_teams + v_idx]    = -1.0         # -visitor_D
+        y_home = home_pts[i] - mu - hca[i] * h_off_share
+        # Half-equation: visitor_O - home_D = visitor_pts - mu + hca*h_def_share
+        X[2*i + 1, v_idx]              = 1.0          # +visitor_O
+        X[2*i + 1, n_teams + h_idx]    = -1.0         # -home_D
+        y_vis  = visitor_pts[i] - mu + hca[i] * h_def_share
+
+        if weighting_mode == "wls":
+            y[2*i]     = y_home
+            y[2*i + 1] = y_vis
+            w[2*i]     = weights[i]
+            w[2*i + 1] = weights[i]
+        elif weighting_mode == "margin_scale":
+            y[2*i]     = y_home * weights[i]
+            y[2*i + 1] = y_vis  * weights[i]
+            w[2*i]     = 1.0
+            w[2*i + 1] = 1.0
+        else:
+            raise ValueError(f"Unknown WEIGHTING_MODE: {weighting_mode}")
+
+    # Zero-sum on O
+    X[-2, :n_teams] = 1.0
+    y[-2] = 0.0
+    w[-2] = 1.0e8
+    # Zero-sum on D
+    X[-1, n_teams:] = 1.0
+    y[-1] = 0.0
+    w[-1] = 1.0e8
+
+    sqrt_w = np.sqrt(w)
+    Xw = X * sqrt_w[:, None]
+    yw = y * sqrt_w
+    sol, *_ = np.linalg.lstsq(Xw, yw, rcond=None)
+
+    out = pd.DataFrame({
+        "name":     teams,
+        "rating_o": sol[:n_teams],
+        "rating_d": sol[n_teams:],
+    })
+    out["rank_o"] = out["rating_o"].rank(ascending=False, method="min").astype(int)
+    out["rank_d"] = out["rating_d"].rank(ascending=False, method="min").astype(int)
+    return out
+
+
+def compute_ratings(master_df, existing_ratings_df, window, label, compute_od=False):
     """
     Compute fakeronjan WLS ratings using a rolling `window`-week window.
     Skips ranking_ids already present in existing_ratings_df.
@@ -296,6 +388,27 @@ def compute_ratings(master_df, existing_ratings_df, window, label):
             margin_transform=MARGIN_TRANSFORM,
             margin_cap=MARGIN_CAP,
         )
+        if compute_od:
+            ranked_od = _solve_wls_od(win, weighting_mode=WEIGHTING_MODE)
+            ranked = ranked.merge(ranked_od, on='name', how='left')
+            # REACT-calibrated O/D: shift each team's (O_raw, D_raw) by the same
+            # delta so O+D == REACT exactly. The shape of the split (O - D, i.e.
+            # the offensive vs defensive lean) is preserved; only the absolute
+            # level is anchored to REACT. This means REACT's MARGIN_CAP — which
+            # handles garbage-time blowouts in the single-rating fit — carries
+            # through to O/D too, without needing a separate half-equation cap.
+            #
+            # delta = (REACT - O_raw - D_raw) / 2  per team
+            # O = O_raw + delta;  D = D_raw + delta
+            # => O + D = O_raw + D_raw + 2*delta = REACT
+            # => O - D = O_raw - D_raw (split preserved)
+            # Zero-sum stays intact because sum(delta) = 0 (all three vectors
+            # are zero-sum across the league).
+            delta = (ranked['rating'] - ranked['rating_o'] - ranked['rating_d']) / 2.0
+            ranked['rating_o'] = ranked['rating_o'] + delta
+            ranked['rating_d'] = ranked['rating_d'] + delta
+            ranked['rank_o'] = ranked['rating_o'].rank(ascending=False, method='min').astype(int)
+            ranked['rank_d'] = ranked['rating_d'].rank(ascending=False, method='min').astype(int)
         ranked['season_week'] = current_week
         ranked['ranking_id']  = i
         ranked['season']      = season
@@ -501,6 +614,7 @@ def assemble_final(master_df, react_df, hottake_df, standings_df):
     final_df = final_df[[
         'ranking_id', 'season_week', 'season', 'week', 'name', 'name_season',
         'rating', 'rank', 'rating2', 'rank2',
+        'rating_o', 'rank_o', 'rating_d', 'rank_d',
         'record', 'most_recent_week', 'last_week_of_regular_season',
         'season_flag', 'sb_champ', 'sb_runnerup', 'sb_status',
         'lastgame', 'opponent'
@@ -530,7 +644,7 @@ if __name__ == '__main__':
         existing_react = pd.read_csv('dillon_react_ratings.csv')
     except FileNotFoundError:
         existing_react = pd.DataFrame()
-    react_df = compute_ratings(master_df, existing_react, WEEKS_REACT, 'REACT')
+    react_df = compute_ratings(master_df, existing_react, WEEKS_REACT, 'REACT', compute_od=True)
     react_df.to_csv('dillon_react_ratings.csv', index=False)
 
     # 4. HOTTAKE ratings
