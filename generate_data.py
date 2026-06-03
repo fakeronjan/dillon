@@ -575,26 +575,31 @@ for season, sub in df[df['season_flag'] == 1].groupby('season'):
 print(f"  {len(_division_winners)} division winners flagged.")
 
 
-# ── Team-specific home field advantage (3-year rolling window) ───────────────
-# For each team T and each snapshot R, compute their home margin premium over
-# what their rating gap alone would predict, using the 3 NFL seasons ending at
-# R (with R's season contributing only games played before R within the season):
+# ── Team-specific home field advantage (3-year rolling-day window) ───────────
+# For each team T and each snapshot R (dated at snap_date), compute T's home
+# advantage as the GAP between T's home-game and away-game performance, where
+# "performance" is residual against a neutral-site prediction (rating gap with
+# no HCA term):
 #
-#   h_T(R) = mean over T's home games in window of:
-#              (home_pts - away_pts) - (T_rating - opp_rating)
+#   home_resid(G, T)     = (home_pts - away_pts) - (T_rating - opp_rating)        when T is home
+#   away_resid_T_POV(G,T) = -(home_pts - away_pts) - (T_rating - opp_rating)        when T is away
 #
-# Where ratings are the team's rating GOING INTO the game (prior snapshot).
-# Excludes neutral-site games. League-wide mean lands near the global 2.5
-# constant; altitude / cold-weather / loud-dome teams sit above, soft-market
-# teams below. 3-year window strikes the best balance of stability and recency
-# (per diagnostic review 2026-06-03; 1yr too noisy, 5yr too era-blended).
+#   HFA_T(R) = (mean(home_resid over T's home games in window)
+#               - mean(away_resid_T_POV over T's away games in window)) / 2
 #
-# Per-snapshot rolling lets you see how a team's home advantage has evolved —
-# Seahawks' 12th Man peak in 2013-14 vs the post-Wilson decline, Lambeau's
-# steady decade, etc.
+# Window: games with date in (snap_date - 1095 days, snap_date]. True rolling-
+# day window — every week a new game enters the front AND a game from exactly
+# 3 years ago drops off the back. So HFA updates every snapshot regardless of
+# whether T played at home or away that week.
+#
+# Every game contributes signal: a team's home games tell us how much they
+# outperform expectation when hosting; their away games tell us how much they
+# underperform when traveling. The gap is the home advantage. League average
+# lands near the global HCA constant (~2.5); altitude / cold-weather / loud-
+# dome teams sit above, soft-market teams below.
 
-print("Computing per-snapshot home field advantage (3-year rolling window)...")
-_HFA_WINDOW = 3
+print("Computing per-snapshot home field advantage (3-year rolling-day window)...")
+_HFA_DAYS = 3 * 365  # 1095-day rolling window
 _MIN_HOME_GAMES = 10  # below this, hfa estimate is too noisy; suppress
 
 _rsorted = df.sort_values(['name', 'ranking_id']).copy()
@@ -612,42 +617,71 @@ _all_hfa_games['home_rating'] = _all_hfa_games.apply(
 _all_hfa_games['away_rating'] = _all_hfa_games.apply(
     lambda g: _prior_rating(g['visitor_team_name'], g['season'], g['week']), axis=1)
 _all_hfa_games = _all_hfa_games.dropna(subset=['home_rating', 'away_rating']).copy()
-_all_hfa_games['hfa_contribution'] = (
+# Per-game home-team residual at neutral expectation. Positive = home outperformed.
+# Away team's residual from their POV is the negation of this value.
+_all_hfa_games['home_resid'] = (
     (_all_hfa_games['home_pts'] - _all_hfa_games['visitor_pts'])
     - (_all_hfa_games['home_rating'] - _all_hfa_games['away_rating'])
 )
+# Pre-cast date so window filters are fast.
+_all_hfa_games['date'] = pd.to_datetime(_all_hfa_games['date'])
 print(f"  HFA-eligible games: {len(_all_hfa_games):,}")
 
-def _hfa_snapshot(season, ranking_id):
-    """Return {team: {'hfa': float, 'rank': int}} for the 3-year window ending
-    at this snapshot. Window includes prior 2 seasons in full + games from the
-    snapshot's season up to (and including) the snapshot's ranking_id. Rank is
-    computed within this snapshot (1 = highest HFA in the league)."""
-    window_seasons = list(range(int(season) - _HFA_WINDOW + 1, int(season) + 1))
+# Snapshot date lookup so _hfa_snapshot can find its window start.
+_snapshot_dates = (
+    df.dropna(subset=['date'])
+    .groupby('ranking_id')['date']
+    .first()
+    .to_dict()
+)
+
+
+def _hfa_snapshot(ranking_id):
+    """Return {team: {'hfa': float, 'rank': int}} for the 1095-day rolling
+    window ending at this snapshot's date. Uses both home games (positive
+    residual contribution) and away games (residual from the traveling team's
+    POV = -home_resid). HFA = (home_mean - away_mean) / 2."""
+    snap_date_str = _snapshot_dates.get(ranking_id)
+    if not snap_date_str:
+        return {}
+    snap_date = pd.to_datetime(snap_date_str)
+    window_start = snap_date - pd.Timedelta(days=_HFA_DAYS)
     win = _all_hfa_games[
-        _all_hfa_games['season'].isin(window_seasons)
-        & (_all_hfa_games['cume_week_id'] <= ranking_id)
+        (_all_hfa_games['date'] > window_start)
+        & (_all_hfa_games['date'] <= snap_date)
     ]
     if win.empty:
         return {}
-    g = win.groupby('home_team_name')['hfa_contribution'].agg(['mean', 'size'])
-    g = g[g['size'] >= _MIN_HOME_GAMES].copy()
-    if g.empty:
+
+    # Home-team residuals (T's POV when at home).
+    home_stats = win.groupby('home_team_name')['home_resid'].agg(['mean', 'size'])
+    home_stats.columns = ['home_mean', 'home_n']
+
+    # Away-team residuals from T's POV (negated home_resid).
+    away_view = win.assign(t_pov_resid=-win['home_resid'])
+    away_stats = away_view.groupby('visitor_team_name')['t_pov_resid'].agg(['mean', 'size'])
+    away_stats.columns = ['away_mean', 'away_n']
+
+    combined = home_stats.join(away_stats, how='outer')
+    combined = combined.fillna({'home_mean': 0.0, 'home_n': 0, 'away_mean': 0.0, 'away_n': 0})
+    # Require enough home games for the home-mean to be stable.
+    combined = combined[combined['home_n'] >= _MIN_HOME_GAMES].copy()
+    if combined.empty:
         return {}
-    g['hfa'] = g['mean'].round(2)
-    g['rank'] = g['hfa'].rank(ascending=False, method='min').astype(int)
+
+    combined['hfa'] = ((combined['home_mean'] - combined['away_mean']) / 2.0).round(2)
+    combined['rank'] = combined['hfa'].rank(ascending=False, method='min').astype(int)
     return {team: {'hfa': float(row['hfa']), 'rank': int(row['rank'])}
-            for team, row in g.iterrows()}
+            for team, row in combined.iterrows()}
 
 # Pre-compute snapshot HFA for every ranking_id so per-season + per-team
 # writers share the cache. ~1100 snapshot computations; runs in seconds.
 _LATEST_SEASON = int(df['season'].max())
 _LATEST_RID = int(df['ranking_id'].max())
-_snapshot_seasons = df.groupby('ranking_id')['season'].first().astype(int).to_dict()
 
-_snapshot_hfa_cache = {}  # ranking_id -> {team: hfa}
-for _rid in sorted(_snapshot_seasons):
-    _snapshot_hfa_cache[int(_rid)] = _hfa_snapshot(_snapshot_seasons[_rid], int(_rid))
+_snapshot_hfa_cache = {}  # ranking_id -> {team: {hfa, rank}}
+for _rid in sorted(_snapshot_dates):
+    _snapshot_hfa_cache[int(_rid)] = _hfa_snapshot(int(_rid))
 
 # Latest-snapshot HFA used by current_standings.json + teams_index.json.
 _hfa_lookup = _snapshot_hfa_cache.get(_LATEST_RID, {})
@@ -662,10 +696,10 @@ def _hfa_rk(snap_hfa, team):
     rec = snap_hfa.get(team)
     return rec['rank'] if rec else None
 
-_hfa_window_label = f"{_LATEST_SEASON - _HFA_WINDOW + 1}-{_LATEST_SEASON}"
+_hfa_window_label = f"last {_HFA_DAYS} days"
 print(f"  Cached HFA for {len(_snapshot_hfa_cache):,} snapshots; "
       f"latest snapshot has HFA for {len(_hfa_lookup)} teams "
-      f"(window {_hfa_window_label})")
+      f"(window: {_hfa_window_label})")
 
 
 # ── 1. Current standings ─────────────────────────────────────────────────────
