@@ -848,6 +848,7 @@ for season in all_seasons:
                 'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
+                'hfa':             _hfa_lookup.get(r['name']),
                 'record':          clean(r['record']),
                 'regular_record':  reg,
                 'playoff_record':  po,
