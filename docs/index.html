@@ -1056,11 +1056,19 @@ function renderTeamTable() {
     const era = (g.display_name && g.display_name !== canonical) ? g.display_name : '';
     const badge = finishBadge(g.sb_status);
     const badgeStr = badge ? ' ' + badge : '';
+    // Snapshot cell: week label leads (e.g. "Week 17", "Super Bowl"), actual
+    // date sits beneath in italic muted text. Mirrors GRIFFEY/SAKIC's date
+    // cell pattern where the date carries a phase sub-label.
+    const snapshotCell = wkLabel
+      ? `${wkLabel}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${g.date}</div>`
+      : g.date;
+    // Season cell: clean year + badge. Era display name (for franchises that
+    // changed names) sits beneath in italic if it differs from canonical.
     const seasonCell = era
-      ? `${g.season} · ${wkLabel}${badgeStr}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
-      : `${g.season} · ${wkLabel}${badgeStr}`;
+      ? `${g.season}${badgeStr}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
+      : `${g.season}${badgeStr}`;
     return `<tr>
-    <td style="white-space:nowrap;color:#888;font-size:12px">${g.date}</td>
+    <td style="white-space:nowrap;font-size:12px">${snapshotCell}</td>
     <td class="linked" data-season-link="${g.season}" style="font-size:11px;color:#555;text-align:center">${seasonCell}${tsView !== 'single' ? seasonTag(g.season) : ''}</td>
     <td class="last-match-cell">${renderLastMatch(g.last_match, g.season, !!g._isStale)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
@@ -1075,7 +1083,7 @@ function renderTeamTable() {
   document.getElementById('team-table-wrap').innerHTML = `
     <table>
       <thead><tr>
-        <th>Date</th><th>Season · Week</th><th>Last Game</th>
+        <th>Snapshot</th><th style="text-align:center">Season</th><th>Last Game</th>
         <th>W-L (Pct)</th>
         <th>Rank</th>
         <th>Rating</th>
