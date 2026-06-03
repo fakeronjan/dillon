@@ -413,7 +413,7 @@
 <header>
   <h1>DILLON 🏈</h1>
   <p class="subtitle">NFL Power Rankings</p>
-  <p class="model-note">Considers strength of opponent, margin of result, and recency. Reads as approximate point-spread vs avg team. Offense and Defense break REACT into how much each side of the ball contributes (they sum to REACT). ~+3 = contender; ~+10 = elite; ~+20 = generational (1985 Bears = 20.65).</p>
+  <p class="model-note">Considers strength of opponent, margin of result, and recency. Reads as approximate point-spread vs avg team. Offense and Defense break Rating into how much each side of the ball contributes (they sum to Rating). ~+3 = contender; ~+10 = elite; ~+20 = generational (1985 Bears = 20.65).</p>
   <p class="updated"><span class="cadence-inline">🔄 Updated daily</span> <span class="cadence-sep">|</span> <span id="last-updated">Loading...</span> <span class="cadence-sep">|</span> <span id="last-refreshed">Loading...</span></p>
 </header>
 
@@ -499,7 +499,7 @@
 
 <!-- ── GOAT TABLE ───────────────────────────────────────────────────────── -->
 <div id="goat" class="tab">
-  <p class="data-note">Top 50 single-season ratings · Pick the metric (overall REACT, offense only, or defense only), then pick the snapshot (end of regular season vs. end of playoffs).</p>
+  <p class="data-note">Top 50 single-season ratings · Pick the metric (overall Rating, offense only, or defense only), then pick the snapshot (end of regular season vs. end of playoffs).</p>
   <div class="conf-pills" id="goat-metric-pills"></div>
   <div class="conf-pills" id="goat-mode-pills"></div>
   <div class="conf-pills" id="goat-conf-pills"></div>
@@ -888,7 +888,8 @@ function renderStandings() {
   const rows = teams.map(t => {
     const isStale = !!(prevDate && t.last_match_date && t.last_match_date <= prevDate);
     const slug = nameToSlug[t.team];
-    const label = t.display_name || t.team;
+    const badge = finishBadge(t.sb_status);
+    const label = (t.display_name || t.team) + (badge ? ' ' + badge : '');
     const teamTd = slug
       ? `<td class="team-cell linked" data-team-slug="${slug}" data-season="${season}">${label}</td>`
       : `<td class="team-cell">${label}</td>`;
@@ -902,7 +903,6 @@ function renderStandings() {
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_d, t.rank_d)}</td>
       <td class="last-match-cell">${renderLastMatch(t.last_match, season, isStale)}</td>
       <td class="col-hide-mobile" style="font-size:11px;color:#888;white-space:nowrap">${t.last_match_date || ''}</td>
-      <td class="col-hide-mobile" style="text-align:center">${finishBadge(t.sb_status)}</td>
     </tr>`;
   }).join('');
 
@@ -916,12 +916,11 @@ function renderStandings() {
         <th>Team</th>
         <th class="col-hide-mobile">Conf</th>
         <th>W-L (Pct)</th>
-        <th>REACT</th>
+        <th>Rating</th>
         <th class="col-hide-mobile">Offense</th>
         <th class="col-hide-mobile">Defense</th>
         <th>Last Game</th>
         <th class="col-hide-mobile">Date</th>
-        <th class="col-hide-mobile">Honors</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -1055,9 +1054,11 @@ function renderTeamTable() {
   const tableRows = [...rows].reverse().map(g => {
     const wkLabel = g.week_label || '';
     const era = (g.display_name && g.display_name !== canonical) ? g.display_name : '';
+    const badge = finishBadge(g.sb_status);
+    const badgeStr = badge ? ' ' + badge : '';
     const seasonCell = era
-      ? `${g.season} · ${wkLabel}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
-      : `${g.season} · ${wkLabel}`;
+      ? `${g.season} · ${wkLabel}${badgeStr}<div style="font-size:10px;color:#999;font-style:italic;line-height:1.2">${era}</div>`
+      : `${g.season} · ${wkLabel}${badgeStr}`;
     return `<tr>
     <td style="white-space:nowrap;color:#888;font-size:12px">${g.date}</td>
     <td class="linked" data-season-link="${g.season}" style="font-size:11px;color:#555;text-align:center">${seasonCell}${tsView !== 'single' ? seasonTag(g.season) : ''}</td>
@@ -1068,7 +1069,6 @@ function renderTeamTable() {
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_o, g.rank_o)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_d, g.rank_d)}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
-    <td class="col-hide-mobile" style="font-size:11px">${finishBadge(g.sb_status)}</td>
   </tr>`;
   }).join('');
 
@@ -1078,11 +1078,10 @@ function renderTeamTable() {
         <th>Date</th><th>Season · Week</th><th>Last Game</th>
         <th>W-L (Pct)</th>
         <th>Rank</th>
-        <th>REACT</th>
+        <th>Rating</th>
         <th class="col-hide-mobile">Offense</th>
         <th class="col-hide-mobile">Defense</th>
         <th class="col-hide-mobile">Conf</th>
-        <th class="col-hide-mobile">Honors</th>
       </tr></thead>
       <tbody>${tableRows}</tbody>
     </table>`;
@@ -1245,14 +1244,14 @@ function renderChampions() {
         <th style="text-align:center">Season</th>
         <th class="col-champ">Champion</th>
         <th class="col-champ col-hide-mobile">Rank</th>
-        <th class="col-champ">REACT</th>
+        <th class="col-champ">Rating</th>
         <th class="col-champ col-hide-mobile">Offense</th>
         <th class="col-champ col-hide-mobile">Defense</th>
         <th class="col-champ col-hide-mobile">W-L</th>
         <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Score</th>
         <th class="col-ru">Runner-Up</th>
         <th class="col-ru col-hide-mobile">Rank</th>
-        <th class="col-ru">REACT</th>
+        <th class="col-ru">Rating</th>
         <th class="col-ru col-hide-mobile">Offense</th>
         <th class="col-ru col-hide-mobile">Defense</th>
         <th class="col-ru col-hide-mobile">W-L</th>
@@ -1352,7 +1351,7 @@ function renderRankings(rankType) {
   const isOff   = OFF_MODES.has(rankType);
   const isDef   = DEF_MODES.has(rankType);
   const isPreSB = PRE_SB_MODES.has(rankType);
-  const metricLabel = isOff ? 'Offense' : isDef ? 'Defense' : 'REACT';
+  const metricLabel = isOff ? 'Offense' : isDef ? 'Defense' : 'Rating';
 
   // Filter to rated SBs only. For O/D lists also require rating_o/d on both
   // teams (the engine emits these from commit 534caff onward; older rebuilds
@@ -1389,22 +1388,22 @@ function renderRankings(rankType) {
   switch (rankType) {
     case 'best-champs':
       sorted = [...rows].sort((a, b) => b.champ.rating - a.champ.rating).slice(0, 10);
-      note   = 'Top 10 champions by REACT rating. The strongest teams ever to win a Super Bowl.';
+      note   = 'Top 10 champions by overall Rating. The strongest teams ever to win a Super Bowl.';
       mode   = 'team-vs-opp';
       break;
     case 'worst-champs':
       sorted = [...rows].sort((a, b) => a.champ.rating - b.champ.rating).slice(0, 10);
-      note   = 'Bottom 10 champions by REACT rating. The weakest teams ever to win a Super Bowl.';
+      note   = 'Bottom 10 champions by overall Rating. The weakest teams ever to win a Super Bowl.';
       mode   = 'team-vs-opp';
       break;
     case 'best-losers':
       sorted = [...rows].sort((a, b) => b.loser.rating - a.loser.rating).slice(0, 10);
-      note   = 'Top 10 runner-ups by REACT rating. The strongest teams ever to lose a Super Bowl.';
+      note   = 'Top 10 runner-ups by overall Rating. The strongest teams ever to lose a Super Bowl.';
       mode   = 'loser-vs-champ';
       break;
     case 'worst-losers':
       sorted = [...rows].sort((a, b) => a.loser.rating - b.loser.rating).slice(0, 10);
-      note   = 'Bottom 10 runner-ups by REACT rating. The weakest teams ever to lose a Super Bowl.';
+      note   = 'Bottom 10 runner-ups by overall Rating. The weakest teams ever to lose a Super Bowl.';
       mode   = 'loser-vs-champ';
       break;
     case 'best-off-champs':
@@ -1429,12 +1428,12 @@ function renderRankings(rankType) {
       break;
     case 'best-matchup':
       sorted = [...rows].sort((a, b) => b.quality - a.quality).slice(0, 10);
-      note   = 'Top 10 by pre-SB matchup quality. Formula: max(REACT) + 2 × min(REACT), which weights the weaker team double to reward balanced strength over one-sided star power.';
+      note   = 'Top 10 by pre-SB matchup quality. Formula: max(Rating) + 2 × min(Rating), which weights the weaker team double to reward balanced strength over one-sided star power.';
       mode   = 'matchup';
       break;
     case 'worst-matchup':
       sorted = [...rows].sort((a, b) => a.quality - b.quality).slice(0, 10);
-      note   = 'Bottom 10 by pre-SB matchup quality. Formula: max(REACT) + 2 × min(REACT), which weights the weaker team double to penalise lopsided matchups over evenly-mediocre ones.';
+      note   = 'Bottom 10 by pre-SB matchup quality. Formula: max(Rating) + 2 × min(Rating), which weights the weaker team double to penalise lopsided matchups over evenly-mediocre ones.';
       mode   = 'matchup';
       break;
     case 'closest':
@@ -1495,7 +1494,7 @@ function renderRankingTable(rows, mode, metricLabel) {
   // For team-quality modes, the LEFT team's metric column is the sort key.
   // metricLabel defaults to 'REACT' but switches to 'Offense' or 'Defense'
   // for the O/D leaderboards.
-  const label = metricLabel || 'REACT';
+  const label = metricLabel || 'Rating';
   const sortLeftReact = !isPreSB;
   const leftReactHeader = sortLeftReact
     ? `<th class="col-champ sort-col">${label}</th>`
@@ -1552,12 +1551,12 @@ const PAIR_HEAD = `
     <th style="text-align:center">Season</th>
     <th class="col-champ">Champion</th>
     <th class="col-champ col-hide-mobile">Rank</th>
-    <th class="col-champ">REACT</th>
+    <th class="col-champ">Rating</th>
     <th class="col-champ col-hide-mobile">W-L</th>
     <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Score</th>
     <th class="col-ru">Runner-Up</th>
     <th class="col-ru col-hide-mobile">Rank</th>
-    <th class="col-ru">REACT</th>
+    <th class="col-ru">Rating</th>
     <th class="col-ru col-hide-mobile">W-L</th>`;
 
 function pairRow(e, isPairEnd) {
@@ -1748,7 +1747,7 @@ function goatPick() {
   return {
     data:    goatMode === 'rs' ? goatDataRS : goatDataPS,
     field:   'rating',
-    header:  'REACT',
+    header:  'Rating',
   };
 }
 
@@ -1761,8 +1760,9 @@ function renderGoat() {
     : data.filter(t => t.conference === goatConf);
   updateDisruptedNote('goat-disrupted-note', teams.map(t => t.season));
   const rows = teams.map(t => {
-    const label = t.display_name || t.team;
-    const slug = nameToSlug[t.team] || nameToSlug[label];
+    const badge = finishBadge(t.sb_status);
+    const label = (t.display_name || t.team) + (badge ? ' ' + badge : '');
+    const slug = nameToSlug[t.team] || nameToSlug[t.display_name || t.team];
     const teamTd = slug
       ? `<td class="team-cell linked" data-team-slug="${slug}" data-season="${t.season}">${label}</td>`
       : `<td class="team-cell">${label}</td>`;
@@ -1774,7 +1774,6 @@ function renderGoat() {
     <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
     <td>${ratingBar(val)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
-    <td class="col-hide-mobile" style="font-size:11px">${finishBadge(t.sb_status)}</td>
   </tr>`;
   }).join('');
 
@@ -1787,7 +1786,6 @@ function renderGoat() {
         <th class="col-hide-mobile">Conf</th>
         <th>${pick.header}</th>
         <th class="col-hide-mobile">W-L</th>
-        <th class="col-hide-mobile">Honors</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -1799,7 +1797,7 @@ buildConfPills('standings-conf-pills', standingsConf, v => { standingsConf = v; 
 buildConfPills('ts-conf-pills',        tsConf,        v => { tsConf = v; populateTeamSelect(); });
 buildConfPills('goat-conf-pills',      goatConf,      v => { goatConf = v; renderGoat(); });
 buildConfPills('goat-metric-pills',    goatMetric,    v => { goatMetric = v; renderGoat(); }, [
-  { value: 'react', label: 'REACT (overall)' },
+  { value: 'react', label: 'Rating (overall)' },
   { value: 'o',     label: 'Offense only' },
   { value: 'd',     label: 'Defense only' },
 ]);
