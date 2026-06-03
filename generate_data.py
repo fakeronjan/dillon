@@ -12,6 +12,7 @@ NFL-specific tweaks vs LOBO/DUNCAN:
 """
 
 import pandas as pd
+import numpy as np
 import json
 import os
 import re
@@ -702,6 +703,159 @@ print(f"  Cached HFA for {len(_snapshot_hfa_cache):,} snapshots; "
       f"(window: {_hfa_window_label})")
 
 
+# ── Super Bowl odds (logistic regression, per-week leave-one-season-out) ────
+# For each team T and each regular-season snapshot R, compute P(T wins Super
+# Bowl that season) by training a logistic regression on every other season's
+# week-W snapshots (features: rating_o, rating_d, hfa; label: won_sb).
+# Predictions for the held-out season are then normalized so the league total
+# = 100% (since exactly one team wins each year).
+#
+# Leave-one-season-out keeps historical predictions honest: when we compute
+# 2007 Giants' week-12 SB odds, the model has not been told the 2007 outcome.
+# This is what makes retrospective "biggest upset" stories meaningful.
+#
+# Playoff snapshots (weeks 101-104) are excluded — the path is being
+# revealed game-by-game and rating-based prediction stops being meaningful.
+
+print("Computing Super Bowl odds (per-week logistic regression)...")
+from scipy.optimize import minimize
+
+REGULAR_SEASON_WEEKS = list(range(1, 19))  # weeks 1-18 (pre-2021 used 1-17)
+
+# Identify SB winners by season — the team flagged sb_champ at week 104.
+_sb_winners = {}
+for _season, _sdf in df.groupby('season'):
+    _wk104 = _sdf[(_sdf['week'] == 104) & (_sdf['sb_champ'] == 1)]
+    if not _wk104.empty:
+        _sb_winners[int(_season)] = _wk104['name'].iloc[0]
+print(f"  SB winners identified: {len(_sb_winners)} seasons")
+
+# Build training rows: one per (team, season, regular-season-week) with valid
+# (O, D, HFA) features and a known SB outcome. Skip in-progress seasons.
+_sb_rows = []
+for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
+    _season = int(_r['season'])
+    if _season not in _sb_winners:
+        continue
+    if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
+        continue
+    _hfa = _hfa_val(_snapshot_hfa_cache.get(int(_r['ranking_id']), {}), _r['name'])
+    if _hfa is None:
+        continue
+    _sb_rows.append({
+        'season':     _season,
+        'week':       int(_r['week']),
+        'ranking_id': int(_r['ranking_id']),
+        'team':       _r['name'],
+        'rating_o':   float(_r['rating_o']),
+        'rating_d':   float(_r['rating_d']),
+        'hfa':        float(_hfa),
+        'won_sb':     1 if _r['name'] == _sb_winners[_season] else 0,
+    })
+_sb_train_df = pd.DataFrame(_sb_rows)
+print(f"  Training rows: {len(_sb_train_df):,} (team, season, regular-season-week)")
+
+
+def _fit_logistic(X, y):
+    """Plain logistic regression via scipy BFGS. Returns beta vector with
+    intercept as first element. X shape (n, k), y shape (n,)."""
+    n, k = X.shape
+    Xa = np.column_stack([np.ones(n), X])
+
+    def nll(beta):
+        z = Xa @ beta
+        # Numerically stable log(1 + exp(z))
+        return float(np.sum(np.maximum(z, 0.0) + np.log1p(np.exp(-np.abs(z))) - y * z))
+
+    def grad(beta):
+        z = Xa @ beta
+        p_hat = 1.0 / (1.0 + np.exp(-z))
+        return Xa.T @ (p_hat - y)
+
+    res = minimize(nll, np.zeros(k + 1), jac=grad, method='BFGS',
+                   options={'maxiter': 200, 'gtol': 1e-6})
+    return res.x
+
+
+def _predict_logistic(X, beta):
+    n = X.shape[0]
+    Xa = np.column_stack([np.ones(n), X])
+    z = Xa @ beta
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+# Build the also-in-progress-current-season frame: for seasons NOT in
+# _sb_winners (in-progress), we'll still predict using a model trained on
+# all known seasons.
+_current_rows = []
+for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
+    _season = int(_r['season'])
+    if _season in _sb_winners:
+        continue  # handled in LOO loop
+    if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
+        continue
+    _hfa = _hfa_val(_snapshot_hfa_cache.get(int(_r['ranking_id']), {}), _r['name'])
+    if _hfa is None:
+        continue
+    _current_rows.append({
+        'season':     _season,
+        'week':       int(_r['week']),
+        'ranking_id': int(_r['ranking_id']),
+        'team':       _r['name'],
+        'rating_o':   float(_r['rating_o']),
+        'rating_d':   float(_r['rating_d']),
+        'hfa':        float(_hfa),
+    })
+_sb_current_df = pd.DataFrame(_current_rows)
+
+# Fit + predict
+_sb_odds_cache = {}  # (ranking_id, team) -> sb_odds  (float, 0-1)
+_FEATURES = ['rating_o', 'rating_d', 'hfa']
+
+for _week_val, _week_data in _sb_train_df.groupby('week'):
+    if len(_week_data) < 50 or _week_data['won_sb'].sum() < 3:
+        continue  # insufficient signal for this week
+
+    X_all = _week_data[_FEATURES].to_numpy()
+    y_all = _week_data['won_sb'].to_numpy()
+
+    # LOO: for each season in this week's data, train on the rest
+    for _season in _week_data['season'].unique():
+        mask_in   = _week_data['season'] != _season
+        mask_held = _week_data['season'] == _season
+        beta = _fit_logistic(X_all[mask_in.values], y_all[mask_in.values])
+
+        held = _week_data[mask_held]
+        X_held = held[_FEATURES].to_numpy()
+        probs = _predict_logistic(X_held, beta)
+        total = probs.sum()
+        if total > 0:
+            probs = probs / total
+        for team, p, rid in zip(held['team'].values, probs, held['ranking_id'].values):
+            _sb_odds_cache[(int(rid), team)] = float(p)
+
+    # Current/in-progress predictions: train on the full week dataset
+    if not _sb_current_df.empty:
+        cur_at_week = _sb_current_df[_sb_current_df['week'] == _week_val]
+        if not cur_at_week.empty:
+            beta_full = _fit_logistic(X_all, y_all)
+            for _rid_val, rid_group in cur_at_week.groupby('ranking_id'):
+                X_cur = rid_group[_FEATURES].to_numpy()
+                probs = _predict_logistic(X_cur, beta_full)
+                total = probs.sum()
+                if total > 0:
+                    probs = probs / total
+                for team, p in zip(rid_group['team'].values, probs):
+                    _sb_odds_cache[(int(_rid_val), team)] = float(p)
+
+print(f"  SB-odds predictions cached for {len(_sb_odds_cache):,} (snapshot, team) pairs")
+
+
+def _sb_odds_val(ranking_id, team):
+    """Return SB odds as float 0-1, or None if no prediction at this snapshot."""
+    return _sb_odds_cache.get((int(ranking_id), team))
+
+
 # ── 1. Current standings ─────────────────────────────────────────────────────
 print("Writing current_standings.json...")
 latest_id = int(df['ranking_id'].max())
@@ -726,6 +880,7 @@ standings_data = {
             'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
             'hfa':             _hfa_val(_hfa_lookup, r['name']),
             'hfa_rank':        _hfa_rk(_hfa_lookup, r['name']),
+            'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
             'record':          clean(r['record']),
             'last_match':      era_aware_last_match(clean(r['lastgame']) if _played(r['lastgame']) else last_game_as_of(r['name'], r['season_week'], r['season']), r['season']),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
@@ -867,6 +1022,7 @@ for team in all_teams:
                 'rank_d':            int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
                 'hfa':               _hfa_val(snap_hfa, team),
                 'hfa_rank':          _hfa_rk(snap_hfa, team),
+                'sb_odds':           _sb_odds_val(r['ranking_id'], team),
                 'record':            clean(r['record']),
                 'regular_record':    reg,
                 'playoff_record':    po,
@@ -937,6 +1093,7 @@ for season in all_seasons:
                 'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
                 'hfa':             _hfa_val(snap_hfa, r['name']),
                 'hfa_rank':        _hfa_rk(snap_hfa, r['name']),
+                'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
                 'record':          clean(r['record']),
                 'regular_record':  reg,
                 'playoff_record':  po,
