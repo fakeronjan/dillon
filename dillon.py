@@ -531,11 +531,14 @@ def assemble_final(master_df, react_df, standings_df):
     latest_week_id = final_df['ranking_id'].max()
     final_df['most_recent_week'] = (final_df['ranking_id'] == latest_week_id).astype(int)
 
-    # season_flag: only populated for fully-complete seasons.
-    # NFL season YYYY ends in Feb of YYYY+1; "fully complete" once today is past March 31 of YYYY+1.
-    today = datetime.now().date()
+    # season_flag: only populated for fully-complete seasons. A season is
+    # "fully complete" the moment the Super Bowl game (week=WEEK_SUPERBOWL,
+    # i.e. 104) lands in the games data — event-based, mirrors GRIFFEY's
+    # WS-walker and new ZIDANE's CL-Final-date gate. No date cushion means
+    # badges show the day after the SB instead of waiting until April.
     def season_is_fully_complete(season):
-        return today > datetime(int(season) + 1, 3, 31).date()
+        sb = master_df[(master_df['season'] == season) & (master_df['week'] == WEEK_SUPERBOWL)]
+        return not sb.empty
 
     seasons = sorted(final_df['season'].unique())
 
