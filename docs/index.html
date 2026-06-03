@@ -773,14 +773,16 @@ function fmtOD(rating, rank) {
   return `<div class="od-val">${r}</div><div class="od-rank">${rank}</div>`;
 }
 
-// Super Bowl odds (logistic-regression probability) formatted as percentage.
+// Super Bowl odds (logistic-regression probability) formatted as percentage,
+// with optional rank stacked below to match the OFF/DEF/HFA columns.
 // 0% (eliminated) and rounds-to-0.0% render as '-'; 100% drops the decimal.
-function fmtSBOdds(odds) {
+function fmtSBOdds(odds, rank) {
   if (odds == null) return '-';
   const displayed = (odds * 100).toFixed(1);
   if (displayed === '0.0') return '-';
-  if (parseFloat(displayed) >= 100) return '100%';
-  return `${displayed}%`;
+  const value = parseFloat(displayed) >= 100 ? '100%' : `${displayed}%`;
+  if (rank == null) return value;
+  return `<div class="od-val">${value}</div><div class="od-rank">${rank}</div>`;
 }
 
 function ratingBar(rating) {
@@ -941,7 +943,7 @@ function renderStandings() {
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_o, t.rank_o)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_d, t.rank_d)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.hfa, t.hfa_rank)}</td>
-      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${fmtSBOdds(t.sb_odds)}</td>
+      <td class="rating-cell od-cell col-hide-mobile">${fmtSBOdds(t.sb_odds, t.sb_odds_rank)}</td>
       <td class="last-match-cell">${lastGameCell}</td>
     </tr>`;
   }).join('');
@@ -1118,7 +1120,7 @@ function renderTeamTable() {
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_o, g.rank_o)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_d, g.rank_d)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.hfa, g.hfa_rank)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${fmtSBOdds(g.sb_odds)}</td>
+    <td class="rating-cell od-cell col-hide-mobile">${fmtSBOdds(g.sb_odds, g.sb_odds_rank)}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
   </tr>`;
   }).join('');

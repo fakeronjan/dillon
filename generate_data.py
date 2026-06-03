@@ -1619,9 +1619,38 @@ print(f"  EOR locked-in: {_eor_locked} seasons")
 print(f"  Total SB-odds predictions cached: {len(_sb_odds_cache):,} (snapshot, team) pairs")
 
 
+# Precompute per-snapshot SB-odds rank (1 = highest probability). Teams
+# with 0% (eliminated) are unranked — display would just be "-". Built as
+# a dict {ranking_id -> {team: rank}} so the per-team accessor is O(1).
+_sb_odds_rank_cache = {}
+_sb_pairs_by_rid = {}
+for (rid, team), odds in _sb_odds_cache.items():
+    if odds is None or odds <= 0:
+        continue
+    _sb_pairs_by_rid.setdefault(rid, []).append((team, odds))
+for rid, pairs in _sb_pairs_by_rid.items():
+    pairs.sort(key=lambda x: -x[1])
+    rank_map = {}
+    prev_odds = None
+    prev_rank = 0
+    for i, (team, odds) in enumerate(pairs, start=1):
+        # Standard competition ranking: tied teams share the lower rank.
+        if odds != prev_odds:
+            prev_rank = i
+            prev_odds = odds
+        rank_map[team] = prev_rank
+    _sb_odds_rank_cache[rid] = rank_map
+
+
 def _sb_odds_val(ranking_id, team):
     """Return SB odds as float 0-1, or None if no prediction at this snapshot."""
     return _sb_odds_cache.get((int(ranking_id), team))
+
+
+def _sb_odds_rk(ranking_id, team):
+    """Return SB-odds rank (1 = best). None for eliminated (0%) teams."""
+    rm = _sb_odds_rank_cache.get(int(ranking_id))
+    return rm.get(team) if rm else None
 
 
 # ── 1. Current standings ─────────────────────────────────────────────────────
@@ -1649,6 +1678,7 @@ standings_data = {
             'hfa':             _hfa_val(_hfa_lookup, r['name']),
             'hfa_rank':        _hfa_rk(_hfa_lookup, r['name']),
             'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
+            'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
             'record':          clean(r['record']),
             'last_match':      era_aware_last_match(clean(r['lastgame']) if _played(r['lastgame']) else last_game_as_of(r['name'], r['season_week'], r['season']), r['season']),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
@@ -1791,6 +1821,7 @@ for team in all_teams:
                 'hfa':               _hfa_val(snap_hfa, team),
                 'hfa_rank':          _hfa_rk(snap_hfa, team),
                 'sb_odds':           _sb_odds_val(r['ranking_id'], team),
+                'sb_odds_rank':      _sb_odds_rk(r['ranking_id'], team),
                 'record':            clean(r['record']),
                 'regular_record':    reg,
                 'playoff_record':    po,
@@ -1862,6 +1893,7 @@ for season in all_seasons:
                 'hfa':             _hfa_val(snap_hfa, r['name']),
                 'hfa_rank':        _hfa_rk(snap_hfa, r['name']),
                 'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
+                'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
                 'record':          clean(r['record']),
                 'regular_record':  reg,
                 'playoff_record':  po,
