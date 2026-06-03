@@ -3,7 +3,8 @@ generate_data.py — reads dillon_ratings_with_standings.csv and writes JSON for
 Run after dillon.py. Outputs to docs/data/.
 
 NFL-specific tweaks vs LOBO/DUNCAN:
-  - Two ratings per team per snapshot (REACT 20-week + HOTTAKE 10-week)
+  - REACT 20-week rolling rating, decomposed into Offense + Defense via a
+    Massey-style dual solver (engine commit 534caff)
   - AFC/NFC conference + division mapping for all 44 historical team names since 1970
   - Weekly cadence (cume_week_id, not daily)
   - Records can include ties (W-L-T), e.g. "10-5-1"
@@ -585,14 +586,12 @@ standings_data = {
     'teams': [
         {
             'rank':            int(r['rank']),
-            'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
             'team':            r['name'],
             'display_name':    display_name(r['name'], r['season']),
             'conference':      conf_for_season(r['name'], r['season']),
             'division':        div_for_season(r['name'], r['season']),
             'division_winner': 1 if (int(r['season']), r['name']) in _division_winners else 0,
             'rating':          round(float(r['rating']), 3),
-            'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
             'rating_o':        round(float(r['rating_o']), 3) if 'rating_o' in r and not pd.isna(r['rating_o']) else None,
             'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
             'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
@@ -660,8 +659,6 @@ def _build_goat(rows, sort_col='rating'):
             'rating':          round(float(r['rating']), 3),
             'rating_o':        round(float(r['rating_o']), 3) if 'rating_o' in r and not pd.isna(r['rating_o']) else None,
             'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
-            'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
-            'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
             'record':          clean(r['record']),
             'regular_record':  reg,
             'playoff_record':  playoff_record(final_record, reg),
@@ -733,8 +730,6 @@ for team in all_teams:
                 'display_name':      display_name(team, season),
                 'rating':            round(float(r['rating']), 3),
                 'rank':              int(r['rank']),
-                'rating2':           round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
-                'rank2':             int(r['rank2']) if not pd.isna(r['rank2']) else None,
                 'rating_o':          round(float(r['rating_o']), 3) if 'rating_o' in r and not pd.isna(r['rating_o']) else None,
                 'rating_d':          round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':            int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
@@ -794,14 +789,12 @@ for season in all_seasons:
             played_today = _played(r['lastgame'])
             teams_snap.append({
                 'rank':            int(r['rank']),
-                'rank2':           int(r['rank2']) if not pd.isna(r['rank2']) else None,
                 'team':            r['name'],
                 'display_name':    display_name(r['name'], season),
                 'conference':      conf_for_season(r['name'], season),
                 'division':        div_for_season(r['name'], season),
                 'division_winner': 1 if (int(season), r['name']) in _division_winners else 0,
                 'rating':          round(float(r['rating']), 3),
-                'rating2':         round(float(r['rating2']), 3) if not pd.isna(r['rating2']) else None,
                 'rating_o':        round(float(r['rating_o']), 3) if 'rating_o' in r and not pd.isna(r['rating_o']) else None,
                 'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
@@ -847,7 +840,7 @@ champions = []
 # conference championship and BEFORE the Super Bowl, across all rated seasons
 # (1971+). Used to evaluate matchup quality / closeness / upsets without the
 # circularity of letting the SB result itself colour the "going-in" rating.
-pre_sb_cols = ['name', 'season', 'rating', 'rating2', 'rank', 'rank2', 'record']
+pre_sb_cols = ['name', 'season', 'rating', 'rank', 'record']
 # Carry O/D through pre-SB lookup when available (defensive in case of older
 # rebuilds without the columns — the engine commit 534caff is when they began).
 for c in ('rating_o', 'rating_d', 'rank_o', 'rank_d'):
@@ -863,9 +856,7 @@ def pre_sb_fields(name, season, reg_record):
         return {}
     out = {
         'rating_pre':         round(float(p['rating']),  3),
-        'rating2_pre':        round(float(p['rating2']), 3) if not pd.isna(p['rating2']) else None,
         'rank_pre':           int(p['rank']),
-        'rank2_pre':          int(p['rank2']) if not pd.isna(p['rank2']) else None,
         'playoff_record_pre': playoff_record(clean(p['record']), reg_record),
     }
     if 'rating_o' in p and not pd.isna(p['rating_o']):
@@ -910,9 +901,7 @@ for season in sorted(df['season'].unique(), reverse=True):
             'division':        div_for_season(cr['name'], season),
             'division_winner': 1 if (int(season), cr['name']) in _division_winners else 0,
             'rating':         round(float(cr['rating']), 3),
-            'rating2':        round(float(cr['rating2']), 3) if not pd.isna(cr['rating2']) else None,
             'rank':           int(cr['rank']),
-            'rank2':          int(cr['rank2']) if not pd.isna(cr['rank2']) else None,
             'rating_o':       round(float(cr['rating_o']), 3) if 'rating_o' in cr and not pd.isna(cr['rating_o']) else None,
             'rating_d':       round(float(cr['rating_d']), 3) if 'rating_d' in cr and not pd.isna(cr['rating_d']) else None,
             'rank_o':         int(cr['rank_o']) if 'rank_o' in cr and not pd.isna(cr['rank_o']) else None,
@@ -929,9 +918,7 @@ for season in sorted(df['season'].unique(), reverse=True):
             'division':        div_for_season(rr['name'], season),
             'division_winner': 1 if (int(season), rr['name']) in _division_winners else 0,
             'rating':         round(float(rr['rating']), 3),
-            'rating2':        round(float(rr['rating2']), 3) if not pd.isna(rr['rating2']) else None,
             'rank':           int(rr['rank']),
-            'rank2':          int(rr['rank2']) if not pd.isna(rr['rank2']) else None,
             'rating_o':       round(float(rr['rating_o']), 3) if 'rating_o' in rr and not pd.isna(rr['rating_o']) else None,
             'rating_d':       round(float(rr['rating_d']), 3) if 'rating_d' in rr and not pd.isna(rr['rating_d']) else None,
             'rank_o':         int(rr['rank_o']) if 'rank_o' in rr and not pd.isna(rr['rank_o']) else None,

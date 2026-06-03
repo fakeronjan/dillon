@@ -13,7 +13,6 @@ from datetime import datetime
 
 MIN_SEASON           = 1970   # first post-AFL/NFL-merger season
 WEEKS_REACT          = 20     # rolling window for REACT ratings (long-view)
-WEEKS_HOTTAKE        = 10     # rolling window for HOTTAKE ratings (recent-form)
 HOME_FIELD_ADVANTAGE = 2.5    # raw-point home advantage; subtracted from home margin pre-transform
 MARGIN_CAP           = 35     # symmetric clip on the HCA-adjusted home margin
 
@@ -454,7 +453,7 @@ def compute_standings(master_df, existing_standings_df):
     df_for_calc['loser_tie']        = df_for_calc['is_tie']
 
     max_date_id = int(master_df['cume_week_id'].max())
-    min_date_id = min(WEEKS_REACT, WEEKS_HOTTAKE)
+    min_date_id = WEEKS_REACT
 
     if len(existing_standings_df) > 0 and 'ranking_id' in existing_standings_df.columns:
         max_ranked = int(existing_standings_df['ranking_id'].max())
@@ -517,19 +516,11 @@ def compute_standings(master_df, existing_standings_df):
 # FINAL ASSEMBLY
 # =========================================================
 
-def assemble_final(master_df, react_df, hottake_df, standings_df):
-    """Merge REACT + HOTTAKE ratings + standings, add flags."""
+def assemble_final(master_df, react_df, standings_df):
+    """Merge REACT ratings + standings, add flags."""
     print('Final step — merging DILLON ratings and standings...')
 
-    # Merge the two rating streams
-    both = pd.merge(react_df, hottake_df, how='left',
-                    on=['ranking_id', 'season_week', 'season', 'name', 'week'])
-    both.rename(columns={
-        'rating_x': 'rating',  'rating_y': 'rating2',
-        'rank_x':   'rank',    'rank_y':   'rank2',
-    }, inplace=True)
-
-    final_df = pd.merge(both, standings_df, how='left', on=['ranking_id', 'name'])
+    final_df = pd.merge(react_df, standings_df, how='left', on=['ranking_id', 'name'])
     final_df.rename(columns={'season_week_x': 'season_week', 'season_x': 'season'}, inplace=True)
     final_df['season'] = final_df['season'].round(0).astype(int)
     final_df['record'] = final_df['record'].fillna('0-0')
@@ -613,7 +604,7 @@ def assemble_final(master_df, react_df, hottake_df, standings_df):
 
     final_df = final_df[[
         'ranking_id', 'season_week', 'season', 'week', 'name', 'name_season',
-        'rating', 'rank', 'rating2', 'rank2',
+        'rating', 'rank',
         'rating_o', 'rank_o', 'rating_d', 'rank_d',
         'record', 'most_recent_week', 'last_week_of_regular_season',
         'season_flag', 'sb_champ', 'sb_runnerup', 'sb_status',
@@ -647,15 +638,7 @@ if __name__ == '__main__':
     react_df = compute_ratings(master_df, existing_react, WEEKS_REACT, 'REACT', compute_od=True)
     react_df.to_csv('dillon_react_ratings.csv', index=False)
 
-    # 4. HOTTAKE ratings
-    try:
-        existing_hottake = pd.read_csv('dillon_hottake_ratings.csv')
-    except FileNotFoundError:
-        existing_hottake = pd.DataFrame()
-    hottake_df = compute_ratings(master_df, existing_hottake, WEEKS_HOTTAKE, 'HOTTAKE')
-    hottake_df.to_csv('dillon_hottake_ratings.csv', index=False)
-
-    # 5. Standings
+    # 4. Standings
     try:
         existing_standings = pd.read_csv('weekly_standings.csv')
     except FileNotFoundError:
@@ -663,5 +646,5 @@ if __name__ == '__main__':
     standings_df = compute_standings(master_df, existing_standings)
     standings_df.to_csv('weekly_standings.csv', index=False)
 
-    # 6. Final assembly
-    assemble_final(master_df, react_df, hottake_df, standings_df)
+    # 5. Final assembly
+    assemble_final(master_df, react_df, standings_df)
