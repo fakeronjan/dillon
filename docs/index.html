@@ -193,6 +193,24 @@
     font-variant-numeric: tabular-nums;
     color: #1a6b8a;
   }
+  /* Stacked Offense / Defense / HFA cells: value above, rank below. */
+  .od-val {
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+  .od-rank {
+    line-height: 1.15;
+    color: #888;
+    font-weight: 500;
+    font-size: 0.78em;
+    font-variant-numeric: tabular-nums;
+    margin-top: 1px;
+  }
+  td.od-cell, th.col-od {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
   .rating-bar-wrap {
     display: flex;
     flex-direction: column;
@@ -744,14 +762,15 @@ function attachLinks() {
 
 const BAR_MIN = -22, BAR_MAX = 22, BAR_RANGE = 44;
 
-// Single rating + dimmed rank pair, used by the Offense and Defense columns
-// on Standings / Team Summary / Champions. Mirrors the old HOTTAKE format
-// so the visual rhythm of those columns stays familiar.
+// Value (bold tinted) over rank (dimmed, smaller) on two lines. Used by
+// the Offense / Defense / HFA columns on Standings / Team Summary /
+// Champions. Stacking shrinks the column width, returning space to the
+// Last Match column on Standings.
 function fmtOD(rating, rank) {
   if (rating == null) return '-';
   const r = rating.toFixed(2);
   if (rank == null) return r;
-  return `${r} <span style="color:#888;font-size:0.85em">(${rank})</span>`;
+  return `<div class="od-val">${r}</div><div class="od-rank">${rank}</div>`;
 }
 
 // Super Bowl odds (logistic-regression probability) formatted as percentage.
@@ -919,9 +938,9 @@ function renderStandings() {
       <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
       <td>${ratingBar(t.rating)}</td>
-      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_o, t.rank_o)}</td>
-      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_d, t.rank_d)}</td>
-      <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.hfa, t.hfa_rank)}</td>
+      <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_o, t.rank_o)}</td>
+      <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_d, t.rank_d)}</td>
+      <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.hfa, t.hfa_rank)}</td>
       <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${fmtSBOdds(t.sb_odds)}</td>
       <td class="last-match-cell">${lastGameCell}</td>
     </tr>`;
@@ -938,9 +957,9 @@ function renderStandings() {
         <th class="col-hide-mobile">Conf</th>
         <th>W-L (Pct)</th>
         <th>Rating</th>
-        <th class="col-hide-mobile">Offense</th>
-        <th class="col-hide-mobile">Defense</th>
-        <th class="col-hide-mobile" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
+        <th class="col-hide-mobile col-od">OFF</th>
+        <th class="col-hide-mobile col-od">DEF</th>
+        <th class="col-hide-mobile col-od" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
         <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) at this snapshot. Trained on every other season's snapshots at this same week (leave-one-out). League-wide probabilities sum to 100%.">SB Odds</th>
         <th>Last Game</th>
       </tr></thead>
@@ -1096,9 +1115,9 @@ function renderTeamTable() {
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
     <td class="rank-cell">${g.rank}</td>
     <td>${ratingBar(g.rating)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_o, g.rank_o)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.rating_d, g.rank_d)}</td>
-    <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(g.hfa, g.hfa_rank)}</td>
+    <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_o, g.rank_o)}</td>
+    <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_d, g.rank_d)}</td>
+    <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.hfa, g.hfa_rank)}</td>
     <td class="rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center">${fmtSBOdds(g.sb_odds)}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
   </tr>`;
@@ -1111,9 +1130,9 @@ function renderTeamTable() {
         <th>W-L (Pct)</th>
         <th>Rank</th>
         <th>Rating</th>
-        <th class="col-hide-mobile">Offense</th>
-        <th class="col-hide-mobile">Defense</th>
-        <th class="col-hide-mobile" title="Home field advantage: home-game margin premium beyond what Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
+        <th class="col-hide-mobile col-od">OFF</th>
+        <th class="col-hide-mobile col-od">DEF</th>
+        <th class="col-hide-mobile col-od" title="Home field advantage: home-game margin premium beyond what Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
         <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) at this snapshot. Trained on every other season's snapshots at this same week (leave-one-out). League-wide probabilities sum to 100%.">SB Odds</th>
         <th class="col-hide-mobile">Conf</th>
       </tr></thead>
@@ -1239,8 +1258,8 @@ function renderChampions() {
       ${teamTd}
       <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap;color:#888;font-size:0.85em">${rank}</td>
       <td class="${bg} rating-cell" style="font-variant-numeric:tabular-nums">${rating}</td>
-      <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_o, t.rank_o)}</td>
-      <td class="${bg} rating-cell col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtOD(t.rating_d, t.rank_d)}</td>
+      <td class="${bg} rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_o, t.rank_o)}</td>
+      <td class="${bg} rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_d, t.rank_d)}</td>
       <td class="${bg} col-hide-mobile" style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>`;
   }
 
@@ -1279,15 +1298,15 @@ function renderChampions() {
         <th class="col-champ">Champion</th>
         <th class="col-champ col-hide-mobile">Rank</th>
         <th class="col-champ">Rating</th>
-        <th class="col-champ col-hide-mobile">Offense</th>
-        <th class="col-champ col-hide-mobile">Defense</th>
+        <th class="col-champ col-hide-mobile col-od">OFF</th>
+        <th class="col-champ col-hide-mobile col-od">DEF</th>
         <th class="col-champ col-hide-mobile">W-L</th>
         <th class="divider-col" style="text-align:center;font-size:10px;width:64px">Score</th>
         <th class="col-ru">Runner-Up</th>
         <th class="col-ru col-hide-mobile">Rank</th>
         <th class="col-ru">Rating</th>
-        <th class="col-ru col-hide-mobile">Offense</th>
-        <th class="col-ru col-hide-mobile">Defense</th>
+        <th class="col-ru col-hide-mobile col-od">OFF</th>
+        <th class="col-ru col-hide-mobile col-od">DEF</th>
         <th class="col-ru col-hide-mobile">W-L</th>
       </tr></thead>
       <tbody>${rows}</tbody>
