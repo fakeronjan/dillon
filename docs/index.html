@@ -1506,65 +1506,112 @@ function pairRow(e, isPairEnd) {
 }
 
 function renderRepeatChamps() {
+  // Detect runs of consecutive seasons with the SAME champion. A run of
+  // length N renders as a single N-row block (back-to-backs = 2 rows,
+  // would catch threepeats as 3 rows if any happened). Single-season
+  // wins are skipped — only runs of length 2+ show up here.
   const entries = [...(championsData['NFL'] || [])].sort((a, b) => a.season - b.season);
-  const pairs = [];
-  for (let i = 0; i < entries.length - 1; i++) {
-    const a = entries[i], b = entries[i + 1];
-    if (a.champion && b.champion &&
-        a.champion.team === b.champion.team &&
-        b.season - a.season === 1) {
-      pairs.push([a, b]);
+  const runs = [];
+  let current = [];
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    if (!e.champion) {
+      if (current.length >= 2) runs.push(current);
+      current = [];
+      continue;
+    }
+    const prev = current.length ? current[current.length - 1] : null;
+    const continues = prev
+      && prev.champion.team === e.champion.team
+      && e.season - prev.season === 1;
+    if (continues) {
+      current.push(e);
+    } else {
+      if (current.length >= 2) runs.push(current);
+      current = [e];
     }
   }
-  pairs.reverse(); // newest first
+  if (current.length >= 2) runs.push(current);
 
+  // Blocks newest-first.
+  runs.sort((a, b) => b[b.length - 1].season - a[a.length - 1].season);
+
+  const totalSeasons = runs.reduce((sum, r) => sum + r.length, 0);
   document.getElementById('history-rank-note').textContent =
-    `${pairs.length} back-to-back Super Bowl wins. Same team wins SB(N) and SB(N+1).`;
+    `${runs.length} repeat-championship runs (${totalSeasons} total seasons across consecutive titles).`;
 
-  if (!pairs.length) {
-    document.getElementById('history-rank-table-wrap').innerHTML = '<p class="loading">No back-to-back champions in this dataset.</p>';
+  if (!runs.length) {
+    document.getElementById('history-rank-table-wrap').innerHTML = '<p class="loading">No repeat champions in this dataset.</p>';
     return;
   }
 
-  const body = pairs.map(([a, b]) => pairRow(a, false) + pairRow(b, true)).join('');
+  // Rows within a block also render newest-first; the row-group-end border
+  // lives on the last RENDERED row (the OLDEST season after the reverse).
+  const body = runs.map(run => {
+    const rev = [...run].reverse();
+    return rev.map((e, i) => pairRow(e, i === rev.length - 1)).join('');
+  }).join('');
   document.getElementById('history-rank-table-wrap').innerHTML =
     `<table><thead><tr>${PAIR_HEAD}</tr></thead><tbody>${body}</tbody></table>`;
   attachLinks();
 }
 
 function renderRematches() {
+  // Group all Super Bowls between the SAME two teams into a single N-row
+  // block. A group's window extends as long as those two teams keep meeting
+  // — once 5 calendar years pass without them facing each other again,
+  // the window closes and a later meeting starts a fresh group.
+  //
+  // Patriots-Giants 2007 + 2011 = grouped (4-yr gap). Hypothetical same-
+  // pair 2007 + 2013 would split (6-yr gap > threshold).
+  //
   // Rated SBs only (1971+) — pre-rated rematches would lack REACT/W-L cells.
+  const REMATCH_GAP_THRESHOLD = 5;
   const entries = (championsData['NFL'] || []).filter(e =>
     e.champion && e.runner_up &&
     e.champion.rating != null && e.runner_up.rating != null
   ).sort((a, b) => a.season - b.season);
 
-  const seen = new Set();
-  const rematches = [];
-  for (let i = 0; i < entries.length; i++) {
-    for (let j = i + 1; j < entries.length; j++) {
-      const gap = entries[j].season - entries[i].season;
-      if (gap > 5) break;
-      const pi = [entries[i].champion.team, entries[i].runner_up.team].sort().join('|');
-      const pj = [entries[j].champion.team, entries[j].runner_up.team].sort().join('|');
-      if (pi !== pj) continue;
-      const key = `${pi}|${entries[i].season}|${entries[j].season}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      rematches.push({ a: entries[i], b: entries[j] });
-    }
+  const pairKey = e => [e.champion.team, e.runner_up.team].sort().join('|');
+  const meetingsByPair = {};
+  for (const e of entries) {
+    const k = pairKey(e);
+    (meetingsByPair[k] = meetingsByPair[k] || []).push(e);
   }
-  rematches.reverse(); // newest first (by latest meeting)
 
+  const groups = [];
+  for (const k of Object.keys(meetingsByPair)) {
+    const list = meetingsByPair[k];
+    let current = [list[0]];
+    for (let i = 1; i < list.length; i++) {
+      const gap = list[i].season - list[i - 1].season;
+      if (gap > REMATCH_GAP_THRESHOLD) {
+        if (current.length >= 2) groups.push(current);
+        current = [list[i]];
+      } else {
+        current.push(list[i]);
+      }
+    }
+    if (current.length >= 2) groups.push(current);
+  }
+
+  // Blocks newest-first by their last meeting.
+  groups.sort((a, b) => b[b.length - 1].season - a[a.length - 1].season);
+
+  const totalMeetings = groups.reduce((sum, g) => sum + g.length, 0);
   document.getElementById('history-rank-note').textContent =
-    `${rematches.length} Super Bowl rematches within 5 seasons. Same two teams meet again in the championship.`;
+    `${groups.length} Super Bowl rematch groups (${totalMeetings} total meetings). A group continues as long as the same two teams meet again within ${REMATCH_GAP_THRESHOLD} years.`;
 
-  if (!rematches.length) {
+  if (!groups.length) {
     document.getElementById('history-rank-table-wrap').innerHTML = '<p class="loading">No qualifying rematches.</p>';
     return;
   }
 
-  const body = rematches.map(({ a, b }) => pairRow(a, false) + pairRow(b, true)).join('');
+  // Rows within each group also newest-first.
+  const body = groups.map(group => {
+    const rev = [...group].reverse();
+    return rev.map((e, i) => pairRow(e, i === rev.length - 1)).join('');
+  }).join('');
   document.getElementById('history-rank-table-wrap').innerHTML =
     `<table><thead><tr>${PAIR_HEAD}</tr></thead><tbody>${body}</tbody></table>`;
   attachLinks();
