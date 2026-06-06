@@ -1,5 +1,5 @@
 """
-generate_data.py — reads dillon_ratings_with_standings.csv and writes JSON for the DILLON web frontend.
+generate_data.py - reads dillon_ratings_with_standings.csv and writes JSON for the DILLON web frontend.
 Run after dillon.py. Outputs to docs/data/.
 
 NFL-specific tweaks vs LOBO/DUNCAN:
@@ -195,7 +195,7 @@ def historical_display_names(canonical):
 # Format: team_name → list of (first_season, last_season_inclusive, conf, division).
 # 9999 = ongoing. Division name has no conf prefix (e.g. 'East', not 'AFC East').
 TEAM_DIVISION_HISTORY = {
-    # AFC East — stable from 1970
+    # AFC East - stable from 1970
     'Buffalo Bills':            [(1970, 9999, 'AFC', 'East')],
     'Miami Dolphins':           [(1970, 9999, 'AFC', 'East')],
     'Boston Patriots':          [(1970, 1970, 'AFC', 'East')],
@@ -219,12 +219,12 @@ TEAM_DIVISION_HISTORY = {
     'Baltimore Ravens':         [(1996, 2001, 'AFC', 'Central'),
                                  (2002, 9999, 'AFC', 'North')],
 
-    # AFC South (created 2002) — Houston/Tennessee lineage was AFC Central
+    # AFC South (created 2002) - Houston/Tennessee lineage was AFC Central
     'Houston Oilers':           [(1970, 1996, 'AFC', 'Central')],
     'Tennessee Oilers':         [(1997, 1998, 'AFC', 'Central')],
     # 'Tennessee Titans' is the DILLON-canonical name for Tennessee Oilers
     # (1997-1998) too via the TEAM_ALIASES collapse in dillon.py, so its
-    # history must cover the AFC-Central Oilers era as well — otherwise
+    # history must cover the AFC-Central Oilers era as well - otherwise
     # 1997/1998 'Tennessee Titans' rows fall through to the modern AFC South
     # fallback and corrupt playoff-field derivation.
     'Tennessee Titans':         [(1997, 2001, 'AFC', 'Central'),
@@ -233,7 +233,7 @@ TEAM_DIVISION_HISTORY = {
                                  (2002, 9999, 'AFC', 'South')],
     'Houston Texans':           [(2002, 9999, 'AFC', 'South')],
 
-    # AFC West — stable, with relocations within division
+    # AFC West - stable, with relocations within division
     'Denver Broncos':           [(1970, 9999, 'AFC', 'West')],
     'Kansas City Chiefs':       [(1970, 9999, 'AFC', 'West')],
     'Oakland Raiders':          [(1970, 1981, 'AFC', 'West'),
@@ -247,7 +247,7 @@ TEAM_DIVISION_HISTORY = {
                                  (1977, 2001, 'AFC', 'West'),
                                  (2002, 9999, 'NFC', 'West')],
 
-    # NFC East — stable from 1970
+    # NFC East - stable from 1970
     'Dallas Cowboys':           [(1970, 9999, 'NFC', 'East')],
     'New York Giants':          [(1970, 9999, 'NFC', 'East')],
     'Philadelphia Eagles':      [(1970, 9999, 'NFC', 'East')],
@@ -279,7 +279,7 @@ TEAM_DIVISION_HISTORY = {
                                  (1977, 2001, 'NFC', 'Central'),
                                  (2002, 9999, 'NFC', 'South')],
 
-    # NFC South (created 2002) — Falcons/Saints were NFC West, Bucs NFC Central
+    # NFC South (created 2002) - Falcons/Saints were NFC West, Bucs NFC Central
     'Atlanta Falcons':          [(1970, 2001, 'NFC', 'West'),
                                  (2002, 9999, 'NFC', 'South')],
     'Carolina Panthers':        [(1995, 2001, 'NFC', 'West'),
@@ -287,7 +287,7 @@ TEAM_DIVISION_HISTORY = {
     'New Orleans Saints':       [(1970, 2001, 'NFC', 'West'),
                                  (2002, 9999, 'NFC', 'South')],
 
-    # NFC West — Rams + 49ers (and Seahawks 1976, Bucs/etc handled above)
+    # NFC West - Rams + 49ers (and Seahawks 1976, Bucs/etc handled above)
     'Los Angeles Rams':         [(1970, 1994, 'NFC', 'West'),
                                  (2016, 9999, 'NFC', 'West')],
     'St. Louis Rams':           [(1995, 2015, 'NFC', 'West')],
@@ -345,7 +345,7 @@ def slug(name):
 def _played(result):
     """True iff this row represents an actual game played. Upstream now
     writes empty strings for non-game-days (was 'Bye / No Game' previously)
-    — both must be treated as "didn't play" or the forward-fill of
+    - both must be treated as "didn't play" or the forward-fill of
     last_match breaks for any week a team had a bye."""
     if result is None or pd.isna(result):
         return False
@@ -358,7 +358,7 @@ df['is_game_day'] = df['lastgame'].apply(_played).astype(int)
 df['is_end_of_season'] = df['season_flag'].isin([1, 2]).astype(int)
 
 # Per-(team, season) forward-filled last game. Keying by season prevents
-# cross-season carry-forward — at the start of a new season, teams that
+# cross-season carry-forward - at the start of a new season, teams that
 # haven't played yet correctly show empty rather than their previous-season
 # Super Bowl result.
 _last_game_history = {}
@@ -413,7 +413,7 @@ _reg_record_lookup = {
 
 # Final (post-playoff) record per (team, season) from season_flag == 2 snapshots.
 # Used so the GOAT-RS view can show each team's actual playoff outcome alongside
-# their regular-season record — mirrors GRIFFEY/SAKIC/COBI, where playoff_record
+# their regular-season record - mirrors GRIFFEY/SAKIC/COBI, where playoff_record
 # in goat_rs reflects how the team's playoffs ultimately went. Teams that
 # didn't make the playoffs fall back to their regular_record (giving "0-0").
 _final_record_lookup = {
@@ -515,7 +515,7 @@ def _common_opponents(season, teams, rs_games):
         opps.update(season_games[season_games['home_team_name'] == t]['visitor_team_name'])
         opps.update(season_games[season_games['visitor_team_name'] == t]['home_team_name'])
         opps.discard(t)
-        # Also exclude the tied teams themselves — common-games is vs OTHER common opps.
+        # Also exclude the tied teams themselves - common-games is vs OTHER common opps.
         opps -= set(teams)
         team_opps[t] = opps
     if not team_opps:
@@ -827,7 +827,7 @@ _season_records_cache = {}
 
 # ── Division winners (per season + (conference, division)) ───────────────────
 # Tag the team with the best RS record in each (conference, division) at end
-# of regular season. Real NFL tiebreakers are 9 steps deep — we apply the first
+# of regular season. Real NFL tiebreakers are 9 steps deep - we apply the first
 # three (head-to-head → division record → conference record) which resolve the
 # vast majority of historical ties; alphabetical name is the final fallback.
 _division_winners = set()  # set of (season, team) tuples
@@ -861,7 +861,7 @@ print(f"  {len(_division_winners)} division winners flagged.")
 #               - mean(away_resid_T_POV over T's away games in window)) / 2
 #
 # Window: games with date in (snap_date - 1095 days, snap_date]. True rolling-
-# day window — every week a new game enters the front AND a game from exactly
+# day window - every week a new game enters the front AND a game from exactly
 # 3 years ago drops off the back. So HFA updates every snapshot regardless of
 # whether T played at home or away that week.
 #
@@ -882,7 +882,7 @@ _rating_prior_lookup = _rsorted.set_index(['name', 'season', 'week'])['rating_pr
 def _prior_rating(name, season, week):
     return _rating_prior_lookup.get((name, int(season), int(week)))
 
-# Build the full hfa_contribution table — one row per non-neutral game with
+# Build the full hfa_contribution table - one row per non-neutral game with
 # valid prior ratings for both teams. Reused across all snapshot lookups.
 _all_hfa_games = games[games['is_neutral'] == 0].copy()
 _all_hfa_games['home_rating'] = _all_hfa_games.apply(
@@ -986,7 +986,7 @@ print(f"  Cached HFA for {len(_snapshot_hfa_cache):,} snapshots; "
 # 2007 Giants' week-12 SB odds, the model has not been told the 2007 outcome.
 # This is what makes retrospective "biggest upset" stories meaningful.
 #
-# Playoff snapshots (weeks 101-104) are excluded — the path is being
+# Playoff snapshots (weeks 101-104) are excluded - the path is being
 # revealed game-by-game and rating-based prediction stops being meaningful.
 
 print("Computing Super Bowl odds (per-week logistic regression)...")
@@ -995,13 +995,13 @@ from scipy.optimize import minimize
 REGULAR_SEASON_WEEKS = list(range(1, 19))  # weeks 1-18 (pre-2021 used 1-17)
 
 
-# Mathematical playoff elimination check — used to zero out teams whose
+# Mathematical playoff elimination check - used to zero out teams whose
 # record makes a playoff berth literally impossible. A team is eliminated
 # iff BOTH conditions hold:
 #   - conf-teams-currently-ahead-of-T's-max-wins >= playoff_seeds  (can't be top-7)
 #   - 1+ division opponent currently has wins > T's max wins         (can't win division)
 # Winning a division earns a top-4 seed regardless of overall record, so
-# both paths must be blocked for elimination. This is conservative — it
+# both paths must be blocked for elimination. This is conservative - it
 # only flags definite eliminations, never false positives.
 
 def _total_regular_season_games(season):
@@ -1078,7 +1078,7 @@ for _rid in df[df['week'].isin(REGULAR_SEASON_WEEKS)]['ranking_id'].unique():
         _eliminated_cache[int(_rid)] = _elim
 print(f"  Eliminated-team flags cached for {len(_eliminated_cache):,} snapshots")
 
-# Identify SB winners by season — the team flagged sb_champ at week 104.
+# Identify SB winners by season - the team flagged sb_champ at week 104.
 _sb_winners = {}
 for _season, _sdf in df.groupby('season'):
     _wk104 = _sdf[(_sdf['week'] == 104) & (_sdf['sb_champ'] == 1)]
@@ -1225,11 +1225,11 @@ print(f"  RS SB-odds predictions cached for {len(_sb_odds_cache):,} (snapshot, t
 # lost in earlier playoff rounds are explicitly zeroed out; alive teams
 # get model predictions normalized so their probabilities sum to 100%.
 #
-# Alive sets are derived from games — playoff_teams = anyone who played in
+# Alive sets are derived from games - playoff_teams = anyone who played in
 # week 101+ that season; alive[week] = playoff_teams minus everyone who
 # lost in any week up to and including this one. Works perfectly for
 # completed seasons. For current in-progress at snap 101 (WC done, DR not
-# played), bye teams won't appear in playoff_teams until DR — accepted
+# played), bye teams won't appear in playoff_teams until DR - accepted
 # limitation, fixed once DR games are scrape-able.
 
 print("Computing playoff SB odds (rounds 101-103 + post-SB 104)...")
@@ -1254,7 +1254,7 @@ def _playoff_state(season_games_df):
 
 _season_playoff_state = {int(s): _playoff_state(sub) for s, sub in games.groupby('season')}
 
-# Build playoff training rows — alive teams at each playoff snapshot
+# Build playoff training rows - alive teams at each playoff snapshot
 _playoff_train_rows = []
 for _, _r in df[df['week'].isin(PLAYOFF_TRAIN_WEEKS)].iterrows():
     _season = int(_r['season'])
@@ -1370,7 +1370,7 @@ for _season in _current_playoff_seasons:
         _zero_eliminated(rid, _season, _week_val)
 
 
-# Snapshot 104 (post-SB): direct assignment — SB winner gets 100%, every
+# Snapshot 104 (post-SB): direct assignment - SB winner gets 100%, every
 # other team that made the playoffs gets 0%, non-playoff teams stay absent.
 for _season, _winner in _sb_winners.items():
     wk104 = df[(df['season'] == _season) & (df['week'] == 104)]
@@ -1383,7 +1383,7 @@ for _season, _winner in _sb_winners.items():
 
 
 # EOR playoff-field lock-in: at end of regular season we know EXACTLY who's
-# in the playoffs. For COMPLETED seasons that's trivial — read week 101+
+# in the playoffs. For COMPLETED seasons that's trivial - read week 101+
 # games. For CURRENT in-progress at EOR (RS done, WC not played yet), we
 # derive the field directly from RS standings using division winners + top
 # wild cards by record. Either way, non-playoff teams get zeroed and the
@@ -1433,7 +1433,7 @@ def _pick_top_wild_card(season, pool, rs_games):
 
     survivors = reps
 
-    # Step 2: head-to-head sweep — only applicable when ALL teams in the
+    # Step 2: head-to-head sweep - only applicable when ALL teams in the
     # group played each other. Otherwise the rule is explicitly skipped
     # (NFL: "applicable only if one team beat all others or lost to all").
     if _all_pairs_played(s_int, survivors, rs_games):
@@ -1473,7 +1473,7 @@ def _pick_top_wild_card(season, pool, rs_games):
 
 def _resolve_wild_card_tie(season, tied_teams, num_to_pick, rs_games):
     """Pick `num_to_pick` teams from a tied pool, one at a time. Each pick
-    redoes the full cull-and-cascade against the remaining pool — that's
+    redoes the full cull-and-cascade against the remaining pool - that's
     the actual NFL behavior, otherwise multiple non-div-winners from the
     same division can never both make the playoffs."""
     if len(tied_teams) <= num_to_pick:
@@ -1620,7 +1620,7 @@ print(f"  Total SB-odds predictions cached: {len(_sb_odds_cache):,} (snapshot, t
 
 
 # Precompute per-snapshot SB-odds rank (1 = highest probability). Teams
-# with 0% (eliminated) are unranked — display would just be "-". Built as
+# with 0% (eliminated) are unranked - display would just be "-". Built as
 # a dict {ranking_id -> {team: rank}} so the per-team accessor is O(1).
 _sb_odds_rank_cache = {}
 _sb_pairs_by_rid = {}
@@ -1699,7 +1699,7 @@ GOAT_TOP_N = 50
 print("Writing goat_rs.json + goat_ps.json...")
 
 
-# Short / disrupted seasons — flagged on GOAT/Champions/Standings/TeamSummary
+# Short / disrupted seasons - flagged on GOAT/Champions/Standings/TeamSummary
 # rows so the UI can tag them inline + footnote. 2020 NOT tagged: NFL played
 # full 16-game schedule despite COVID disruption.
 SHORT_SEASONS = {
@@ -1725,7 +1725,7 @@ def _build_goat(rows, sort_col='rating'):
         # For RS snapshots, r['record'] equals the regular-season record
         # (no playoff games played yet), which would give playoff_record="0-0".
         # Use the team's FINAL record so the surfaced playoff_record reflects
-        # their actual playoff outcome — matches GRIFFEY/SAKIC/COBI convention.
+        # their actual playoff outcome - matches GRIFFEY/SAKIC/COBI convention.
         final_record = _final_record_lookup.get((r['name'], s), r['record'])
         out.append({
             'rank':            i + 1,
@@ -1937,7 +1937,7 @@ champions = []
 # circularity of letting the SB result itself colour the "going-in" rating.
 pre_sb_cols = ['name', 'season', 'rating', 'rank', 'record']
 # Carry O/D through pre-SB lookup when available (defensive in case of older
-# rebuilds without the columns — the engine commit 534caff is when they began).
+# rebuilds without the columns - the engine commit 534caff is when they began).
 for c in ('rating_o', 'rating_d', 'rank_o', 'rank_d'):
     if c in df.columns:
         pre_sb_cols.append(c)
@@ -1988,7 +1988,7 @@ for season in sorted(df['season'].unique(), reverse=True):
     champions.append({
         'season':       int(season),
         'final_score':  final_score,
-        # NFL is single-elimination — no series, only the Super Bowl is one game.
+        # NFL is single-elimination - no series, only the Super Bowl is one game.
         'champion': {
             'team':           cr['name'],
             'display_name':   display_name(cr['name'], season),
@@ -2027,7 +2027,7 @@ for season in sorted(df['season'].unique(), reverse=True):
 
 # Pre-rated-data Super Bowl titles (SB I through V).
 # Our rating data starts at season 1971 due to the 20-week warm-up, so SBs from
-# the 1966-1970 seasons aren't otherwise captured. Counts only SB-era titles —
+# the 1966-1970 seasons aren't otherwise captured. Counts only SB-era titles -
 # pre-Super Bowl NFL championships (1920-1965) and AFL championships are NOT included.
 PRE_RATED_CHAMPIONSHIPS = {
     'Green Bay Packers':  2,  # SB I (1966), SB II (1967)
@@ -2060,23 +2060,23 @@ for entry in reversed(champions):
 # linked. Counts here are the running totals AT THAT POINT IN TIME, independent
 # of the seeded counts above (which feed downstream rated rows).
 PRE_RATED_SB_ROWS = [
-    # SB V — Jan 1971 — season 1970 — first post-merger Super Bowl, no AFL
+    # SB V - Jan 1971 - season 1970 - first post-merger Super Bowl, no AFL
     {'sb_num': 'V', 'season': 1970, 'final_score': '16-13',
      'champion':  {'team': 'Baltimore Colts',    'title_count': 1, 'regular_record': '11-2-1', 'playoff_record': '3-0'},
      'runner_up': {'team': 'Dallas Cowboys',     'runner_up_count': 1, 'regular_record': '10-4', 'playoff_record': '2-1'}},
-    # SB IV — Jan 1970 — season 1969 — last AFL season
+    # SB IV - Jan 1970 - season 1969 - last AFL season
     {'sb_num': 'IV', 'season': 1969, 'final_score': '23-7',
      'champion':  {'team': 'Kansas City Chiefs', 'title_count': 1, 'regular_record': '11-3', 'playoff_record': '3-0', 'afl': True},
      'runner_up': {'team': 'Minnesota Vikings',  'runner_up_count': 1, 'regular_record': '12-2', 'playoff_record': '2-1'}},
-    # SB III — Jan 1969 — season 1968
+    # SB III - Jan 1969 - season 1968
     {'sb_num': 'III', 'season': 1968, 'final_score': '16-7',
      'champion':  {'team': 'New York Jets',      'title_count': 1, 'regular_record': '11-3', 'playoff_record': '2-0', 'afl': True},
      'runner_up': {'team': 'Baltimore Colts',    'runner_up_count': 1, 'regular_record': '13-1', 'playoff_record': '2-1'}},
-    # SB II — Jan 1968 — season 1967
+    # SB II - Jan 1968 - season 1967
     {'sb_num': 'II', 'season': 1967, 'final_score': '33-14',
      'champion':  {'team': 'Green Bay Packers',  'title_count': 2, 'regular_record': '9-4-1', 'playoff_record': '3-0'},
      'runner_up': {'team': 'Oakland Raiders',    'runner_up_count': 1, 'regular_record': '13-1', 'playoff_record': '1-1', 'afl': True}},
-    # SB I — Jan 1967 — season 1966
+    # SB I - Jan 1967 - season 1966
     {'sb_num': 'I', 'season': 1966, 'final_score': '35-10',
      'champion':  {'team': 'Green Bay Packers',  'title_count': 1, 'regular_record': '12-2',   'playoff_record': '2-0'},
      'runner_up': {'team': 'Kansas City Chiefs', 'runner_up_count': 1, 'regular_record': '11-2-1', 'playoff_record': '1-1', 'afl': True}},

@@ -50,7 +50,7 @@ When REACT and HOTTAKE pick OPPOSITE sides against Vegas (1,532 games):
 - HOTTAKE's pick wins ATS: **46.9%**
 - REACT's pick wins ATS: **53.1%**
 
-Directionally, HOTTAKE *is* a fade signal: 46.9% is a losing strategy. But the inverse — backing REACT when they disagree — sits at 53.1%, just barely above the 52.38% break-even at standard -110 juice.
+Directionally, HOTTAKE *is* a fade signal: 46.9% is a losing strategy. But the inverse - backing REACT when they disagree - sits at 53.1%, just barely above the 52.38% break-even at standard -110 juice.
 
 ### Statistical reality check on 53.1%
 
@@ -114,7 +114,7 @@ The one place we found a meaningful signal.
 
 **REACT in the Divisional round: 58.5% ATS on n=108.** That's a meaningful sample, well above break-even. Aligns with the broader thesis: in playoffs, load management and lineup noise drop out, the team-strength signal cleans up, and the market may not fully adjust.
 
-(Same caveat about sample size applies — 108 games is small. But the directional finding lines up with the DUNCAN playoff result.)
+(Same caveat about sample size applies - 108 games is small. But the directional finding lines up with the DUNCAN playoff result.)
 
 ---
 

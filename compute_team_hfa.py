@@ -1,5 +1,5 @@
 """
-compute_team_hfa.py — diagnostic for team-specific home field advantage.
+compute_team_hfa.py - diagnostic for team-specific home field advantage.
 
 For each team T and each window W, computes:
   h_T = mean over T's home games in window W of:
@@ -83,7 +83,7 @@ tables = {name: team_hfa_table(seasons).set_index('team')
 ranks = {name: tables[name]['hfa'].rank(ascending=False, method='min').astype(int)
          for name in WINDOWS}
 
-# League averages by window — useful baseline reference.
+# League averages by window - useful baseline reference.
 print()
 print("League averages (mean HFA across all non-neutral games in window):")
 for window_name, seasons in WINDOWS.items():

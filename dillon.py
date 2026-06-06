@@ -65,13 +65,13 @@ def scrape_games(min_season, max_season, existing_df):
         try:
             df = pd.read_html(url)[0]
         except Exception:
-            print(f"{year} — not found, skipping.")
+            print(f"{year} - not found, skipping.")
             continue
         df['Season'] = year
         # pro-football-reference uses 'Pts' and 'Pts.1' (winner / loser points)
         df.rename(columns={'Pts': 'PtsW', 'Pts.1': 'PtsL'}, inplace=True)
         new_frames.append(df)
-        print(f"{year} — scraped!")
+        print(f"{year} - scraped!")
 
     print("Successfully scraped!")
 
@@ -177,7 +177,7 @@ def prepare_game_data(raw_df):
 
 
 # =========================================================
-# FAKERONJAN WLS RATINGS — homebrew weighted least squares solver
+# FAKERONJAN WLS RATINGS - homebrew weighted least squares solver
 # =========================================================
 
 def _apply_margin_transform(margin, transform, cap):
@@ -205,7 +205,7 @@ def _solve_wls(window_df, weighting_mode, margin_transform, margin_cap):
     weights. Solves min sum_i w_i * (X_i r - y_i)^2 with a zero-sum
     constraint enforced as an extra high-weight row.
 
-    HCA is per-game (column 'hca' in window_df) — supports neutral-site
+    HCA is per-game (column 'hca' in window_df) - supports neutral-site
     games (Super Bowl, international games) where HCA should be 0.
     """
     teams = sorted(set(window_df["home_team_name"]) | set(window_df["visitor_team_name"]))
@@ -393,8 +393,8 @@ def compute_ratings(master_df, existing_ratings_df, window, label, compute_od=Fa
             # REACT-calibrated O/D: shift each team's (O_raw, D_raw) by the same
             # delta so O+D == REACT exactly. The shape of the split (O - D, i.e.
             # the offensive vs defensive lean) is preserved; only the absolute
-            # level is anchored to REACT. This means REACT's MARGIN_CAP — which
-            # handles garbage-time blowouts in the single-rating fit — carries
+            # level is anchored to REACT. This means REACT's MARGIN_CAP - which
+            # handles garbage-time blowouts in the single-rating fit - carries
             # through to O/D too, without needing a separate half-equation cap.
             #
             # delta = (REACT - O_raw - D_raw) / 2  per team
@@ -505,7 +505,7 @@ def compute_standings(master_df, existing_standings_df):
 
     df = pd.concat([existing_standings_df] + new_frames, axis=0, sort=False).reset_index(drop=True)
     df.sort_values(['ranking_id', 'name'], inplace=True)
-    # Same dedupe approach as compute_ratings — the latest ranking_id is always
+    # Same dedupe approach as compute_ratings - the latest ranking_id is always
     # recomputed, so the existing row and new row coexist after concat.
     df.drop_duplicates(subset=['ranking_id', 'name'], keep='last', inplace=True)
     print('CSV of standings is ready!')
@@ -518,7 +518,7 @@ def compute_standings(master_df, existing_standings_df):
 
 def assemble_final(master_df, react_df, standings_df):
     """Merge REACT ratings + standings, add flags."""
-    print('Final step — merging DILLON ratings and standings...')
+    print('Final step - merging DILLON ratings and standings...')
 
     final_df = pd.merge(react_df, standings_df, how='left', on=['ranking_id', 'name'])
     final_df.rename(columns={'season_week_x': 'season_week', 'season_x': 'season'}, inplace=True)
@@ -533,7 +533,7 @@ def assemble_final(master_df, react_df, standings_df):
 
     # season_flag: only populated for fully-complete seasons. A season is
     # "fully complete" the moment the Super Bowl game (week=WEEK_SUPERBOWL,
-    # i.e. 104) lands in the games data — event-based, mirrors GRIFFEY's
+    # i.e. 104) lands in the games data - event-based, mirrors GRIFFEY's
     # WS-walker and new ZIDANE's CL-Final-date gate. No date cushion means
     # badges show the day after the SB instead of waiting until April.
     def season_is_fully_complete(season):

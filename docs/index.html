@@ -70,7 +70,7 @@
 
   .tab { display: none; padding: 16px; max-width: 1100px; margin: 0 auto; }
   .tab.active { display: block; }
-  /* Super Bowls tab has 12 columns and overflows at 1100px — let it use
+  /* Super Bowls tab has 12 columns and overflows at 1100px - let it use
      more of the available iframe width to avoid a horizontal scrollbar. */
   #league-history.tab { max-width: 1320px; }
 
@@ -316,7 +316,7 @@
     .col-hide-mobile { display: none; }
   }
 
-  /* Fleet nav strip — links to sister sites in the fakeronjan sports ratings family */
+  /* Fleet nav strip - links to sister sites in the fakeronjan sports ratings family */
   .fleet-nav {
     background: #0e4a5f;
     display: flex;
@@ -554,7 +554,7 @@ const CONFERENCES = ['AFC', 'NFC'];
 let standingsConf = 'all';
 let tsConf        = 'all';
 let goatConf      = 'all';
-let goatMode      = 'ps';     // 'ps' (end of playoffs — championship contenders) or 'rs' (end of regular season)
+let goatMode      = 'ps';     // 'ps' (end of playoffs - championship contenders) or 'rs' (end of regular season)
 let goatMetric    = 'react';  // 'react' (overall) | 'o' (offense only) | 'd' (defense only)
 let tsView        = 'cross';  // 'cross' (all-season summary) or 'single' (one season, all game-days)
 
@@ -1192,11 +1192,11 @@ function drawChart(rows, seasonFilter) {
   });
 
   // Super Bowl markers: 👑 for champion, 🥈 for runner-up, placed at
-  // the SB-game snapshot (week 104 — sb_status is set on EVERY snapshot
+  // the SB-game snapshot (week 104 - sb_status is set on EVERY snapshot
   // of a SB-participating season, so we filter to just the final game).
   // Emoji sits 14px above the point, clamped so it never clips above
   // the chart top. Each marker is wrapped in a <g> with a transparent
-  // hit-rect — bare <text> emojis have flaky hover hit-testing across
+  // hit-rect - bare <text> emojis have flaky hover hit-testing across
   // browsers, the rect gives a stable target for the <title> tooltip.
   const trophies = [];
   rows.forEach((r, i) => {
@@ -1356,13 +1356,13 @@ function renderChampions() {
 // All rankings are computed client-side from championsData; no extra fetch.
 // Pre-1971 SBs (no ratings) are excluded; SBs are sorted by REACT (in-season).
 // Layout mirrors the LIST view exactly: same team block, season cell, score
-// divider, col-champ/col-ru tinting — just sorted by a chosen metric.
+// divider, col-champ/col-ru tinting - just sorted by a chosen metric.
 
 // 4-cell team block used in the rankings sub-view: team-name | rank | REACT | W-L.
-// O/D columns are dropped here — Lists shows a single sorted metric per pill.
-// Pre-rated/AFL cases are not handled — pre-1971 SBs are filtered out upstream.
+// O/D columns are dropped here - Lists shows a single sorted metric per pill.
+// Pre-rated/AFL cases are not handled - pre-1971 SBs are filtered out upstream.
 // `bg` is the column-group tint (col-champ for the LEFT slot, col-ru for the
-// RIGHT slot — slot semantics, not always champion/runner-up). `sortReact`
+// RIGHT slot - slot semantics, not always champion/runner-up). `sortReact`
 // adds the sort-col highlight to the REACT cell for team-quality rankings.
 function rankTeamBlock(t, bg, season, sortReact) {
   if (!t) return `<td class="${bg}" colspan="4">-</td>`;
@@ -1397,7 +1397,7 @@ function rankSeasonCell(e) {
 
 function fmtSigned(n) { return (n >= 0 ? '+' : '') + n.toFixed(2); }
 
-// Flip "W-L" to "L-W" — used when the loser is the focal team (left slot) so
+// Flip "W-L" to "L-W" - used when the loser is the focal team (left slot) so
 // the score reads from their POV: "22-19" becomes "19-22".
 function flipScore(s) {
   const m = s && s.match(/^(\d+)-(\d+)$/);
@@ -1460,7 +1460,7 @@ function renderRankings(rankType) {
     else if (isDef)    { c = defView(e.champion);   r = defView(e.runner_up); }
     else               { c = e.champion;            r = e.runner_up; }
     // Matchup quality = max(REACT) + 2 * min(REACT). The 2x weight on the
-    // weaker team penalises lopsided matchups — a "great matchup" needs both
+    // weaker team penalises lopsided matchups - a "great matchup" needs both
     // teams to be strong, not just one elite team padding the combined.
     const hi = Math.max(c.rating, r.rating);
     const lo = Math.min(c.rating, r.rating);
@@ -1634,7 +1634,7 @@ function renderRankingTable(rows, mode, metricLabel) {
 // Both reuse the Best-champs column structure (Season | Champ block | Score |
 // RU block) so the visual language is identical to the other rankings. Pairs
 // are visualised via the row-group-end border on the second row of each pair.
-// No # column — these views are chronological, not ranked by a metric.
+// No # column - these views are chronological, not ranked by a metric.
 
 // Standard Best-champs-style header (used by repeat-champs and rematches).
 const PAIR_HEAD = `
@@ -1663,7 +1663,7 @@ function renderRepeatChamps() {
   // Detect runs of consecutive seasons with the SAME champion. A run of
   // length N renders as a single N-row block (back-to-backs = 2 rows,
   // would catch threepeats as 3 rows if any happened). Single-season
-  // wins are skipped — only runs of length 2+ show up here.
+  // wins are skipped - only runs of length 2+ show up here.
   const entries = [...(championsData['NFL'] || [])].sort((a, b) => a.season - b.season);
   const runs = [];
   let current = [];
@@ -1713,13 +1713,13 @@ function renderRepeatChamps() {
 function renderRematches() {
   // Group all Super Bowls between the SAME two teams into a single N-row
   // block. A group's window extends as long as those two teams keep meeting
-  // — once 5 calendar years pass without them facing each other again,
+  // - once 5 calendar years pass without them facing each other again,
   // the window closes and a later meeting starts a fresh group.
   //
   // Patriots-Giants 2007 + 2011 = grouped (4-yr gap). Hypothetical same-
   // pair 2007 + 2013 would split (6-yr gap > threshold).
   //
-  // Rated SBs only (1971+) — pre-rated rematches would lack REACT/W-L cells.
+  // Rated SBs only (1971+) - pre-rated rematches would lack REACT/W-L cells.
   const REMATCH_GAP_THRESHOLD = 5;
   const entries = (championsData['NFL'] || []).filter(e =>
     e.champion && e.runner_up &&
