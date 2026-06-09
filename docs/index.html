@@ -453,7 +453,7 @@
     <span class="count-label" id="standings-count"></span>
   </div>
   <p class="data-note" id="warmup-note" style="display:none">
-    Note: ratings need a 20-week warm-up window, so the 1971 season's first ranked snapshot is week 3.
+    Note: ratings need a 20-week warm-up window, so the 1971 season's first rating is week 3.
   </p>
   <div class="disrupted-note" id="standings-disrupted-note" style="display:none"></div>
   <div id="standings-table-wrap"><p class="loading">Loading standings...</p></div>
@@ -519,7 +519,7 @@
 
 <!-- ── GOAT TABLE ───────────────────────────────────────────────────────── -->
 <div id="goat" class="tab">
-  <p class="data-note">Top 50 single-season ratings · Pick the snapshot (end of regular season vs. end of playoffs), then the metric (overall Rating, offense only, or defense only).</p>
+  <p class="data-note">Top 50 single-season ratings · Pick the timeframe (end of regular season vs. end of playoffs), then the metric (overall Rating, offense only, or defense only).</p>
   <div class="conf-pills" id="goat-mode-pills"></div>
   <div class="conf-pills" id="goat-metric-pills"></div>
   <div class="conf-pills" id="goat-conf-pills"></div>
@@ -968,8 +968,8 @@ function renderStandings() {
         <th>Rating</th>
         <th class="col-hide-mobile col-od">OFF</th>
         <th class="col-hide-mobile col-od">DEF</th>
-        <th class="col-hide-mobile col-od" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
-        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) at this snapshot. Trained on every other season's snapshots at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
+        <th class="col-hide-mobile col-od" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this point in the season">HFA</th>
+        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) through this point in the season. Trained on every other season at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
         <th>Last Game</th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -1141,8 +1141,8 @@ function renderTeamTable() {
         <th>Rating</th>
         <th class="col-hide-mobile col-od">OFF</th>
         <th class="col-hide-mobile col-od">DEF</th>
-        <th class="col-hide-mobile col-od" title="Home field advantage: home-game margin premium beyond what Rating predicts, 3-year rolling window ending at this snapshot">HFA</th>
-        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) at this snapshot. Trained on every other season's snapshots at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
+        <th class="col-hide-mobile col-od" title="Home field advantage: home-game margin premium beyond what Rating predicts, 3-year rolling window ending at this point in the season">HFA</th>
+        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) through this point in the season. Trained on every other season at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
         <th class="col-hide-mobile">Conf</th>
       </tr></thead>
       <tbody>${tableRows}</tbody>
