@@ -1160,21 +1160,51 @@ function drawChart(rows, seasonFilter) {
   const H = 180;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-  // Per-team symmetric auto-scale: the y-band fits THIS team's own range so its
-  // trajectory is always legible, with zero kept centered so sign + dominance
-  // stay readable. No global fixed band, so no team's line is flattened by
-  // another team's outlier - which is what made the old fixed band fail for
-  // dominant teams (the 2007 Patriots sat entirely above it and went flat).
-  // Padded 12% so the peak/trough don't touch the frame edge.
-  const _absMax = Math.max(1, ...rows.map(r => Math.abs(r.rating || 0)));
-  const CHART_MAX = _absMax * 1.12, CHART_MIN = -CHART_MAX;
+  // Per-team auto-scale that only scales OUT from a sport default. Most teams
+  // render at the ±D_DEFAULT baseline (so the labeled context lines give a
+  // consistent sense of scale and charts stay roughly comparable); a stronger
+  // team expands the band to fit its own peak, and genuine chart-busters past
+  // ±D_CAP clamp to the frame edge with a ▲/▼ marker so one freak value can't
+  // compress everything. Padded 12% so peaks don't touch the edge.
+  const D_DEFAULT = 8;    // baseline half-window + context-line level
+  const D_CAP     = 25;   // hard outlier clamp (beyond this = chart-buster)
+  const _peak     = Math.max(0, ...rows.map(r => Math.abs(r.rating || 0)));
+  const CHART_MAX = Math.min(D_CAP, Math.max(D_DEFAULT, _peak * 1.12));
+  const CHART_MIN = -CHART_MAX;
   const CTOP = 10, CBOT = 152;
 
   const px = (i) => (i / (rows.length - 1)) * (W - 20) + 10;
-  const py = (r) => CBOT - ((r - CHART_MIN) / (CHART_MAX - CHART_MIN)) * (CBOT - CTOP);
+  const clampR = (r) => Math.max(CHART_MIN, Math.min(CHART_MAX, r));
+  const py = (r) => CBOT - ((clampR(r) - CHART_MIN) / (CHART_MAX - CHART_MIN)) * (CBOT - CTOP);
 
   const zeroY  = py(0);
   const points = rows.map((r, i) => `${px(i).toFixed(1)},${py(r.rating).toFixed(1)}`).join(' ');
+
+  // Labeled context lines at ±D_DEFAULT - reposition as the band scales so a
+  // team riding above +D reads as genuinely strong, below -D genuinely weak.
+  const ctxLine = (v) => {
+    const y = py(v).toFixed(1);
+    return `<line x1="10" y1="${y}" x2="${(W - 10).toFixed(1)}" y2="${y}" stroke="#e6e6e6" stroke-width="1" stroke-dasharray="2,3"/>`
+         + `<text x="12" y="${(py(v) - 3).toFixed(1)}" font-size="8" fill="#bbb">${v > 0 ? '+' : ''}${v}</text>`;
+  };
+  const contextLines = ctxLine(D_DEFAULT) + ctxLine(-D_DEFAULT);
+
+  // Chart-buster clamp markers: ▲/▼ where a value ran past the band, one per run.
+  const clipMarks = [];
+  let _rs = -1, _rd = 0;
+  const _flushClip = (end) => {
+    if (_rs < 0) return;
+    const midI = Math.round((_rs + end) / 2);
+    const tri  = _rd > 0 ? '▲' : '▼';
+    const ty   = _rd > 0 ? CTOP + 8 : CBOT - 2;
+    clipMarks.push(`<text x="${px(midI).toFixed(1)}" y="${ty}" font-size="9" fill="#999" text-anchor="middle">${tri}</text>`);
+    _rs = -1; _rd = 0;
+  };
+  rows.forEach((r, i) => {
+    const d = r.rating > CHART_MAX ? 1 : (r.rating < CHART_MIN ? -1 : 0);
+    if (d !== _rd) { _flushClip(i - 1); if (d !== 0) { _rs = i; _rd = d; } }
+  });
+  _flushClip(rows.length - 1);
 
   const isSingle = seasonFilter !== 'all';
   const MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1232,6 +1262,7 @@ function drawChart(rows, seasonFilter) {
         <stop offset="${(zeroY / H + 0.0001).toFixed(4)}" stop-color="#ff6eb4"/>
       </linearGradient>
     </defs>
+    ${contextLines}
     <line x1="10" y1="${zeroY.toFixed(1)}" x2="${(W - 10).toFixed(1)}" y2="${zeroY.toFixed(1)}"
           stroke="#ccc" stroke-width="1" stroke-dasharray="4,3"/>
     <line x1="10" y1="${CBOT + 2}" x2="${(W - 10).toFixed(1)}" y2="${CBOT + 2}"
@@ -1239,6 +1270,7 @@ function drawChart(rows, seasonFilter) {
     ${ticks.join('')}
     ${xlabels.join('')}
     <polyline points="${points}" fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${clipMarks.join('')}
     ${trophies.join('')}`;
 }
 
