@@ -767,7 +767,15 @@ function attachLinks() {
   });
 }
 
-const BAR_MIN = -22, BAR_MAX = 22, BAR_RANGE = 44;
+// Bar scale: default half-range = the "elite" line (BAR_D); each table view
+// expands this to fit its OWN widest bar, capped at the buster threshold
+// (beyond = full bar, silent). So everyday views share the D scale, while a
+// view of elite teams scales out instead of pegging every bar at full length.
+const BAR_D = 10, BAR_CAP = 24;
+function barScale(ratings) {
+  const m = Math.max(0, ...ratings.map(r => Math.abs(r || 0)));
+  return Math.min(BAR_CAP, Math.max(BAR_D, m));
+}
 
 // Value (bold tinted) over rank (dimmed, smaller) on two lines. Used by
 // the Offense / Defense / HFA columns on Standings / Team Summary /
@@ -792,16 +800,11 @@ function fmtSBOdds(odds, rank) {
   return `<div class="od-val">${value}</div><div class="od-rank">${rank}</div>`;
 }
 
-function ratingBar(rating) {
-  const clipped = Math.max(BAR_MIN, Math.min(BAR_MAX, rating));
-  let leftPct, widthPct;
-  if (clipped >= 0) {
-    leftPct  = 50;
-    widthPct = (clipped / BAR_RANGE) * 100;
-  } else {
-    widthPct = (-clipped / BAR_RANGE) * 100;
-    leftPct  = 50 - widthPct;
-  }
+function ratingBar(rating, scaleMax) {
+  const S = scaleMax || BAR_D;
+  const clipped  = Math.max(-S, Math.min(S, rating));
+  const widthPct = (Math.abs(clipped) / (2 * S)) * 100;
+  const leftPct  = clipped >= 0 ? 50 : 50 - widthPct;
   return `<div class="rating-bar-wrap">
     <span class="rating-cell">${rating.toFixed(2)}</span>
     <div class="rating-bar-track">
@@ -929,6 +932,7 @@ function renderStandings() {
   const prevDate = idx > 0 ? snaps[idx - 1].date : null;
 
   const season = currentSeasonData && currentSeasonData.season;
+  const barSc = barScale(teams.map(t => t.rating));
   const rows = teams.map(t => {
     const isStale = !!(prevDate && t.last_match_date && t.last_match_date <= prevDate);
     const slug = nameToSlug[t.team];
@@ -946,7 +950,7 @@ function renderStandings() {
       ${teamTd}
       <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
       <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(t.regular_record, t.playoff_record, t.record)}</td>
-      <td>${ratingBar(t.rating)}</td>
+      <td>${ratingBar(t.rating, barSc)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_o, t.rank_o)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_d, t.rank_d)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.hfa, t.hfa_rank)}</td>
@@ -1101,6 +1105,7 @@ function renderTeamTable() {
     updateDisruptedNote('team-summary-disrupted-note', []);
   }
 
+  const barSc = barScale(rows.map(g => g.rating));
   const tableRows = [...rows].reverse().map(g => {
     const wkLabel = g.week_label || '';
     const era = (g.display_name && g.display_name !== canonical) ? g.display_name : '';
@@ -1123,7 +1128,7 @@ function renderTeamTable() {
     <td class="last-match-cell">${renderLastMatch(g.last_match, g.season, !!g._isStale)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap">${fmtRecordSmart(g.regular_record, g.playoff_record, g.record)}</td>
     <td class="rank-cell">${g.rank}</td>
-    <td>${ratingBar(g.rating)}</td>
+    <td>${ratingBar(g.rating, barSc)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_o, g.rank_o)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_d, g.rank_d)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.hfa, g.hfa_rank)}</td>
@@ -1888,6 +1893,7 @@ function renderGoat() {
     ? data
     : data.filter(t => t.conference === goatConf);
   updateDisruptedNote('goat-disrupted-note', teams.map(t => t.season));
+  const barSc = barScale(teams.map(t => t[pick.field]));
   const rows = teams.map(t => {
     const badge = finishBadge(t.sb_status);
     const label = (t.display_name || t.team) + (badge ? ' ' + badge : '');
@@ -1901,7 +1907,7 @@ function renderGoat() {
     <td class="season-cell linked" data-season-link="${t.season}">${t.season}</td>
     ${teamTd}
     <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
-    <td>${ratingBar(val)}</td>
+    <td>${ratingBar(val, barSc)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
   </tr>`;
   }).join('');
