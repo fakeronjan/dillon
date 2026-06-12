@@ -1166,8 +1166,8 @@ function drawChart(rows, seasonFilter) {
   // team expands the band to fit its own peak, and genuine chart-busters past
   // ±D_CAP clamp to the frame edge with a ▲/▼ marker so one freak value can't
   // compress everything. Padded 12% so peaks don't touch the edge.
-  const D_DEFAULT = 8;    // baseline half-window + context-line level
-  const D_CAP     = 25;   // hard outlier clamp (beyond this = chart-buster)
+  const D_DEFAULT = 10;   // baseline half-window + context lines (90th pct of |rating|)
+  const D_CAP     = 30;   // hard outlier clamp (chart-busters only, ~0.1% of charts)
   const _peak     = Math.max(0, ...rows.map(r => Math.abs(r.rating || 0)));
   const CHART_MAX = Math.min(D_CAP, Math.max(D_DEFAULT, _peak * 1.12));
   const CHART_MIN = -CHART_MAX;
