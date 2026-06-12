@@ -1160,35 +1160,21 @@ function drawChart(rows, seasonFilter) {
   const H = 180;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-  const CHART_MIN = -10, CHART_MAX = 10;
+  // Per-team symmetric auto-scale: the y-band fits THIS team's own range so its
+  // trajectory is always legible, with zero kept centered so sign + dominance
+  // stay readable. No global fixed band, so no team's line is flattened by
+  // another team's outlier - which is what made the old fixed band fail for
+  // dominant teams (the 2007 Patriots sat entirely above it and went flat).
+  // Padded 12% so the peak/trough don't touch the frame edge.
+  const _absMax = Math.max(1, ...rows.map(r => Math.abs(r.rating || 0)));
+  const CHART_MAX = _absMax * 1.12, CHART_MIN = -CHART_MAX;
   const CTOP = 10, CBOT = 152;
 
   const px = (i) => (i / (rows.length - 1)) * (W - 20) + 10;
-  // Tight band keeps everyday movement legible; values beyond it clamp to the
-  // frame edge and get a ▲/▼ marker instead of stretching the axis.
-  const clampR = (r) => Math.max(CHART_MIN, Math.min(CHART_MAX, r));
-  const py = (r) => CBOT - ((clampR(r) - CHART_MIN) / (CHART_MAX - CHART_MIN)) * (CBOT - CTOP);
+  const py = (r) => CBOT - ((r - CHART_MIN) / (CHART_MAX - CHART_MIN)) * (CBOT - CTOP);
 
   const zeroY  = py(0);
   const points = rows.map((r, i) => `${px(i).toFixed(1)},${py(r.rating).toFixed(1)}`).join(' ');
-
-  // Off-scale clip indicator: one ▲ (ran above CHART_MAX) or ▼ (below
-  // CHART_MIN) per contiguous run of clipped snapshots, centered on the run.
-  const clipMarks = [];
-  let _rs = -1, _rd = 0;
-  const _flushClip = (end) => {
-    if (_rs < 0) return;
-    const midI = Math.round((_rs + end) / 2);
-    const tri  = _rd > 0 ? '▲' : '▼';
-    const ty   = _rd > 0 ? CTOP + 8 : CBOT - 2;
-    clipMarks.push(`<text x="${px(midI).toFixed(1)}" y="${ty}" font-size="9" fill="#999" text-anchor="middle">${tri}</text>`);
-    _rs = -1; _rd = 0;
-  };
-  rows.forEach((r, i) => {
-    const d = r.rating > CHART_MAX ? 1 : (r.rating < CHART_MIN ? -1 : 0);
-    if (d !== _rd) { _flushClip(i - 1); if (d !== 0) { _rs = i; _rd = d; } }
-  });
-  _flushClip(rows.length - 1);
 
   const isSingle = seasonFilter !== 'all';
   const MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1253,7 +1239,6 @@ function drawChart(rows, seasonFilter) {
     ${ticks.join('')}
     ${xlabels.join('')}
     <polyline points="${points}" fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linejoin="round"/>
-    ${clipMarks.join('')}
     ${trophies.join('')}`;
 }
 
