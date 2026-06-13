@@ -1917,8 +1917,8 @@ function renderGoat() {
     <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
     ${GOAT_METRICS.map(m => m.field === pick.field
-      ? `<td>${ratingBar(t[m.field], barSc)}</td>`
-      : `<td class="od-cell col-hide-mobile">${fmtOD(t[m.field], null)}</td>`).join('')}
+      ? `<td class="od-cell">${ratingBar(t[m.field], barSc)}</td>`
+      : `<td class="rating-cell od-cell col-hide-mobile">${fmtOD(t[m.field], null)}</td>`).join('')}
   </tr>`;
   }).join('');
 
@@ -1930,7 +1930,7 @@ function renderGoat() {
         <th>Team</th>
         <th class="col-hide-mobile">Conf</th>
         <th class="col-hide-mobile">W-L</th>
-        ${GOAT_METRICS.map(m => `<th class="${m.field === pick.field ? '' : 'col-hide-mobile col-od'}">${m.label}</th>`).join('')}
+        ${GOAT_METRICS.map(m => `<th class="col-od${m.field === pick.field ? '' : ' col-hide-mobile'}">${m.label}</th>`).join('')}
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
