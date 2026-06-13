@@ -1888,6 +1888,14 @@ function goatPick() {
 
 function renderGoat() {
   const pick = goatPick();
+  // Fixed Rating / OFF / DEF column set (standings-aligned). The active metric
+  // (the pill selection) renders the value+bar; the other two render the
+  // compact value. pick.field marks which column is active.
+  const GOAT_METRICS = [
+    { field: 'rating',   label: 'Rating' },
+    { field: 'rating_o', label: 'OFF' },
+    { field: 'rating_d', label: 'DEF' },
+  ];
   const data = pick.data;
   if (!data) return;
   const teams = goatConf === 'all'
@@ -1902,14 +1910,15 @@ function renderGoat() {
     const teamTd = slug
       ? `<td class="team-cell linked" data-team-slug="${slug}" data-season="${t.season}">${label}</td>`
       : `<td class="team-cell">${label}</td>`;
-    const val = t[pick.field];
     return `<tr>
     <td class="rank-cell">${t.rank}</td>
     <td class="season-cell linked" data-season-link="${t.season}">${t.season}</td>
     ${teamTd}
     <td class="col-hide-mobile" style="white-space:nowrap">${confDivBadge(t.conference, t.division, t.division_winner, t.sb_status)}</td>
-    <td>${ratingBar(val, barSc)}</td>
     <td style="font-variant-numeric:tabular-nums;white-space:nowrap" class="col-hide-mobile">${fmtRecordStacked(t.regular_record, t.playoff_record)}</td>
+    ${GOAT_METRICS.map(m => m.field === pick.field
+      ? `<td>${ratingBar(t[m.field], barSc)}</td>`
+      : `<td class="od-cell col-hide-mobile">${fmtOD(t[m.field], null)}</td>`).join('')}
   </tr>`;
   }).join('');
 
@@ -1920,8 +1929,8 @@ function renderGoat() {
         <th style="text-align:center">Season</th>
         <th>Team</th>
         <th class="col-hide-mobile">Conf</th>
-        <th>${pick.header}</th>
         <th class="col-hide-mobile">W-L</th>
+        ${GOAT_METRICS.map(m => `<th class="${m.field === pick.field ? '' : 'col-hide-mobile col-od'}">${m.label}</th>`).join('')}
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
