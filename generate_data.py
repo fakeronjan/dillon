@@ -1717,7 +1717,11 @@ SHORT_SEASONS = {
 
 
 def _build_goat(rows, sort_col='rating'):
-    rows = rows.sort_values(sort_col, ascending=False).head(GOAT_TOP_N).reset_index(drop=True)
+    # Length rounds down to the nearest 10, capped at GOAT_TOP_N. The RS pool
+    # (all teams) is huge so it always hits the cap (50); the champions-only PS
+    # pool rounds down (e.g. 45 champion seasons -> top 40).
+    _n = min(GOAT_TOP_N, (len(rows) // 10) * 10)
+    rows = rows.sort_values(sort_col, ascending=False).head(_n).reset_index(drop=True)
     out = []
     for i, (_, r) in enumerate(rows.iterrows()):
         s = int(r['season'])
@@ -1754,7 +1758,7 @@ def _build_goat(rows, sort_col='rating'):
 # variants are restricted to Super Bowl participants (sb_status >= 1) so
 # the list shows actual championship contenders, not playoff flameouts.
 rs_rows = df[df['season_flag'] == 1].copy()
-ps_rows = df[(df['season_flag'] == 2) & (df['sb_status'] >= 1)].copy()
+ps_rows = df[(df['season_flag'] == 2) & (df['sb_status'] == 2)].copy()  # champions only
 
 goat_files = [
     ('goat_rs.json',   rs_rows, 'rating'),    # REACT, RS-end (canonical)
