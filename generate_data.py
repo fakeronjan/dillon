@@ -411,6 +411,15 @@ _reg_record_lookup = {
     for _, row in df[df['season_flag'] == 1].iterrows()
 }
 
+# End-of-regular-season rating per (team, season) from season_flag == 1
+# snapshots. The champion entry's own `rating` is the end-of-playoffs (flag == 2)
+# rating, so pairing the two gives the Lists sub-view its "biggest playoff leap"
+# ranking (playoffs - regular season).
+_rs_rating_lookup = {
+    (row['name'], int(row['season'])): round(float(row['rating']), 3)
+    for _, row in df[df['season_flag'] == 1].iterrows()
+}
+
 # Final (post-playoff) record per (team, season) from season_flag == 2 snapshots.
 # Used so the GOAT-RS view can show each team's actual playoff outcome alongside
 # their regular-season record - mirrors GRIFFEY/SAKIC/COBI, where playoff_record
@@ -2000,6 +2009,7 @@ for season in sorted(df['season'].unique(), reverse=True):
             'division':        div_for_season(cr['name'], season),
             'division_winner': 1 if (int(season), cr['name']) in _division_winners else 0,
             'rating':         round(float(cr['rating']), 3),
+            'rating_rs':      _rs_rating_lookup.get((cr['name'], int(season))),
             'rank':           int(cr['rank']),
             'rating_o':       round(float(cr['rating_o']), 3) if 'rating_o' in cr and not pd.isna(cr['rating_o']) else None,
             'rating_d':       round(float(cr['rating_d']), 3) if 'rating_d' in cr and not pd.isna(cr['rating_d']) else None,
