@@ -1942,6 +1942,19 @@ with open('docs/data/seasons_index.json', 'w') as f:
 # ── 5. Champions table (Super Bowl winners and runners-up) ───────────────────
 print("Writing champions.json...")
 
+# End-of-regular-season Super Bowl odds per (team, season): the model's title
+# probability for that team at the End-of-regular-season snapshot (season_flag == 1,
+# robust to the RS length changing over the eras - 14/16/17 games), i.e. how likely
+# the eventual champion looked going into the playoffs. Powers the "Biggest favorites"
+# / "Longest shots" lists. sb_odds_rank is the team's rank in those league-wide
+# (sum-to-100%) odds at that snapshot.
+_rs_sb_odds_lookup = {}
+_rs_sb_odds_rank_lookup = {}
+for _, row in df[df['season_flag'] == 1].iterrows():
+    key = (row['name'], int(row['season']))
+    _rs_sb_odds_lookup[key]      = _sb_odds_val(row['ranking_id'], row['name'])
+    _rs_sb_odds_rank_lookup[key] = _sb_odds_rk(row['ranking_id'], row['name'])
+
 champions = []
 
 # Pre-SB snapshot lookup: week 103 is universally the snapshot taken AFTER the
@@ -2010,6 +2023,8 @@ for season in sorted(df['season'].unique(), reverse=True):
             'division_winner': 1 if (int(season), cr['name']) in _division_winners else 0,
             'rating':         round(float(cr['rating']), 3),
             'rating_rs':      _rs_rating_lookup.get((cr['name'], int(season))),
+            'rs_sb_odds':      _rs_sb_odds_lookup.get((cr['name'], int(season))),
+            'rs_sb_odds_rank': _rs_sb_odds_rank_lookup.get((cr['name'], int(season))),
             'rank':           int(cr['rank']),
             'rating_o':       round(float(cr['rating_o']), 3) if 'rating_o' in cr and not pd.isna(cr['rating_o']) else None,
             'rating_d':       round(float(cr['rating_d']), 3) if 'rating_d' in cr and not pd.isna(cr['rating_d']) else None,
