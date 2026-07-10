@@ -195,7 +195,7 @@
     text-align: center;
   }
   thead th.col-num { text-align: center; }
-  /* Stacked Offense / Defense / HFA cells: value above, rank below. */
+  /* Stacked Offense / Defense cells: value above, rank below. */
   .od-val {
     line-height: 1.15;
     font-variant-numeric: tabular-nums;
@@ -788,7 +788,7 @@ function barScale(ratings) {
 }
 
 // Value (bold tinted) over rank (dimmed, smaller) on two lines. Used by
-// the Offense / Defense / HFA columns on Standings / Team Summary /
+// the Offense / Defense columns on Standings / Team Summary /
 // Champions. Stacking shrinks the column width, returning space to the
 // Last Match column on Standings.
 function fmtOD(rating, rank) {
@@ -799,7 +799,7 @@ function fmtOD(rating, rank) {
 }
 
 // Super Bowl odds (logistic-regression probability) formatted as percentage,
-// with optional rank stacked below to match the OFF/DEF/HFA columns.
+// with optional rank stacked below to match the OFF/DEF columns.
 // 0% (eliminated) and rounds-to-0.0% render as '-'; 100% drops the decimal.
 function fmtSBOdds(odds, rank) {
   if (odds == null) return '-';
@@ -963,7 +963,6 @@ function renderStandings() {
       <td>${ratingBar(t.rating, barSc)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_o, t.rank_o)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.rating_d, t.rank_d)}</td>
-      <td class="rating-cell od-cell col-hide-mobile">${fmtOD(t.hfa, t.hfa_rank)}</td>
       <td class="rating-cell od-cell col-hide-mobile">${fmtSBOdds(t.sb_odds, t.sb_odds_rank)}</td>
       <td class="last-match-cell">${lastGameCell}</td>
     </tr>`;
@@ -982,8 +981,7 @@ function renderStandings() {
         <th class="col-num">Rating</th>
         <th class="col-hide-mobile col-od">OFF</th>
         <th class="col-hide-mobile col-od">DEF</th>
-        <th class="col-hide-mobile col-od" title="Home field advantage: team's home-game margin premium beyond what its Rating predicts, 3-year rolling window ending at this point in the season">HFA</th>
-        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) through this point in the season. Trained on every other season at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
+        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense) through this point in the season. Trained on every other season at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
         <th>Last Game</th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -1141,7 +1139,6 @@ function renderTeamTable() {
     <td>${ratingBar(g.rating, barSc)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_o, g.rank_o)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.rating_d, g.rank_d)}</td>
-    <td class="rating-cell od-cell col-hide-mobile">${fmtOD(g.hfa, g.hfa_rank)}</td>
     <td class="rating-cell od-cell col-hide-mobile">${fmtSBOdds(g.sb_odds, g.sb_odds_rank)}</td>
     <td class="col-hide-mobile" style="font-size:11px;white-space:nowrap">${confDivBadge(g.conference || data.conference, g.division || data.division, g.division_winner, g.sb_status)}</td>
   </tr>`;
@@ -1156,8 +1153,7 @@ function renderTeamTable() {
         <th class="col-num">Rating</th>
         <th class="col-hide-mobile col-od">OFF</th>
         <th class="col-hide-mobile col-od">DEF</th>
-        <th class="col-hide-mobile col-od" title="Home field advantage: home-game margin premium beyond what Rating predicts, 3-year rolling window ending at this point in the season">HFA</th>
-        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense, HFA) through this point in the season. Trained on every other season at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
+        <th class="col-hide-mobile" title="Probability of winning the Super Bowl, given (Offense, Defense) through this point in the season. Trained on every other season at this same week. League-wide probabilities sum to 100%.">SB Odds</th>
         <th class="col-hide-mobile">Conf</th>
       </tr></thead>
       <tbody>${tableRows}</tbody>

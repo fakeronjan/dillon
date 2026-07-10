@@ -857,137 +857,10 @@ for season, sub in df[df['season_flag'] == 1].groupby('season'):
 print(f"  {len(_division_winners)} division winners flagged.")
 
 
-# ── Team-specific home field advantage (3-year rolling-day window) ───────────
-# For each team T and each snapshot R (dated at snap_date), compute T's home
-# advantage as the GAP between T's home-game and away-game performance, where
-# "performance" is residual against a neutral-site prediction (rating gap with
-# no HCA term):
-#
-#   home_resid(G, T)     = (home_pts - away_pts) - (T_rating - opp_rating)        when T is home
-#   away_resid_T_POV(G,T) = -(home_pts - away_pts) - (T_rating - opp_rating)        when T is away
-#
-#   HFA_T(R) = (mean(home_resid over T's home games in window)
-#               - mean(away_resid_T_POV over T's away games in window)) / 2
-#
-# Window: games with date in (snap_date - 1095 days, snap_date]. True rolling-
-# day window - every week a new game enters the front AND a game from exactly
-# 3 years ago drops off the back. So HFA updates every snapshot regardless of
-# whether T played at home or away that week.
-#
-# Every game contributes signal: a team's home games tell us how much they
-# outperform expectation when hosting; their away games tell us how much they
-# underperform when traveling. The gap is the home advantage. League average
-# lands near the global HCA constant (~2.5); altitude / cold-weather / loud-
-# dome teams sit above, soft-market teams below.
-
-print("Computing per-snapshot home field advantage (3-year rolling-day window)...")
-_HFA_DAYS = 3 * 365  # 1095-day rolling window
-_MIN_HOME_GAMES = 10  # below this, hfa estimate is too noisy; suppress
-
-_rsorted = df.sort_values(['name', 'ranking_id']).copy()
-_rsorted['rating_prior'] = _rsorted.groupby('name')['rating'].shift(1)
-_rating_prior_lookup = _rsorted.set_index(['name', 'season', 'week'])['rating_prior'].to_dict()
-
-def _prior_rating(name, season, week):
-    return _rating_prior_lookup.get((name, int(season), int(week)))
-
-# Build the full hfa_contribution table - one row per non-neutral game with
-# valid prior ratings for both teams. Reused across all snapshot lookups.
-_all_hfa_games = games[games['is_neutral'] == 0].copy()
-_all_hfa_games['home_rating'] = _all_hfa_games.apply(
-    lambda g: _prior_rating(g['home_team_name'], g['season'], g['week']), axis=1)
-_all_hfa_games['away_rating'] = _all_hfa_games.apply(
-    lambda g: _prior_rating(g['visitor_team_name'], g['season'], g['week']), axis=1)
-_all_hfa_games = _all_hfa_games.dropna(subset=['home_rating', 'away_rating']).copy()
-# Per-game home-team residual at neutral expectation. Positive = home outperformed.
-# Away team's residual from their POV is the negation of this value.
-_all_hfa_games['home_resid'] = (
-    (_all_hfa_games['home_pts'] - _all_hfa_games['visitor_pts'])
-    - (_all_hfa_games['home_rating'] - _all_hfa_games['away_rating'])
-)
-# Pre-cast date so window filters are fast.
-_all_hfa_games['date'] = pd.to_datetime(_all_hfa_games['date'])
-print(f"  HFA-eligible games: {len(_all_hfa_games):,}")
-
-# Snapshot date lookup so _hfa_snapshot can find its window start.
-_snapshot_dates = (
-    df.dropna(subset=['date'])
-    .groupby('ranking_id')['date']
-    .first()
-    .to_dict()
-)
-
-
-def _hfa_snapshot(ranking_id):
-    """Return {team: {'hfa': float, 'rank': int}} for the 1095-day rolling
-    window ending at this snapshot's date. Uses both home games (positive
-    residual contribution) and away games (residual from the traveling team's
-    POV = -home_resid). HFA = (home_mean - away_mean) / 2."""
-    snap_date_str = _snapshot_dates.get(ranking_id)
-    if not snap_date_str:
-        return {}
-    snap_date = pd.to_datetime(snap_date_str)
-    window_start = snap_date - pd.Timedelta(days=_HFA_DAYS)
-    win = _all_hfa_games[
-        (_all_hfa_games['date'] > window_start)
-        & (_all_hfa_games['date'] <= snap_date)
-    ]
-    if win.empty:
-        return {}
-
-    # Home-team residuals (T's POV when at home).
-    home_stats = win.groupby('home_team_name')['home_resid'].agg(['mean', 'size'])
-    home_stats.columns = ['home_mean', 'home_n']
-
-    # Away-team residuals from T's POV (negated home_resid).
-    away_view = win.assign(t_pov_resid=-win['home_resid'])
-    away_stats = away_view.groupby('visitor_team_name')['t_pov_resid'].agg(['mean', 'size'])
-    away_stats.columns = ['away_mean', 'away_n']
-
-    combined = home_stats.join(away_stats, how='outer')
-    combined = combined.fillna({'home_mean': 0.0, 'home_n': 0, 'away_mean': 0.0, 'away_n': 0})
-    # Require enough home games for the home-mean to be stable.
-    combined = combined[combined['home_n'] >= _MIN_HOME_GAMES].copy()
-    if combined.empty:
-        return {}
-
-    combined['hfa'] = ((combined['home_mean'] - combined['away_mean']) / 2.0).round(2)
-    combined['rank'] = combined['hfa'].rank(ascending=False, method='min').astype(int)
-    return {team: {'hfa': float(row['hfa']), 'rank': int(row['rank'])}
-            for team, row in combined.iterrows()}
-
-# Pre-compute snapshot HFA for every ranking_id so per-season + per-team
-# writers share the cache. ~1100 snapshot computations; runs in seconds.
-_LATEST_SEASON = int(df['season'].max())
-_LATEST_RID = int(df['ranking_id'].max())
-
-_snapshot_hfa_cache = {}  # ranking_id -> {team: {hfa, rank}}
-for _rid in sorted(_snapshot_dates):
-    _snapshot_hfa_cache[int(_rid)] = _hfa_snapshot(int(_rid))
-
-# Latest-snapshot HFA used by current_standings.json + teams_index.json.
-_hfa_lookup = _snapshot_hfa_cache.get(_LATEST_RID, {})
-
-def _hfa_val(snap_hfa, team):
-    """Extract just the hfa value from a snapshot's hfa dict; None if missing."""
-    rec = snap_hfa.get(team)
-    return rec['hfa'] if rec else None
-
-def _hfa_rk(snap_hfa, team):
-    """Extract the hfa rank from a snapshot's hfa dict; None if missing."""
-    rec = snap_hfa.get(team)
-    return rec['rank'] if rec else None
-
-_hfa_window_label = f"last {_HFA_DAYS} days"
-print(f"  Cached HFA for {len(_snapshot_hfa_cache):,} snapshots; "
-      f"latest snapshot has HFA for {len(_hfa_lookup)} teams "
-      f"(window: {_hfa_window_label})")
-
-
 # ── Super Bowl odds (logistic regression, per-week leave-one-season-out) ────
 # For each team T and each regular-season snapshot R, compute P(T wins Super
 # Bowl that season) by training a logistic regression on every other season's
-# week-W snapshots (features: rating_o, rating_d, hfa; label: won_sb).
+# week-W snapshots (features: rating_o, rating_d; label: won_sb).
 # Predictions for the held-out season are then normalized so the league total
 # = 100% (since exactly one team wins each year).
 #
@@ -1096,16 +969,13 @@ for _season, _sdf in df.groupby('season'):
 print(f"  SB winners identified: {len(_sb_winners)} seasons")
 
 # Build training rows: one per (team, season, regular-season-week) with valid
-# (O, D, HFA) features and a known SB outcome. Skip in-progress seasons.
+# (O, D) features and a known SB outcome. Skip in-progress seasons.
 _sb_rows = []
 for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
     _season = int(_r['season'])
     if _season not in _sb_winners:
         continue
     if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
-        continue
-    _hfa = _hfa_val(_snapshot_hfa_cache.get(int(_r['ranking_id']), {}), _r['name'])
-    if _hfa is None:
         continue
     _sb_rows.append({
         'season':     _season,
@@ -1114,7 +984,6 @@ for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
         'team':       _r['name'],
         'rating_o':   float(_r['rating_o']),
         'rating_d':   float(_r['rating_d']),
-        'hfa':        float(_hfa),
         'won_sb':     1 if _r['name'] == _sb_winners[_season] else 0,
     })
 _sb_train_df = pd.DataFrame(_sb_rows)
@@ -1159,9 +1028,6 @@ for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
         continue  # handled in LOO loop
     if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
         continue
-    _hfa = _hfa_val(_snapshot_hfa_cache.get(int(_r['ranking_id']), {}), _r['name'])
-    if _hfa is None:
-        continue
     _current_rows.append({
         'season':     _season,
         'week':       int(_r['week']),
@@ -1169,13 +1035,12 @@ for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
         'team':       _r['name'],
         'rating_o':   float(_r['rating_o']),
         'rating_d':   float(_r['rating_d']),
-        'hfa':        float(_hfa),
     })
 _sb_current_df = pd.DataFrame(_current_rows)
 
 # Fit + predict
 _sb_odds_cache = {}  # (ranking_id, team) -> sb_odds  (float, 0-1)
-_FEATURES = ['rating_o', 'rating_d', 'hfa']
+_FEATURES = ['rating_o', 'rating_d']
 
 for _week_val, _week_data in _sb_train_df.groupby('week'):
     if len(_week_data) < 50 or _week_data['won_sb'].sum() < 3:
@@ -1275,9 +1140,6 @@ for _, _r in df[df['week'].isin(PLAYOFF_TRAIN_WEEKS)].iterrows():
         continue
     if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
         continue
-    _hfa = _hfa_val(_snapshot_hfa_cache.get(int(_r['ranking_id']), {}), _r['name'])
-    if _hfa is None:
-        continue
     _playoff_train_rows.append({
         'season':     _season,
         'week':       int(_r['week']),
@@ -1285,7 +1147,6 @@ for _, _r in df[df['week'].isin(PLAYOFF_TRAIN_WEEKS)].iterrows():
         'team':       _r['name'],
         'rating_o':   float(_r['rating_o']),
         'rating_d':   float(_r['rating_d']),
-        'hfa':        float(_hfa),
         'won_sb':     1 if _r['name'] == _sb_winners[_season] else 0,
     })
 _playoff_train_df = pd.DataFrame(_playoff_train_rows)
@@ -1354,10 +1215,7 @@ for _season in _current_playoff_seasons:
                 continue
             if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
                 continue
-            _hfa = _hfa_val(_snapshot_hfa_cache.get(rid, {}), _r['name'])
-            if _hfa is None:
-                continue
-            feature_rows.append([float(_r['rating_o']), float(_r['rating_d']), float(_hfa)])
+            feature_rows.append([float(_r['rating_o']), float(_r['rating_d'])])
             feature_teams.append(_r['name'])
         if not feature_rows:
             continue
@@ -1670,7 +1528,6 @@ latest_date = str(latest['date'].iloc[0]) if not latest.empty else ''
 
 standings_data = {
     'updated': latest_date,
-    'hfa_window': _hfa_window_label,
     'teams': [
         {
             'rank':            int(r['rank']),
@@ -1684,8 +1541,6 @@ standings_data = {
             'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
             'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
             'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
-            'hfa':             _hfa_val(_hfa_lookup, r['name']),
-            'hfa_rank':        _hfa_rk(_hfa_lookup, r['name']),
             'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
             'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
             'record':          clean(r['record']),
@@ -1818,7 +1673,6 @@ for team in all_teams:
             else:
                 reg = clean(r['record'])
                 po  = ''
-            snap_hfa = _snapshot_hfa_cache.get(int(r['ranking_id']), {})
             entries.append({
                 'date':              clean(r['date']),
                 'season_week':       float(r['season_week']),
@@ -1831,8 +1685,6 @@ for team in all_teams:
                 'rating_d':          round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':            int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':            int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
-                'hfa':               _hfa_val(snap_hfa, team),
-                'hfa_rank':          _hfa_rk(snap_hfa, team),
                 'sb_odds':           _sb_odds_val(r['ranking_id'], team),
                 'sb_odds_rank':      _sb_odds_rk(r['ranking_id'], team),
                 'record':            clean(r['record']),
@@ -1879,9 +1731,6 @@ for season in all_seasons:
         rs_end = _rs_end_sw.get(season)
         in_postseason = (rs_end is not None) and (snap_sw > rs_end)
 
-        # Per-snapshot rolling HFA: 3-year window ending at this ranking_id.
-        snap_hfa = _snapshot_hfa_cache.get(int(ranking_id), {})
-
         teams_snap = []
         for _, r in rdf.iterrows():
             if in_postseason:
@@ -1903,8 +1752,6 @@ for season in all_seasons:
                 'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
-                'hfa':             _hfa_val(snap_hfa, r['name']),
-                'hfa_rank':        _hfa_rk(snap_hfa, r['name']),
                 'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
                 'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
                 'record':          clean(r['record']),
