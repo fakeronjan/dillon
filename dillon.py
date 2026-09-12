@@ -202,8 +202,14 @@ def prepare_game_data(raw_df):
     df = df[df['date'] != 'Playoffs']
     df = df.dropna(subset=['ptsw'])
 
-    df['ptsw'] = pd.to_numeric(df['ptsw'])
-    df['ptsl'] = pd.to_numeric(df['ptsl'])
+    # Scores are always whole numbers, but nflverse-sourced rows carry them as
+    # native floats (home_score/away_score) while PFR-scraped rows carry them
+    # as plain strings - concatenating the two upcasts the whole column to
+    # float64, which then rendered every "last game" string as "27.0-14.0"
+    # instead of "27-14". Force back to int right away so no downstream
+    # str()/map(str) call can reintroduce a decimal.
+    df['ptsw'] = pd.to_numeric(df['ptsw']).astype(int)
+    df['ptsl'] = pd.to_numeric(df['ptsl']).astype(int)
 
     # Apply same-market rebrand consolidation before any team-keyed work
     # (margins, result strings, name_season, downstream merges). Old names
