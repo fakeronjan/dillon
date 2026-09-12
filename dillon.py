@@ -43,6 +43,97 @@ TEAM_ALIASES = {
     'Tennessee Oilers':          'Tennessee Titans',
 }
 
+# pro-football-reference started returning Cloudflare bot-challenge 403s to
+# scrapers around Aug 2026 (confirmed: plain requests, spoofed User-Agent,
+# and cloudscraper all blocked). 2025 and earlier are already fully scraped
+# and cached in loaded_NFL_games.csv, so only seasons from here on need a
+# replacement source. nflverse's games.csv is free, actively maintained,
+# unblocked, and uses the same relocation-aware team codes (OAK/LV, SD/LAC,
+# STL/LA) this file already relies on.
+NFLVERSE_START_YEAR = 2026
+NFLVERSE_GAMES_URL  = 'https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv'
+
+# Current-era (2026+) team codes only - nflverse's relocation-specific codes
+# for retired franchises (OAK/SD/STL/etc.) aren't needed since we only pull
+# NFLVERSE_START_YEAR onward. Add codes here if a future relocation happens.
+NFLVERSE_TEAM_NAMES = {
+    'ARI': 'Arizona Cardinals',      'ATL': 'Atlanta Falcons',
+    'BAL': 'Baltimore Ravens',       'BUF': 'Buffalo Bills',
+    'CAR': 'Carolina Panthers',      'CHI': 'Chicago Bears',
+    'CIN': 'Cincinnati Bengals',     'CLE': 'Cleveland Browns',
+    'DAL': 'Dallas Cowboys',         'DEN': 'Denver Broncos',
+    'DET': 'Detroit Lions',          'GB':  'Green Bay Packers',
+    'HOU': 'Houston Texans',         'IND': 'Indianapolis Colts',
+    'JAX': 'Jacksonville Jaguars',   'KC':  'Kansas City Chiefs',
+    'LA':  'Los Angeles Rams',       'LAC': 'Los Angeles Chargers',
+    'LV':  'Las Vegas Raiders',      'MIA': 'Miami Dolphins',
+    'MIN': 'Minnesota Vikings',      'NE':  'New England Patriots',
+    'NO':  'New Orleans Saints',     'NYG': 'New York Giants',
+    'NYJ': 'New York Jets',          'PHI': 'Philadelphia Eagles',
+    'PIT': 'Pittsburgh Steelers',    'SEA': 'Seattle Seahawks',
+    'SF':  'San Francisco 49ers',    'TB':  'Tampa Bay Buccaneers',
+    'TEN': 'Tennessee Titans',       'WAS': 'Washington Commanders',
+}
+
+NFLVERSE_WEEK_LABELS = {
+    'WC':  'WildCard',
+    'DIV': 'Division',
+    'CON': 'ConfChamp',
+    'SB':  'SuperBowl',
+}
+
+# loaded_NFL_games.csv's raw column layout (see prepare_game_data). Only 8 of
+# these 15 columns feed the ratings pipeline (season/week/date/winner/loser/
+# ptsw/ptsl/home-marker) - the rest (day, time, boxscore, yards, turnovers)
+# are scraped from PFR but dropped immediately and unavailable from
+# nflverse's games.csv, so they're left blank here.
+PFR_RAW_COLUMNS = ['Week', 'Day', 'Date', 'Time', 'Winner/tie', 'Unnamed: 5',
+                    'Loser/tie', 'Unnamed: 7', 'PtsW', 'PtsL', 'YdsW', 'TOW',
+                    'YdsL', 'TOL', 'Season']
+
+
+def scrape_nflverse_season(year):
+    """Build a PFR-shaped raw games DataFrame for one season from nflverse's
+    games.csv. Returns None if the season has no played games yet."""
+    all_games = pd.read_csv(NFLVERSE_GAMES_URL)
+    season_games = all_games[all_games['season'] == year].dropna(
+        subset=['home_score', 'away_score']).copy()
+    if season_games.empty:
+        return None
+
+    rows = []
+    for _, g in season_games.iterrows():
+        home_name = NFLVERSE_TEAM_NAMES[g['home_team']]
+        away_name = NFLVERSE_TEAM_NAMES[g['away_team']]
+        home_pts, away_pts = g['home_score'], g['away_score']
+        neutral = g['location'] == 'Neutral'
+
+        # Winner/tie is always the higher-scoring team (home team on a tie);
+        # the marker column then records whether THAT team was home, away,
+        # or at a neutral site - prepare_game_data decodes home/visitor from
+        # that pairing, so it doesn't matter which side we call "winner" as
+        # long as the two stay consistent.
+        if away_pts > home_pts:
+            winner, loser = away_name, home_name
+            ptsw, ptsl = away_pts, home_pts
+            marker = 'N' if neutral else '@'   # winner (away team) on the road
+        else:
+            winner, loser = home_name, away_name
+            ptsw, ptsl = home_pts, away_pts
+            marker = 'N' if neutral else np.nan  # winner (home team) at home
+
+        week = NFLVERSE_WEEK_LABELS.get(g['game_type'], g['week'])
+
+        rows.append({
+            'Week': week, 'Day': np.nan, 'Date': g['gameday'], 'Time': np.nan,
+            'Winner/tie': winner, 'Unnamed: 5': marker, 'Loser/tie': loser,
+            'Unnamed: 7': np.nan, 'PtsW': ptsw, 'PtsL': ptsl,
+            'YdsW': np.nan, 'TOW': np.nan, 'YdsL': np.nan, 'TOL': np.nan,
+            'Season': year,
+        })
+
+    return pd.DataFrame(rows, columns=PFR_RAW_COLUMNS)
+
 
 # =========================================================
 # SCRAPING
@@ -61,6 +152,14 @@ def scrape_games(min_season, max_season, existing_df):
 
     new_frames = []
     for year in range(max_season_completed + 1, max_season + 1):
+        if year >= NFLVERSE_START_YEAR:
+            df = scrape_nflverse_season(year)
+            if df is None:
+                print(f"{year} - not found, skipping.")
+                continue
+            new_frames.append(df)
+            print(f"{year} - scraped! (nflverse)")
+            continue
         url = f'https://www.pro-football-reference.com/years/{year}/games.htm'
         try:
             df = pd.read_html(url)[0]
