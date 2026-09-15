@@ -1458,6 +1458,14 @@ for _season in sorted(set(int(s) for s, _ in df.groupby('season'))):
     eor_rows = df[(df['season'] == _season) & (df['last_week_of_regular_season'] == 1)]
     if eor_rows.empty:
         continue
+    # last_week_of_regular_season flags "the most recent regular-season week
+    # we have data for" - true by construction for an in-progress season at
+    # ANY point (week 1 included), not just once the regular season has
+    # actually finished. Without this check, an early-season snapshot gets
+    # treated as end-of-RS and a hypothetical playoff field (computed from
+    # a handful of games) zeroes out SB odds for every team outside it.
+    if int(eor_rows['week'].iloc[0]) < _total_regular_season_games(_season):
+        continue
     eor_rid = int(eor_rows['ranking_id'].iloc[0])
 
     snap_probs = {}
