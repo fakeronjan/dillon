@@ -857,640 +857,33 @@ for season, sub in df[df['season_flag'] == 1].groupby('season'):
 print(f"  {len(_division_winners)} division winners flagged.")
 
 
-# ── Super Bowl odds (logistic regression, per-week leave-one-season-out) ────
-# For each team T and each regular-season snapshot R, compute P(T wins Super
-# Bowl that season) by training a logistic regression on every other season's
-# week-W snapshots (features: rating_o, rating_d; label: won_sb).
-# Predictions for the held-out season are then normalized so the league total
-# = 100% (since exactly one team wins each year).
-#
-# Leave-one-season-out keeps historical predictions honest: when we compute
-# 2007 Giants' week-12 SB odds, the model has not been told the 2007 outcome.
-# This is what makes retrospective "biggest upset" stories meaningful.
-#
-# Playoff snapshots (weeks 101-104) are excluded - the path is being
-# revealed game-by-game and rating-based prediction stops being meaningful.
-
-print("Computing Super Bowl odds (per-week logistic regression)...")
-from scipy.optimize import minimize
-
-REGULAR_SEASON_WEEKS = list(range(1, 19))  # weeks 1-18 (pre-2021 used 1-17)
-
-
-# Mathematical playoff elimination check - used to zero out teams whose
-# record makes a playoff berth literally impossible. A team is eliminated
-# iff BOTH conditions hold:
-#   - conf-teams-currently-ahead-of-T's-max-wins >= playoff_seeds  (can't be top-7)
-#   - 1+ division opponent currently has wins > T's max wins         (can't win division)
-# Winning a division earns a top-4 seed regardless of overall record, so
-# both paths must be blocked for elimination. This is conservative - it
-# only flags definite eliminations, never false positives.
-
-def _total_regular_season_games(season):
-    if season == 1982: return 9    # strike-shortened
-    if season == 1987: return 15   # strike + cancelled week
-    if season <= 1977: return 14
-    if season >= 2021: return 17
-    return 16
-
-def _playoff_seeds_per_conf(season):
-    if season == 1982: return 8    # expanded SB Tournament
-    if season <= 1977: return 4
-    if season <= 1989: return 5
-    if season <= 2019: return 6
-    return 7
-
-def _parse_wlt(rec):
-    if not isinstance(rec, str) or not rec:
-        return 0, 0, 0
-    parts = rec.split('-')
-    try:
-        if len(parts) == 2:
-            return int(parts[0]), int(parts[1]), 0
-        if len(parts) == 3:
-            return int(parts[0]), int(parts[1]), int(parts[2])
-    except ValueError:
-        pass
-    return 0, 0, 0
-
-
-def _eliminated_teams_at_snapshot(season, snap_df):
-    total_games = _total_regular_season_games(season)
-    seeds = _playoff_seeds_per_conf(season)
-
-    info = []
-    for _, r in snap_df.iterrows():
-        w, l, t = _parse_wlt(r.get('record', ''))
-        gp = w + l + t
-        gr = max(0, total_games - gp)
-        eff_w = w + 0.5 * t
-        info.append({
-            'team': r['name'],
-            'conf': conf_for_season(r['name'], season),
-            'div':  div_for_season(r['name'], season),
-            'wins': eff_w,
-            'max_wins': eff_w + gr,
-        })
-
-    eliminated = set()
-    for t_info in info:
-        T_max = t_info['max_wins']
-        ahead_conf = sum(1 for x in info
-                          if x['conf'] == t_info['conf']
-                          and x['team'] != t_info['team']
-                          and x['wins'] > T_max)
-        ahead_div = sum(1 for x in info
-                         if x['conf'] == t_info['conf']
-                         and x['div']  == t_info['div']
-                         and x['team'] != t_info['team']
-                         and x['wins'] > T_max)
-        if ahead_conf >= seeds and ahead_div >= 1:
-            eliminated.add(t_info['team'])
-    return eliminated
-
-
-# Pre-compute eliminated set per ranking_id (RS snapshots only). Cheap.
-print("  Computing mathematical playoff elimination per snapshot...")
-_eliminated_cache = {}
-for _rid in df[df['week'].isin(REGULAR_SEASON_WEEKS)]['ranking_id'].unique():
-    _snap = df[df['ranking_id'] == _rid]
-    _season_val = int(_snap['season'].iloc[0])
-    _elim = _eliminated_teams_at_snapshot(_season_val, _snap)
-    if _elim:
-        _eliminated_cache[int(_rid)] = _elim
-print(f"  Eliminated-team flags cached for {len(_eliminated_cache):,} snapshots")
-
-# Identify SB winners by season - the team flagged sb_champ at week 104.
-_sb_winners = {}
-for _season, _sdf in df.groupby('season'):
-    _wk104 = _sdf[(_sdf['week'] == 104) & (_sdf['sb_champ'] == 1)]
-    if not _wk104.empty:
-        _sb_winners[int(_season)] = _wk104['name'].iloc[0]
-print(f"  SB winners identified: {len(_sb_winners)} seasons")
-
-# Build training rows: one per (team, season, regular-season-week) with valid
-# (O, D) features and a known SB outcome. Skip in-progress seasons.
-_sb_rows = []
-for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
-    _season = int(_r['season'])
-    if _season not in _sb_winners:
-        continue
-    if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
-        continue
-    _sb_rows.append({
-        'season':     _season,
-        'week':       int(_r['week']),
-        'ranking_id': int(_r['ranking_id']),
-        'team':       _r['name'],
-        'rating_o':   float(_r['rating_o']),
-        'rating_d':   float(_r['rating_d']),
-        'won_sb':     1 if _r['name'] == _sb_winners[_season] else 0,
-    })
-_sb_train_df = pd.DataFrame(_sb_rows)
-print(f"  Training rows: {len(_sb_train_df):,} (team, season, regular-season-week)")
-
-
-def _fit_logistic(X, y):
-    """Plain logistic regression via scipy BFGS. Returns beta vector with
-    intercept as first element. X shape (n, k), y shape (n,)."""
-    n, k = X.shape
-    Xa = np.column_stack([np.ones(n), X])
-
-    def nll(beta):
-        z = Xa @ beta
-        # Numerically stable log(1 + exp(z))
-        return float(np.sum(np.maximum(z, 0.0) + np.log1p(np.exp(-np.abs(z))) - y * z))
-
-    def grad(beta):
-        z = Xa @ beta
-        p_hat = 1.0 / (1.0 + np.exp(-z))
-        return Xa.T @ (p_hat - y)
-
-    res = minimize(nll, np.zeros(k + 1), jac=grad, method='BFGS',
-                   options={'maxiter': 200, 'gtol': 1e-6})
-    return res.x
-
-
-def _predict_logistic(X, beta):
-    n = X.shape[0]
-    Xa = np.column_stack([np.ones(n), X])
-    z = Xa @ beta
-    return 1.0 / (1.0 + np.exp(-z))
-
-
-# Build the also-in-progress-current-season frame: for seasons NOT in
-# _sb_winners (in-progress), we'll still predict using a model trained on
-# all known seasons.
-_current_rows = []
-for _, _r in df[df['week'].isin(REGULAR_SEASON_WEEKS)].iterrows():
-    _season = int(_r['season'])
-    if _season in _sb_winners:
-        continue  # handled in LOO loop
-    if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
-        continue
-    _current_rows.append({
-        'season':     _season,
-        'week':       int(_r['week']),
-        'ranking_id': int(_r['ranking_id']),
-        'team':       _r['name'],
-        'rating_o':   float(_r['rating_o']),
-        'rating_d':   float(_r['rating_d']),
-    })
-_sb_current_df = pd.DataFrame(_current_rows)
-
-# Fit + predict
-_sb_odds_cache = {}  # (ranking_id, team) -> sb_odds  (float, 0-1)
-_FEATURES = ['rating_o', 'rating_d']
-
-for _week_val, _week_data in _sb_train_df.groupby('week'):
-    if len(_week_data) < 50 or _week_data['won_sb'].sum() < 3:
-        continue  # insufficient signal for this week
-
-    X_all = _week_data[_FEATURES].to_numpy()
-    y_all = _week_data['won_sb'].to_numpy()
-
-    # LOO: for each season in this week's data, train on the rest
-    for _season in _week_data['season'].unique():
-        mask_in   = _week_data['season'] != _season
-        mask_held = _week_data['season'] == _season
-        beta = _fit_logistic(X_all[mask_in.values], y_all[mask_in.values])
-
-        held = _week_data[mask_held]
-        X_held = held[_FEATURES].to_numpy()
-        probs = _predict_logistic(X_held, beta)
-        # Zero out mathematically eliminated teams, then renormalize.
-        rid = int(held['ranking_id'].iloc[0])
-        elim_set = _eliminated_cache.get(rid, set())
-        if elim_set:
-            for i, team in enumerate(held['team'].values):
-                if team in elim_set:
-                    probs[i] = 0.0
-        total = probs.sum()
-        if total > 0:
-            probs = probs / total
-        for team, p, rid_val in zip(held['team'].values, probs, held['ranking_id'].values):
-            _sb_odds_cache[(int(rid_val), team)] = float(p)
-
-    # Current/in-progress predictions: train on the full week dataset
-    if not _sb_current_df.empty:
-        cur_at_week = _sb_current_df[_sb_current_df['week'] == _week_val]
-        if not cur_at_week.empty:
-            beta_full = _fit_logistic(X_all, y_all)
-            for _rid_val, rid_group in cur_at_week.groupby('ranking_id'):
-                X_cur = rid_group[_FEATURES].to_numpy()
-                probs = _predict_logistic(X_cur, beta_full)
-                # Same elimination step
-                elim_set = _eliminated_cache.get(int(_rid_val), set())
-                if elim_set:
-                    for i, team in enumerate(rid_group['team'].values):
-                        if team in elim_set:
-                            probs[i] = 0.0
-                total = probs.sum()
-                if total > 0:
-                    probs = probs / total
-                for team, p in zip(rid_group['team'].values, probs):
-                    _sb_odds_cache[(int(_rid_val), team)] = float(p)
-
-print(f"  RS SB-odds predictions cached for {len(_sb_odds_cache):,} (snapshot, team) pairs")
-
-
-# ── Playoff SB odds (per-round LR + alive-set logic) ─────────────────────────
-# Extends SB odds through the playoff snapshots (weeks 101-104). Teams who
-# lost in earlier playoff rounds are explicitly zeroed out; alive teams
-# get model predictions normalized so their probabilities sum to 100%.
-#
-# Alive sets are derived from games - playoff_teams = anyone who played in
-# week 101+ that season; alive[week] = playoff_teams minus everyone who
-# lost in any week up to and including this one. Works perfectly for
-# completed seasons. For current in-progress at snap 101 (WC done, DR not
-# played), bye teams won't appear in playoff_teams until DR - accepted
-# limitation, fixed once DR games are scrape-able.
-
-print("Computing playoff SB odds (rounds 101-103 + post-SB 104)...")
-PLAYOFF_WEEKS = [101, 102, 103, 104]
-PLAYOFF_TRAIN_WEEKS = [101, 102, 103]  # 104 is direct assignment from SB winner
-
-def _playoff_state(season_games_df):
-    pg = season_games_df[season_games_df['week'].isin(PLAYOFF_WEEKS)]
-    if pg.empty:
-        return {'playoff_teams': set(), 'alive_by_week': {}}
-    playoff_teams = set(pg['home_team_name']) | set(pg['visitor_team_name'])
-    eliminated = set()
-    alive_by_week = {}
-    for week in sorted({int(w) for w in pg['week'].unique() if int(w) in PLAYOFF_WEEKS}):
-        for _, g in pg[pg['week'] == week].iterrows():
-            if g['home_pts'] > g['visitor_pts']:
-                eliminated.add(g['visitor_team_name'])
-            elif g['visitor_pts'] > g['home_pts']:
-                eliminated.add(g['home_team_name'])
-        alive_by_week[week] = playoff_teams - eliminated
-    return {'playoff_teams': playoff_teams, 'alive_by_week': alive_by_week}
-
-_season_playoff_state = {int(s): _playoff_state(sub) for s, sub in games.groupby('season')}
-
-# Build playoff training rows - alive teams at each playoff snapshot
-_playoff_train_rows = []
-for _, _r in df[df['week'].isin(PLAYOFF_TRAIN_WEEKS)].iterrows():
-    _season = int(_r['season'])
-    if _season not in _sb_winners:
-        continue
-    state = _season_playoff_state.get(_season, {}).get('alive_by_week', {})
-    alive_at_week = state.get(int(_r['week']), set())
-    if _r['name'] not in alive_at_week:
-        continue
-    if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
-        continue
-    _playoff_train_rows.append({
-        'season':     _season,
-        'week':       int(_r['week']),
-        'ranking_id': int(_r['ranking_id']),
-        'team':       _r['name'],
-        'rating_o':   float(_r['rating_o']),
-        'rating_d':   float(_r['rating_d']),
-        'won_sb':     1 if _r['name'] == _sb_winners[_season] else 0,
-    })
-_playoff_train_df = pd.DataFrame(_playoff_train_rows)
-print(f"  Playoff training rows (alive teams only): {len(_playoff_train_df):,}")
-
-
-def _zero_eliminated(rid, season, week_val):
-    """Mark eliminated (in playoff field but not alive at this week) as 0%."""
-    state = _season_playoff_state.get(season, {})
-    playoff_teams = state.get('playoff_teams', set())
-    alive_at_week = state.get('alive_by_week', {}).get(week_val, set())
-    for team in playoff_teams - alive_at_week:
-        _sb_odds_cache[(rid, team)] = 0.0
-
-
-for _week_val, _week_data in _playoff_train_df.groupby('week'):
-    if len(_week_data) < 30 or _week_data['won_sb'].sum() < 3:
-        continue
-    X_all = _week_data[_FEATURES].to_numpy()
-    y_all = _week_data['won_sb'].to_numpy()
-
-    # LOO for each historical season at this playoff week
-    for _season in _week_data['season'].unique():
-        mask_in = _week_data['season'] != _season
-        mask_held = _week_data['season'] == _season
-        beta = _fit_logistic(X_all[mask_in.values], y_all[mask_in.values])
-
-        held = _week_data[mask_held]
-        X_held = held[_FEATURES].to_numpy()
-        probs = _predict_logistic(X_held, beta)
-        total = probs.sum()
-        if total > 0:
-            probs = probs / total
-        rid = int(held['ranking_id'].iloc[0])
-        for team, p in zip(held['team'].values, probs):
-            _sb_odds_cache[(rid, team)] = float(p)
-        _zero_eliminated(rid, int(_season), int(_week_val))
-
-    # Current/in-progress predictions: train on full history, predict for
-    # current-season's alive teams at this playoff week (if any).
-    if _sb_current_df is not None and not _sb_current_df.empty:
-        pass  # handled below in a separate loop using game-aware alive set
-
-# Current/in-progress playoff predictions: identify alive teams from
-# game results, predict using full-history model.
-_current_playoff_seasons = sorted(set(int(s) for s, _ in df.groupby('season')
-                                     if int(s) not in _sb_winners))
-for _season in _current_playoff_seasons:
-    state = _season_playoff_state.get(_season, {})
-    if not state.get('playoff_teams'):
-        continue
-    for _week_val in PLAYOFF_TRAIN_WEEKS:
-        alive_at_week = state.get('alive_by_week', {}).get(_week_val, set())
-        if not alive_at_week:
-            continue
-        # Find snapshot for this (season, week)
-        snap_df = df[(df['season'] == _season) & (df['week'] == _week_val)]
-        if snap_df.empty:
-            continue
-        rid = int(snap_df['ranking_id'].iloc[0])
-        # Build feature matrix for alive teams from snap_df
-        feature_rows = []
-        feature_teams = []
-        for _, _r in snap_df.iterrows():
-            if _r['name'] not in alive_at_week:
-                continue
-            if pd.isna(_r.get('rating_o')) or pd.isna(_r.get('rating_d')):
-                continue
-            feature_rows.append([float(_r['rating_o']), float(_r['rating_d'])])
-            feature_teams.append(_r['name'])
-        if not feature_rows:
-            continue
-        # Fit on full historical playoff data at this week, predict for current alive teams
-        train_at_week = _playoff_train_df[_playoff_train_df['week'] == _week_val]
-        if len(train_at_week) < 30 or train_at_week['won_sb'].sum() < 3:
-            continue
-        beta = _fit_logistic(
-            train_at_week[_FEATURES].to_numpy(),
-            train_at_week['won_sb'].to_numpy(),
-        )
-        X_cur = np.array(feature_rows)
-        probs = _predict_logistic(X_cur, beta)
-        total = probs.sum()
-        if total > 0:
-            probs = probs / total
-        for team, p in zip(feature_teams, probs):
-            _sb_odds_cache[(rid, team)] = float(p)
-        _zero_eliminated(rid, _season, _week_val)
-
-
-# Snapshot 104 (post-SB): direct assignment - SB winner gets 100%, every
-# other team that made the playoffs gets 0%, non-playoff teams stay absent.
-for _season, _winner in _sb_winners.items():
-    wk104 = df[(df['season'] == _season) & (df['week'] == 104)]
-    if wk104.empty:
-        continue
-    rid = int(wk104['ranking_id'].iloc[0])
-    playoff_teams = _season_playoff_state.get(_season, {}).get('playoff_teams', set())
-    for team in playoff_teams:
-        _sb_odds_cache[(rid, team)] = 1.0 if team == _winner else 0.0
-
-
-# EOR playoff-field lock-in: at end of regular season we know EXACTLY who's
-# in the playoffs. For COMPLETED seasons that's trivial - read week 101+
-# games. For CURRENT in-progress at EOR (RS done, WC not played yet), we
-# derive the field directly from RS standings using division winners + top
-# wild cards by record. Either way, non-playoff teams get zeroed and the
-# remaining playoff field renormalizes to 100%.
-
-def _all_pairs_played(season, teams, rs_games):
-    """True iff every pair of teams in the group played at least one game
-    against each other this season. Required for NFL's h2h-sweep rule."""
-    s = int(season)
-    season_games = rs_games[rs_games['season'] == s]
-    for i, t1 in enumerate(teams):
-        for t2 in teams[i + 1:]:
-            played = season_games[
-                ((season_games['home_team_name'] == t1) & (season_games['visitor_team_name'] == t2))
-                | ((season_games['home_team_name'] == t2) & (season_games['visitor_team_name'] == t1))
-            ]
-            if played.empty:
-                return False
-    return True
-
-
-def _pick_top_wild_card(season, pool, rs_games):
-    """Pick the single top team from a tied pool using the NFL wild-card
-    tiebreaker cascade. Each step splits the surviving group; if a step
-    cannot apply (missing data), continue to the next."""
-    s_int = int(season)
-    if len(pool) == 1:
-        return pool[0]
-
-    # Step 1: cull to one rep per division (using division tiebreaker).
-    by_div = collections.defaultdict(list)
-    for t in pool:
-        by_div[div_for_season(t, s_int)].append(t)
-    reps = []
-    for teams in by_div.values():
-        reps.append(teams[0] if len(teams) == 1
-                    else _resolve_division_tie(s_int, teams, rs_games))
-    if len(reps) == 1:
-        return reps[0]
-
-    def _filter(survivors, pcts):
-        if not pcts or any(v is None for v in pcts.values()):
-            return survivors
-        best = max(pcts.values())
-        winners = [t for t in survivors if pcts[t] == best]
-        return winners if winners else survivors
-
-    survivors = reps
-
-    # Step 2: head-to-head sweep - only applicable when ALL teams in the
-    # group played each other. Otherwise the rule is explicitly skipped
-    # (NFL: "applicable only if one team beat all others or lost to all").
-    if _all_pairs_played(s_int, survivors, rs_games):
-        h2h = {t: _h2h_pct(s_int, t, [x for x in survivors if x != t], rs_games) for t in survivors}
-        survivors = _filter(survivors, h2h)
-        if len(survivors) == 1: return survivors[0]
-
-    # Step 3: best conference record
-    cr = {t: _conf_record_pct(s_int, t, rs_games) for t in survivors}
-    survivors = _filter(survivors, cr)
-    if len(survivors) == 1: return survivors[0]
-
-    # Step 4: common games (>=4 common opponents)
-    common = _common_opponents(s_int, survivors, rs_games)
-    if common:
-        cg = {t: _common_games_pct(s_int, t, common, rs_games) for t in survivors}
-        survivors = _filter(survivors, cg)
-        if len(survivors) == 1: return survivors[0]
-
-    # Steps 5-6: strength of victory, strength of schedule
-    season_records = _season_records_cache.get(s_int)
-    if season_records is None:
-        season_records = _build_season_records(s_int, rs_games)
-        _season_records_cache[s_int] = season_records
-
-    sov = {t: _strength_of_victory(s_int, t, season_records, rs_games) for t in survivors}
-    survivors = _filter(survivors, sov)
-    if len(survivors) == 1: return survivors[0]
-
-    sos = {t: _strength_of_schedule(s_int, t, season_records, rs_games) for t in survivors}
-    survivors = _filter(survivors, sos)
-    if len(survivors) == 1: return survivors[0]
-
-    # Steps 7-10: points-based cascade (combined ranking, net points)
-    return _apply_points_based_cascade(s_int, survivors, rs_games)
-
-
-def _resolve_wild_card_tie(season, tied_teams, num_to_pick, rs_games):
-    """Pick `num_to_pick` teams from a tied pool, one at a time. Each pick
-    redoes the full cull-and-cascade against the remaining pool - that's
-    the actual NFL behavior, otherwise multiple non-div-winners from the
-    same division can never both make the playoffs."""
-    if len(tied_teams) <= num_to_pick:
-        return list(tied_teams)
-    picked = []
-    pool = list(tied_teams)
-    while len(picked) < num_to_pick and pool:
-        top = _pick_top_wild_card(season, pool, rs_games)
-        picked.append(top)
-        pool.remove(top)
-    return picked
-
-
-def _playoff_field_from_eor_standings(season):
-    """Derive the playoff field from end-of-RS standings using division
-    winners + the NFL wild-card tiebreaker cascade for the remaining slots."""
-    eor_rows = df[(df['season'] == season) & (df['last_week_of_regular_season'] == 1)]
-    if eor_rows.empty:
-        return set()
-
-    seeds = _playoff_seeds_per_conf(season)
-    div_winners_this_season = {t for (s, t) in _division_winners if s == season}
-
-    # Build per-team info with raw W-L for proper tiebreaker-friendly pct.
-    teams_info = []
-    for _, r in eor_rows.iterrows():
-        w, l, t = _parse_wlt(r.get('record', ''))
-        eff_w = w + 0.5 * t
-        n_games = w + l + t
-        pct = (eff_w / n_games) if n_games > 0 else 0.0
-        teams_info.append({
-            'team': r['name'],
-            'conf': conf_for_season(r['name'], season),
-            'wins': eff_w,
-            'pct':  pct,
-        })
-
-    playoff_field = set()
-    for conf in {t['conf'] for t in teams_info}:
-        conf_teams = [t for t in teams_info if t['conf'] == conf]
-        conf_div_winners = [t for t in conf_teams if t['team'] in div_winners_this_season]
-        playoff_field.update(t['team'] for t in conf_div_winners)
-
-        remaining = seeds - len(conf_div_winners)
-        if remaining <= 0:
-            continue
-
-        # Non-div-winners sorted by win pct descending; walk down picking
-        # groups, applying the wild-card cascade within each tied group.
-        non_div = [t for t in conf_teams if t['team'] not in div_winners_this_season]
-        non_div.sort(key=lambda x: -x['pct'])
-
-        i = 0
-        slots_left = remaining
-        while slots_left > 0 and i < len(non_div):
-            current_pct = non_div[i]['pct']
-            j = i
-            while j < len(non_div) and non_div[j]['pct'] == current_pct:
-                j += 1
-            tied = [non_div[k]['team'] for k in range(i, j)]
-            if len(tied) <= slots_left:
-                playoff_field.update(tied)
-                slots_left -= len(tied)
-            else:
-                picked = _resolve_wild_card_tie(season, tied, slots_left, _rs_games)
-                playoff_field.update(picked)
-                slots_left = 0
-            i = j
-
-    return playoff_field
-
-
-def _resolve_playoff_field(season):
-    """Prefer the games-based field for completed seasons (100% accurate);
-    fall back to EOR standings derivation when no playoff games exist yet."""
-    from_games = _season_playoff_state.get(season, {}).get('playoff_teams', set())
-    if from_games:
-        return from_games
-    return _playoff_field_from_eor_standings(season)
-
-
-# DEBUG: validate the standings-based derivation against the games-based ground
-# truth across every completed season. Helps catch tiebreaker logic drift.
-if os.environ.get('VALIDATE_PLAYOFF_FIELD'):
-    print()
-    print("Validating standings-derived playoff field against games-based truth...")
-    n_perfect = 0
-    n_mismatch = 0
-    mismatch_seasons = []
-    for _season, _state in _season_playoff_state.items():
-        truth_set = _state.get('playoff_teams', set())
-        if not truth_set:
-            continue
-        derived = _playoff_field_from_eor_standings(_season)
-        missing = truth_set - derived
-        extra = derived - truth_set
-        if not missing and not extra:
-            n_perfect += 1
-        else:
-            n_mismatch += 1
-            mismatch_seasons.append((_season, sorted(missing), sorted(extra)))
-    print(f"  Perfect match: {n_perfect}")
-    print(f"  Mismatches: {n_mismatch}")
-    for season, missing, extra in mismatch_seasons:
-        print(f"    {season}: missing={missing}  extra={extra}")
-    print()
-
-
-print("  Locking in EOR playoff field per season...")
-_eor_locked = 0
-for _season in sorted(set(int(s) for s, _ in df.groupby('season'))):
-    playoff_teams = _resolve_playoff_field(_season)
-    if not playoff_teams:
-        continue
-    eor_rows = df[(df['season'] == _season) & (df['last_week_of_regular_season'] == 1)]
-    if eor_rows.empty:
-        continue
-    # last_week_of_regular_season flags "the most recent regular-season week
-    # we have data for" - true by construction for an in-progress season at
-    # ANY point (week 1 included), not just once the regular season has
-    # actually finished. Without this check, an early-season snapshot gets
-    # treated as end-of-RS and a hypothetical playoff field (computed from
-    # a handful of games) zeroes out SB odds for every team outside it.
-    if int(eor_rows['week'].iloc[0]) < _total_regular_season_games(_season):
-        continue
-    eor_rid = int(eor_rows['ranking_id'].iloc[0])
-
-    snap_probs = {}
-    for team in eor_rows['name']:
-        p = _sb_odds_cache.get((eor_rid, team))
-        if p is not None:
-            snap_probs[team] = p
-    if not snap_probs:
-        continue
-
-    for team in list(snap_probs.keys()):
-        if team not in playoff_teams:
-            snap_probs[team] = 0.0
-
-    total = sum(snap_probs.values())
-    if total > 0:
-        for team in snap_probs:
-            snap_probs[team] = snap_probs[team] / total
-
-    for team, p in snap_probs.items():
-        _sb_odds_cache[(eor_rid, team)] = float(p)
-    _eor_locked += 1
-print(f"  EOR locked-in: {_eor_locked} seasons")
-
-
+# ── Super Bowl odds (season + playoff Monte Carlo, playoff_sim.py) ──────────
+# Replaced the per-week logistic model (and its end-of-regular-season
+# playoff-field lock-in) 2026-09-26, ported from LOBO/DUNCAN/GRIFFEY. Every
+# weekly snapshot simulates the rest of the regular season, qualifies and
+# seeds each conference under that season's format, and plays the bracket;
+# played games are fixed. NFL history is small, so no cache is needed.
+print("Computing Super Bowl odds (season + playoff Monte Carlo)...")
+import playoff_sim
+
+_sim_games = pd.read_csv('all_NFL_games.csv', low_memory=False)
+_sim_games = _sim_games.drop(columns=['home', 'week_id']).rename(columns={
+    'home_team_name': 'home', 'visitor_team_name': 'away', 'cume_week_id': 'week_id'})
+_sim_games = _sim_games[['season', 'week', 'week_id', 'home', 'away', 'home_pts', 'visitor_pts', 'is_neutral']]
+_cur_season = int(_sim_games['season'].max())
+_schedule = None
+if os.path.exists('nfl_schedule.csv'):
+    _schedule = pd.read_csv('nfl_schedule.csv')
+    _played_now = _sim_games[_sim_games['season'] == _cur_season]
+    _played_keys = set(zip(_played_now['week'], _played_now['home'], _played_now['away']))
+    # drop fixtures already in the results (nflverse can lag on posting scores)
+    _schedule = _schedule[[k not in _played_keys for k in zip(_schedule['week'], _schedule['home'], _schedule['away'])]]
+_sim_ratings = df[['ranking_id', 'season', 'name', 'rating']].rename(columns={'ranking_id': 'week_id'})
+_playoff_odds, _brackets = playoff_sim.compute(_sim_games, _sim_ratings, _conf_div_for, _cur_season, _schedule)
+_sb_odds_cache = {}  # (ranking_id, team) -> sb_odds (float, 0-1); only non-zero
+for wid, team, p in _playoff_odds[['week_id', 'team', 'champ']].itertuples(index=False):
+    if p > 0:
+        _sb_odds_cache[(int(wid), team)] = float(p)
 print(f"  Total SB-odds predictions cached: {len(_sb_odds_cache):,} (snapshot, team) pairs")
 
 
@@ -2010,3 +1403,78 @@ if _unknown:
         print(f'    - {t!r}')
     print('    These teams will display as "Other" until added.')
     print()
+
+
+# ── 6. Playoff odds tab (docs/data/playoff_odds/) ────────────────────────────
+# Same schema as LOBO/DUNCAN/COBI/GRIFFEY: per season, a snapshot for every
+# week from the end of the regular season on, with seeds, games so far, and
+# the chance to get past each round (last = Super Bowl odds).
+print("Writing playoff_odds/...")
+os.makedirs('docs/data/playoff_odds', exist_ok=True)
+_rt = df.set_index(['ranking_id', 'name'])
+_date_by_rid = df.drop_duplicates('ranking_id').set_index('ranking_id')['date'].to_dict()
+_po_idx = _playoff_odds.set_index(['week_id', 'team'])
+
+
+def _int_or_none(v):
+    return None if pd.isna(v) else int(v)
+
+
+_po_seasons = []
+for season in sorted(_brackets, reverse=True):
+    names, short = playoff_sim.round_names(season)
+    n_rounds = len(names)
+    enter = playoff_sim.entry_rounds(season)
+    sg = _sim_games[(_sim_games['season'] == season) & (_sim_games['week'] >= 100)]
+    snaps = []
+    for wid, (seeds, matchups, n_sims) in sorted(_brackets[season].items()):
+        series = {}
+        for rnd, bo, ta, tb, wins, decided in matchups:
+            for me, opp in ((ta, tb), (tb, ta)):
+                w = wins.count(me); l = len(wins) - w
+                series.setdefault(me, []).append({
+                    'round': short[rnd - 1], 'opp': display_name(opp, season), 'w': w, 'l': l,
+                    'best_of': 1, 'done': decided is not None, 'won': decided == me})
+        teams_ = []
+        for team, seed in seeds.items():
+            if seed not in enter or (wid, team) not in _po_idx.index or (wid, team) not in _rt.index:
+                continue
+            pr = _po_idx.loc[(wid, team)]
+            adv = [float(pr[f'r{k}']) for k in range(2, n_rounds + 1)] + [float(pr['champ'])]
+            r = _rt.loc[(wid, team)]
+            ser = series.get(team, [])
+            teams_.append({
+                'team': display_name(team, season), 'seed': seed, 'enter': int(enter[seed]),
+                'rating': round(float(r['rating']), 2), 'rank': _int_or_none(r['rank']),
+                'rating_o': round(float(r['rating_o']), 2) if not pd.isna(r['rating_o']) else None,
+                'rank_o': _int_or_none(r['rank_o']),
+                'rating_d': round(float(r['rating_d']), 2) if not pd.isna(r['rating_d']) else None,
+                'rank_d': _int_or_none(r['rank_d']),
+                'adv': [round(x, 4) for x in adv],
+                'eliminated': any(x['done'] and not x['won'] for x in ser)
+                              and not any(not x['done'] for x in ser),
+                'series': ser,
+            })
+        day = sg[sg['week_id'] == wid]
+        played = [x for x in matchups if x[4]]
+        if any(t['adv'][-1] >= 1.0 for t in teams_):
+            stage = 'Champion'
+        elif not played:
+            stage = 'Before playoffs'
+        else:
+            live = [x for x in matchups if x[5] is None]
+            stage = names[min(x[0] for x in live) - 1] if live else names[max(x[0] for x in played) - 1]
+        snaps.append({
+            'date': str(_date_by_rid.get(wid, '')), 'stage': stage, 'n_sims': int(n_sims),
+            'results': [{'home': display_name(x.home, season), 'away': display_name(x.away, season),
+                         'hp': int(x.home_pts), 'vp': int(x.visitor_pts)}
+                        for x in day.itertuples(index=False)] if played else [],
+            'teams': teams_,
+        })
+    _po_seasons.append({'season': int(season), 'rounds': names, 'rounds_short': short, 'snapshots': snaps})
+    with open(f'docs/data/playoff_odds/{season}.json', 'w') as f:
+        json.dump(_po_seasons[-1], f, separators=(',', ':'))
+with open('docs/data/playoff_odds/index.json', 'w') as f:
+    json.dump({'n_sims': playoff_sim.N_SIMS, 'current_season': _cur_season,
+               'seasons': [x['season'] for x in _po_seasons]}, f, separators=(',', ':'))
+print(f"  {len(_po_seasons)} seasons of playoff odds written")

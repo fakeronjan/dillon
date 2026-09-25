@@ -10,3 +10,4 @@ loaded_NFL_games_archive_*.csv
 
 # Engine-migration backup snapshots (never commit)
 *-bak
+nfl_schedule.csv

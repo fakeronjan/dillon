@@ -135,6 +135,25 @@ def scrape_nflverse_season(year):
     return pd.DataFrame(rows, columns=PFR_RAW_COLUMNS)
 
 
+SCHEDULE_CSV = 'nfl_schedule.csv'
+
+
+def fetch_nfl_schedule(season):
+    """Unplayed regular-season games of `season` (the title-odds sim's
+    remaining schedule) from nflverse -> SCHEDULE_CSV, in DILLON's names."""
+    all_games = pd.read_csv(NFLVERSE_GAMES_URL)
+    left = all_games[(all_games['season'] == season) & (all_games['game_type'] == 'REG')
+                     & all_games['home_score'].isna()]
+    df = pd.DataFrame({'home': left['home_team'].map(NFLVERSE_TEAM_NAMES),
+                       'away': left['away_team'].map(NFLVERSE_TEAM_NAMES),
+                       'week': left['week']})
+    if df[['home', 'away']].isna().any().any():
+        raise RuntimeError(f"unmapped nflverse team codes in the {season} schedule")
+    df.to_csv(SCHEDULE_CSV, index=False)
+    print(f"  {len(df)} scheduled regular-season games left in {season} -> {SCHEDULE_CSV}")
+    return df
+
+
 # =========================================================
 # SCRAPING
 # =========================================================
@@ -737,6 +756,7 @@ if __name__ == '__main__':
 
     # 2. Prepare game data
     master_df = prepare_game_data(raw_df)
+    fetch_nfl_schedule(int(master_df['season'].max()))   # a failure should fail the run
 
     # 3. REACT ratings
     try:
