@@ -1429,12 +1429,18 @@ for season in sorted(_brackets, reverse=True):
     snaps = []
     for wid, (seeds, matchups, n_sims) in sorted(_brackets[season].items()):
         series = {}
+        first_week = 102 if playoff_sim.fmt(season) == 'four' else 101
         for rnd, bo, ta, tb, wins, decided in matchups:
+            game = sg[(sg['week'] == first_week + rnd - 1) & sg['home'].isin([ta, tb]) & sg['away'].isin([ta, tb])]
             for me, opp in ((ta, tb), (tb, ta)):
                 w = wins.count(me); l = len(wins) - w
-                series.setdefault(me, []).append({
-                    'round': short[rnd - 1], 'opp': display_name(opp, season), 'w': w, 'l': l,
-                    'best_of': 1, 'done': decided is not None, 'won': decided == me})
+                entry = {'round': short[rnd - 1], 'opp': display_name(opp, season), 'w': w, 'l': l,
+                         'best_of': 1, 'done': decided is not None, 'won': decided == me}
+                if decided is not None and len(game):
+                    x = game.iloc[0]
+                    mine, theirs = (x.home_pts, x.visitor_pts) if x.home == me else (x.visitor_pts, x.home_pts)
+                    entry['score'] = f"{int(mine)}-{int(theirs)}"
+                series.setdefault(me, []).append(entry)
         teams_ = []
         for team, seed in seeds.items():
             if seed not in enter or (wid, team) not in _po_idx.index or (wid, team) not in _rt.index:
