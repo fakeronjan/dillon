@@ -146,7 +146,8 @@ def fetch_nfl_schedule(season):
                      & all_games['home_score'].isna()]
     df = pd.DataFrame({'home': left['home_team'].map(NFLVERSE_TEAM_NAMES),
                        'away': left['away_team'].map(NFLVERSE_TEAM_NAMES),
-                       'week': left['week']})
+                       'week': left['week'],
+                       'is_neutral': (left['location'] == 'Neutral').astype(int)})
     if df[['home', 'away']].isna().any().any():
         raise RuntimeError(f"unmapped nflverse team codes in the {season} schedule")
     df.to_csv(SCHEDULE_CSV, index=False)

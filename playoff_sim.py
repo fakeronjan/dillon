@@ -113,10 +113,14 @@ class SeasonSim:
         playoffs. schedule: unplayed regular-season games (home, away)."""
         self.season = season
         g = games.copy()
-        rs = g[g['week'] < 100][['week_id', 'home', 'away', 'home_pts', 'visitor_pts']]
+        rs = g[g['week'] < 100][['week_id', 'home', 'away', 'home_pts', 'visitor_pts', 'is_neutral']]
         if schedule is not None and len(schedule):
-            rs = pd.concat([rs, schedule.assign(week_id=np.inf, home_pts=np.nan, visitor_pts=np.nan)],
-                           ignore_index=True)
+            sch = schedule.assign(week_id=np.inf, home_pts=np.nan, visitor_pts=np.nan)
+            if 'is_neutral' not in sch.columns:
+                sch['is_neutral'] = 0
+            rs = pd.concat([rs, sch[rs.columns]], ignore_index=True)
+        # International / neutral-site regular-season games get no home edge.
+        rs['is_neutral'] = rs['is_neutral'].fillna(0).astype(int)
         self.teams = sorted(set(rs['home']) | set(rs['away']))
         self.idx = {t: i for i, t in enumerate(self.teams)}
         cd = [conf_div(t, season) for t in self.teams]
@@ -195,7 +199,8 @@ class SeasonSim:
         W = np.tile(w0, (n_sims, 1)); G = np.tile(g0, (n_sims, 1))
         if len(rest):
             h = rest['h'].to_numpy(); a = rest['a'].to_numpy()
-            pr = ndtr(A * (Rs[:, h] - Rs[:, a] + hp)) if np.ndim(Rs) == 2 else ndtr(A * (R[h] - R[a] + hp))
+            hp_g = np.where(rest['is_neutral'].to_numpy() == 1, 0.0, hp)
+            pr = ndtr(A * (Rs[:, h] - Rs[:, a] + hp_g)) if np.ndim(Rs) == 2 else ndtr(A * (R[h] - R[a] + hp_g))
             hw = (rng.random((n_sims, len(rest))) < pr).astype(np.float32)
             Hm = np.zeros((len(rest), T), np.float32); Hm[np.arange(len(rest)), h] = 1
             Am = np.zeros((len(rest), T), np.float32); Am[np.arange(len(rest)), a] = 1
