@@ -1,19 +1,18 @@
 """Weekly Matchups: every game of a week, previewed from the ratings going
-into it - win probability, DILLON's line, a projected score, and the stakes
+into it - win probability, DILLON's line and O/U (projected total), and the stakes
 (each team's playoff and Super Bowl odds with a win vs with a loss). After
 the games: the final score and whether DILLON's pick was right.
 
 Stakes come from the season sim (playoff_sim.py): one run of 100k simulations
 from the snapshot before the week, split by each game's simulated result.
 
-Line and projected score (fit on 1999-2025 games, leave-one-season-out):
+Line and O/U (fit on 1999-2025 games, leave-one-season-out):
     margin = LINE_LAM * (home rating - away rating + home edge)
         home edge = the sim's era home-field value (0 at neutral sites), so the
         line and the win probability always name the same favorite; LINE_LAM
         because ratings over-extrapolate big mismatches
     total  = 2 * league points per team-game last season
              + TOTAL_B * (both offenses - both defenses)
-    projected score = (total +/- margin) / 2
 The ratings don't beat betting lines (DILLON predictive
 analysis, 2026-09-26: 50.6% against the spread).
 """
@@ -136,7 +135,7 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
                 'away_rank': None if pd.isna(ra['rank']) else int(ra['rank']),
                 'p_home': round(p_home, 4),
                 'line': round(float(margin) * 2) / 2,           # home by this many (negative = away)
-                'proj_home': int(round((total + margin) / 2)), 'proj_away': int(round((total - margin) / 2)),
+                'total': round(float(total) * 2) / 2,           # DILLON O/U: projected combined points
                 'stakes': {k: {kk: (None if vv is None else round(vv, 4)) for kk, vv in v.items()} for k, v in stakes.items()},
                 'result': None,
             }
