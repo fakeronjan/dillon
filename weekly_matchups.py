@@ -17,6 +17,10 @@ Line and projected score (fit on 1999-2025 games, leave-one-season-out):
 The ratings don't beat betting lines (DILLON predictive
 analysis, 2026-09-26: 50.6% against the spread).
 """
+import hashlib
+import os
+import pickle
+
 import numpy as np
 import pandas as pd
 
@@ -53,7 +57,11 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
     first_week = 102 if playoff_sim.fmt(season) == 'four' else 101
     weeks_out = []
     all_ids = sorted(snap)
+    unplayed = g.loc[g['home_pts'].isna(), 'week']
+    next_week = unplayed.min() if len(unplayed) else None
     for week, wg in g.groupby('week', sort=True):
+        if next_week is not None and week > next_week:
+            break                                    # live season: preview only the current week
         wid_game = wg['week_id'].min()
         if np.isnan(wid_game):                       # unplayed week: after the latest snapshot
             wid_prev = max(i for i in all_ids if i <= played_g['week_id'].max())
@@ -113,14 +121,19 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
                                  'sb_win': float((champ[won] == it).mean()) if won.any() else None,
                                  'sb_loss': 0.0}
             neutral = int(getattr(x, 'is_neutral', 0) or 0) == 1
-            rh, ra = rt.loc[h], rt.loc[a]
+            # expansion teams (1999 Browns, 2002 Texans) have no rating before
+            # their first game: league average, no rank (as the sim does)
+            blank = pd.Series({'rating': 0.0, 'rating_o': 0.0, 'rating_d': 0.0, 'rank': np.nan})
+            rh = rt.loc[h] if h in rt.index else blank
+            ra = rt.loc[a] if a in rt.index else blank
             margin = LINE_LAM * (rh['rating'] - ra['rating'] + (0.0 if neutral else sim.hp))
             total = 2 * mu + TOTAL_B * ((rh['rating_o'] + ra['rating_o']) - (rh['rating_d'] + ra['rating_d']))
             game = {
                 'home': h, 'away': a, 'neutral': neutral,
                 'home_record': _record(*rec.get(h, (0, 0, 0))), 'away_record': _record(*rec.get(a, (0, 0, 0))),
                 'home_rating': round(float(rh['rating']), 2), 'away_rating': round(float(ra['rating']), 2),
-                'home_rank': int(rh['rank']), 'away_rank': int(ra['rank']),
+                'home_rank': None if pd.isna(rh['rank']) else int(rh['rank']),
+                'away_rank': None if pd.isna(ra['rank']) else int(ra['rank']),
                 'p_home': round(p_home, 4),
                 'line': round(float(margin) * 2) / 2,           # home by this many (negative = away)
                 'proj_home': int(round((total + margin) / 2)), 'proj_away': int(round((total - margin) / 2)),
@@ -167,3 +180,51 @@ def add_juice(seasons):
     for (g, *_), qq, ss in zip(rows, q, s):
         g['quality'], g['stakes_score'] = int(round(qq)), int(round(ss))
         g['juice'] = int(round(np.sqrt(qq * ss)))
+
+
+# ── Per-season cache ─────────────────────────────────────────────────────────
+# Finished seasons never change unless the engine or their inputs do: cache
+# each season under a fingerprint of this file + playoff_sim.py + the
+# season's games (and last season's, for the Week 1 snapshot and scoring
+# baseline) + ratings (rounded to 3dp; the ratings engine isn't
+# bit-reproducible) + the live schedule.
+CACHE_DIR = 'matchups_cache'
+_HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _fingerprint(season, games, ratings, schedule):
+    h = hashlib.sha256()
+    for f in ('weekly_matchups.py', 'playoff_sim.py'):
+        h.update(open(os.path.join(_HERE, f), 'rb').read())
+    g = games[games['season'].isin([season - 1, season])].sort_values(['week_id', 'home'])
+    h.update(g.to_csv(index=False).encode())
+    r = ratings[ratings['season'].isin([season - 1, season])].sort_values(['week_id', 'name']).copy()
+    for c in ('rating', 'rating_o', 'rating_d'):
+        r[c] = r[c].round(3)
+    h.update(r.to_csv(index=False).encode())
+    if schedule is not None:
+        h.update(schedule.sort_values(['week', 'home']).to_csv(index=False).encode())
+    return h.hexdigest()
+
+
+def build_cached(seasons, games, ratings, conf_div, current_season, schedule=None, log=print):
+    """{season: weeks} for every season, reusing cached ones."""
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    out, done = {}, 0
+    for s in seasons:
+        sch = schedule if s == current_season else None
+        sig = _fingerprint(s, games, ratings, sch)
+        path = os.path.join(CACHE_DIR, f'{s}.pkl')
+        if os.path.exists(path):
+            try:
+                old_sig, weeks = pickle.load(open(path, 'rb'))
+                if old_sig == sig:
+                    out[s] = weeks
+                    continue
+            except Exception:
+                pass
+        out[s] = build_season(s, games, ratings, conf_div, sch, log=lambda *a: None)
+        pickle.dump((sig, out[s]), open(path, 'wb'))
+        done += 1
+    log(f'  weekly matchups: {len(seasons) - done} seasons from cache, {done} computed')
+    return out

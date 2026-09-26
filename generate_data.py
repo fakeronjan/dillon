@@ -1490,16 +1490,15 @@ print(f"  {len(_po_seasons)} seasons of playoff odds written")
 # Every game of a week previewed from the ratings going into it (win
 # probability, line, projected score) plus its stakes: each team's playoff
 # and Super Bowl odds with a win vs a loss, from 100k sims split by that
-# game's result. Pilot: 2025 only, for review before backfilling to 1999.
+# game's result. 1999 on; finished seasons are cached (weekly_matchups.py).
 import weekly_matchups
-WM_SEASONS = [2025]
+WM_SEASONS = list(range(1999, int(_cur_season) + 1))   # 1999: first season with every game's data
 print("Writing weekly_matchups/...")
 os.makedirs('docs/data/weekly_matchups', exist_ok=True)
 _wm_ratings = pd.read_csv('dillon_react_ratings.csv').rename(columns={'ranking_id': 'week_id'})[
     ['season', 'week_id', 'name', 'rating', 'rank', 'rating_o', 'rating_d']]
-_wm_all = {_s: weekly_matchups.build_season(_s, _sim_games, _wm_ratings, _conf_div_for,
-                                            _schedule if _s == _cur_season else None, log=lambda *a: None)
-           for _s in WM_SEASONS}
+_wm_all = weekly_matchups.build_cached(WM_SEASONS, _sim_games, _wm_ratings, _conf_div_for,
+                                      _cur_season, _schedule)
 weekly_matchups.add_juice(_wm_all)          # ranked against every game in the pool
 for _s, _weeks in _wm_all.items():
     for _w in _weeks:

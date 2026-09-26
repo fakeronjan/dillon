@@ -29,8 +29,24 @@ jobs:
       - name: Run ratings engine
         run: python dillon.py
 
+      # matchups_cache/ holds per-season Weekly Matchups (weekly_matchups.py),
+      # fingerprinted by engine code + that season's games and ratings, so a
+      # stale entry recomputes itself. A miss rebuilds 1999 on (~5 min).
+      - name: Restore matchups cache
+        uses: actions/cache/restore@v4
+        with:
+          path: matchups_cache
+          key: dillon-matchups-${{ github.run_id }}
+          restore-keys: dillon-matchups-
+
       - name: Generate web data
         run: python generate_data.py
+
+      - name: Save matchups cache
+        uses: actions/cache/save@v4
+        with:
+          path: matchups_cache
+          key: dillon-matchups-${{ github.run_id }}
 
       - name: Commit and push updated data
         run: |
