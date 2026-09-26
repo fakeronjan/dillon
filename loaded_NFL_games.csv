@@ -7753,7 +7753,7 @@ WildCard,Sun,1/5/03,4:47PM,San Francisco 49ers,,New York Giants,boxscore,39,38,4
 8,Sun,10/26/03,1:02PM,Cincinnati Bengals,,Seattle Seahawks,boxscore,27,24,412,0,459,5,2003
 8,Sun,10/26/03,4:15PM,Indianapolis Colts,,Houston Texans,boxscore,30,21,391,1,270,2,2003
 8,Sun,10/26/03,8:30PM,Kansas City Chiefs,,Buffalo Bills,boxscore,38,5,375,0,266,7,2003
-8,Mon,10/27/03,9:09PM,Miami Dolphins,@,San Diego Chargers,boxscore,26,10,264,1,250,3,2003
+8,Mon,10/27/03,9:09PM,Miami Dolphins,N,San Diego Chargers,boxscore,26,10,264,1,250,3,2003
 8,Sun,10/26/03,1:02PM,New England Patriots,,Cleveland Browns,boxscore,9,3,347,0,203,1,2003
 8,Sun,10/26/03,1:00PM,New York Giants,@,Minnesota Vikings,boxscore,29,17,450,1,359,2,2003
 8,Sun,10/26/03,4:13PM,Philadelphia Eagles,,New York Jets,boxscore,24,17,306,2,377,2,2003
@@ -8228,7 +8228,7 @@ WildCard,Sat,1/8/05,4:37PM,St. Louis Rams,@,Seattle Seahawks,boxscore,27,20,396,
 3,Sun,9/25/05,4:06PM,Seattle Seahawks,,Arizona Cardinals,boxscore,37,12,447,0,266,2,2005
 3,Sun,9/25/05,1:02PM,St. Louis Rams,,Tennessee Titans,boxscore,31,27,360,4,335,3,2005
 3,Sun,9/25/05,1:02PM,Tampa Bay Buccaneers,@,Green Bay Packers,boxscore,17,16,293,1,260,4,2005
-4,Sun,10/2/05,8:36PM,Arizona Cardinals,,San Francisco 49ers,boxscore,31,14,463,3,168,4,2005
+4,Sun,10/2/05,8:36PM,Arizona Cardinals,N,San Francisco 49ers,boxscore,31,14,463,3,168,4,2005
 4,Sun,10/2/05,4:17PM,Atlanta Falcons,,Minnesota Vikings,boxscore,30,10,368,0,261,3,2005
 4,Sun,10/2/05,4:05PM,Baltimore Ravens,,New York Jets,boxscore,13,3,259,2,152,0,2005
 4,Mon,10/3/05,9:07PM,Carolina Panthers,,Green Bay Packers,boxscore,32,29,286,1,352,2,2005
@@ -8831,7 +8831,7 @@ WildCard,Sat,1/6/07,8:09PM,Seattle Seahawks,,Dallas Cowboys,boxscore,21,20,332,2
 8,Sun,10/28/07,4:05PM,Jacksonville Jaguars,@,Tampa Bay Buccaneers,boxscore,24,23,219,0,385,3,2007
 8,Sun,10/28/07,4:17PM,New England Patriots,,Washington Redskins,boxscore,52,7,486,1,224,4,2007
 8,Sun,10/28/07,4:17PM,New Orleans Saints,@,San Francisco 49ers,boxscore,31,10,438,1,260,1,2007
-8,Sun,10/28/07,1:03PM,New York Giants,@,Miami Dolphins,boxscore,13,10,238,1,245,2,2007
+8,Sun,10/28/07,1:03PM,New York Giants,N,Miami Dolphins,boxscore,13,10,238,1,245,2,2007
 8,Sun,10/28/07,1:05PM,Philadelphia Eagles,@,Minnesota Vikings,boxscore,23,16,385,0,256,0,2007
 8,Sun,10/28/07,1:02PM,Pittsburgh Steelers,@,Cincinnati Bengals,boxscore,24,13,390,1,296,1,2007
 8,Sun,10/28/07,4:05PM,San Diego Chargers,,Houston Texans,boxscore,35,10,237,0,367,5,2007
@@ -8948,7 +8948,7 @@ WildCard,Sat,1/5/08,4:35PM,Seattle Seahawks,,Washington Redskins,boxscore,35,14,
 14,Sun,12/7/08,4:05PM,Denver Broncos,,Kansas City Chiefs,boxscore,24,17,425,1,260,0,2008
 14,Sun,12/7/08,1:02PM,Houston Texans,@,Green Bay Packers,boxscore,24,21,549,4,387,1,2008
 14,Sun,12/7/08,1:02PM,Indianapolis Colts,,Cincinnati Bengals,boxscore,35,3,334,1,252,4,2008
-14,Sun,12/7/08,4:05PM,Miami Dolphins,@,Buffalo Bills,boxscore,16,3,295,0,163,2,2008
+14,Sun,12/7/08,4:05PM,Miami Dolphins,N,Buffalo Bills,boxscore,16,3,295,0,163,2,2008
 14,Sun,12/7/08,1:03PM,Minnesota Vikings,@,Detroit Lions,boxscore,20,16,301,2,268,0,2008
 14,Sun,12/7/08,4:06PM,New England Patriots,@,Seattle Seahawks,boxscore,24,21,344,0,339,1,2008
 14,Sun,12/7/08,1:02PM,New Orleans Saints,,Atlanta Falcons,boxscore,29,25,414,0,414,1,2008
@@ -9098,7 +9098,7 @@ WildCard,Sat,1/5/08,4:35PM,Seattle Seahawks,,Washington Redskins,boxscore,35,14,
 8,Sun,10/26/08,3:47PM,Houston Texans,,Cincinnati Bengals,boxscore,35,6,384,0,253,3,2008
 8,Sun,10/26/08,1:05PM,Miami Dolphins,,Buffalo Bills,boxscore,25,16,358,1,339,4,2008
 8,Sun,10/26/08,1:02PM,New England Patriots,,St. Louis Rams,boxscore,23,16,348,2,358,1,2008
-8,Sun,10/26/08,1:06PM,New Orleans Saints,,San Diego Chargers,boxscore,37,32,409,0,451,2,2008
+8,Sun,10/26/08,1:06PM,New Orleans Saints,N,San Diego Chargers,boxscore,37,32,409,0,451,2,2008
 8,Sun,10/26/08,4:15PM,New York Giants,@,Pittsburgh Steelers,boxscore,21,14,282,0,249,4,2008
 8,Sun,10/26/08,1:05PM,New York Jets,,Kansas City Chiefs,boxscore,28,24,420,3,330,0,2008
 8,Sun,10/26/08,1:02PM,Philadelphia Eagles,,Atlanta Falcons,boxscore,27,14,432,1,335,3,2008
@@ -9356,7 +9356,7 @@ WildCard,Sat,1/3/09,8:08PM,San Diego Chargers,,Indianapolis Colts,boxscore,23,17
 7,Sun,10/25/09,1:02PM,Green Bay Packers,@,Cleveland Browns,boxscore,31,3,460,0,139,2,2009
 7,Sun,10/25/09,1:04PM,Houston Texans,,San Francisco 49ers,boxscore,24,21,336,1,297,2,2009
 7,Sun,10/25/09,1:00PM,Indianapolis Colts,@,St. Louis Rams,boxscore,42,6,391,0,272,2,2009
-7,Sun,10/25/09,1:06PM,New England Patriots,@,Tampa Bay Buccaneers,boxscore,35,7,414,2,240,3,2009
+7,Sun,10/25/09,1:06PM,New England Patriots,N,Tampa Bay Buccaneers,boxscore,35,7,414,2,240,3,2009
 7,Sun,10/25/09,4:15PM,New Orleans Saints,@,Miami Dolphins,boxscore,46,34,414,4,334,3,2009
 7,Sun,10/25/09,4:05PM,New York Jets,@,Oakland Raiders,boxscore,38,0,447,0,263,4,2009
 7,Mon,10/26/09,8:41PM,Philadelphia Eagles,@,Washington Redskins,boxscore,27,17,262,0,308,4,2009
@@ -9489,7 +9489,7 @@ WildCard,Sat,1/9/10,4:36PM,New York Jets,@,Cincinnati Bengals,boxscore,24,14,353
 14,Sun,12/12/10,4:15PM,Miami Dolphins,@,New York Jets,boxscore,10,6,131,3,280,2,2010
 14,Sun,12/12/10,4:16PM,New England Patriots,@,Chicago Bears,boxscore,36,7,475,0,185,4,2010
 14,Sun,12/12/10,4:05PM,New Orleans Saints,,St. Louis Rams,boxscore,31,13,345,3,327,3,2010
-14,Mon,12/13/10,7:20PM,New York Giants,@,Minnesota Vikings,boxscore,21,3,395,2,164,1,2010
+14,Mon,12/13/10,7:20PM,New York Giants,N,Minnesota Vikings,boxscore,21,3,395,2,164,1,2010
 14,Sun,12/12/10,8:30PM,Philadelphia Eagles,@,Dallas Cowboys,boxscore,30,27,429,2,349,2,2010
 14,Sun,12/12/10,1:02PM,Pittsburgh Steelers,,Cincinnati Bengals,boxscore,23,7,354,0,190,3,2010
 14,Sun,12/12/10,4:15PM,San Diego Chargers,,Kansas City Chiefs,boxscore,31,0,426,2,67,0,2010
@@ -9641,7 +9641,7 @@ WildCard,Sat,1/9/10,4:36PM,New York Jets,@,Cincinnati Bengals,boxscore,24,14,353
 8,Sun,10/31/10,8:30PM,New Orleans Saints,,Pittsburgh Steelers,boxscore,20,10,318,2,279,2,2010
 8,Sun,10/31/10,4:15PM,Oakland Raiders,,Seattle Seahawks,boxscore,33,3,545,0,164,1,2010
 8,Sun,10/31/10,4:05PM,San Diego Chargers,,Tennessee Titans,boxscore,33,25,456,1,370,0,2010
-8,Sun,10/31/10,1:07PM,San Francisco 49ers,,Denver Broncos,boxscore,24,16,339,0,398,2,2010
+8,Sun,10/31/10,1:07PM,San Francisco 49ers,N,Denver Broncos,boxscore,24,16,339,0,398,2,2010
 8,Sun,10/31/10,1:00PM,St. Louis Rams,,Carolina Panthers,boxscore,20,10,246,0,201,4,2010
 8,Sun,10/31/10,4:15PM,Tampa Bay Buccaneers,@,Arizona Cardinals,boxscore,38,35,407,2,396,4,2010
 9,Sun,11/7/10,1:02PM,Atlanta Falcons,,Tampa Bay Buccaneers,boxscore,27,21,365,0,278,2,2010
@@ -9888,7 +9888,7 @@ WildCard,Sat,1/8/11,4:35PM,Seattle Seahawks,,New Orleans Saints,boxscore,41,36,4
 6,Sun,10/16/11,4:15PM,Tampa Bay Buccaneers,,New Orleans Saints,boxscore,26,20,420,0,453,4,2011
 7,Sun,10/23/11,1:05PM,Atlanta Falcons,@,Detroit Lions,boxscore,23,16,328,2,263,1,2011
 7,Sun,10/23/11,1:05PM,Carolina Panthers,,Washington Redskins,boxscore,33,20,407,0,353,3,2011
-7,Sun,10/23/11,1:05PM,Chicago Bears,@,Tampa Bay Buccaneers,boxscore,24,18,395,2,280,4,2011
+7,Sun,10/23/11,1:05PM,Chicago Bears,N,Tampa Bay Buccaneers,boxscore,24,18,395,2,280,4,2011
 7,Sun,10/23/11,1:05PM,Cleveland Browns,,Seattle Seahawks,boxscore,6,3,298,1,137,2,2011
 7,Sun,10/23/11,4:15PM,Dallas Cowboys,,St. Louis Rams,boxscore,34,7,445,1,265,2,2011
 7,Sun,10/23/11,1:02PM,Denver Broncos,@,Miami Dolphins,boxscore,18,15,308,1,267,1,2011
@@ -10175,7 +10175,7 @@ WildCard,Sun,1/8/12,1:06PM,New York Giants,,Atlanta Falcons,boxscore,24,2,442,0,
 8,Sun,10/28/12,1:05PM,Green Bay Packers,,Jacksonville Jaguars,boxscore,24,15,238,1,341,1,2012
 8,Sun,10/28/12,1:06PM,Indianapolis Colts,@,Tennessee Titans,boxscore,19,13,457,1,339,0,2012
 8,Sun,10/28/12,1:06PM,Miami Dolphins,@,New York Jets,boxscore,30,9,236,1,363,2,2012
-8,Sun,10/28/12,1:06PM,New England Patriots,@,St. Louis Rams,boxscore,45,7,473,0,326,2,2012
+8,Sun,10/28/12,1:06PM,New England Patriots,N,St. Louis Rams,boxscore,45,7,473,0,326,2,2012
 8,Sun,10/28/12,4:25PM,New York Giants,@,Dallas Cowboys,boxscore,29,24,293,2,434,6,2012
 8,Sun,10/28/12,4:06PM,Oakland Raiders,@,Kansas City Chiefs,boxscore,26,16,344,1,299,4,2012
 8,Sun,10/28/12,1:02PM,Pittsburgh Steelers,,Washington Redskins,boxscore,27,12,355,0,255,0,2012
@@ -10267,7 +10267,7 @@ WildCard,Sun,1/6/13,4:40PM,Seattle Seahawks,@,Washington Redskins,boxscore,24,14
 12,Sun,11/24/13,1:00PM,St. Louis Rams,,Chicago Bears,boxscore,42,21,406,0,424,3,2013
 12,Sun,11/24/13,1:03PM,Tampa Bay Buccaneers,@,Detroit Lions,boxscore,24,21,229,0,390,5,2013
 12,Sun,11/24/13,4:05PM,Tennessee Titans,@,Oakland Raiders,boxscore,23,19,426,0,353,2,2013
-13,Sun,12/1/13,4:05PM,Atlanta Falcons,@,Buffalo Bills,boxscore,34,31,423,1,405,2,2013
+13,Sun,12/1/13,4:05PM,Atlanta Falcons,N,Buffalo Bills,boxscore,34,31,423,1,405,2,2013
 13,Thu,11/28/13,8:31PM,Baltimore Ravens,,Pittsburgh Steelers,boxscore,22,20,311,0,329,0,2013
 13,Sun,12/1/13,1:04PM,Carolina Panthers,,Tampa Bay Buccaneers,boxscore,27,6,426,2,206,2,2013
 13,Sun,12/1/13,4:25PM,Cincinnati Bengals,@,San Diego Chargers,boxscore,17,10,354,2,334,3,2013
@@ -10386,7 +10386,7 @@ WildCard,Sun,1/6/13,4:40PM,Seattle Seahawks,@,Washington Redskins,boxscore,24,14
 4,Sun,9/29/13,1:03PM,Detroit Lions,,Chicago Bears,boxscore,40,32,387,3,417,4,2013
 4,Sun,9/29/13,1:06PM,Indianapolis Colts,@,Jacksonville Jaguars,boxscore,37,3,437,1,205,3,2013
 4,Sun,9/29/13,1:02PM,Kansas City Chiefs,,New York Giants,boxscore,31,7,390,3,298,3,2013
-4,Sun,9/29/13,1:07PM,Minnesota Vikings,,Pittsburgh Steelers,boxscore,34,27,393,0,434,2,2013
+4,Sun,9/29/13,1:07PM,Minnesota Vikings,N,Pittsburgh Steelers,boxscore,34,27,393,0,434,2,2013
 4,Sun,9/29/13,8:30PM,New England Patriots,@,Atlanta Falcons,boxscore,30,23,448,0,457,1,2013
 4,Mon,9/30/13,8:40PM,New Orleans Saints,,Miami Dolphins,boxscore,38,17,465,1,331,4,2013
 4,Sun,9/29/13,4:25PM,San Diego Chargers,,Dallas Cowboys,boxscore,30,21,506,1,319,1,2013
@@ -10449,7 +10449,7 @@ WildCard,Sun,1/6/13,4:40PM,Seattle Seahawks,@,Washington Redskins,boxscore,24,14
 8,Sun,10/27/13,1:02PM,New Orleans Saints,,Buffalo Bills,boxscore,35,17,386,0,299,3,2013
 8,Sun,10/27/13,1:02PM,New York Giants,@,Philadelphia Eagles,boxscore,15,7,325,1,200,3,2013
 8,Sun,10/27/13,4:05PM,Oakland Raiders,,Pittsburgh Steelers,boxscore,21,18,279,3,276,2,2013
-8,Sun,10/27/13,1:07PM,San Francisco 49ers,@,Jacksonville Jaguars,boxscore,42,10,398,1,318,1,2013
+8,Sun,10/27/13,1:07PM,San Francisco 49ers,N,Jacksonville Jaguars,boxscore,42,10,398,1,318,1,2013
 8,Mon,10/28/13,8:30PM,Seattle Seahawks,@,St. Louis Rams,boxscore,14,9,135,0,339,2,2013
 9,Sun,11/3/13,1:03PM,Carolina Panthers,,Atlanta Falcons,boxscore,34,10,373,2,289,4,2013
 9,Mon,11/4/13,8:40PM,Chicago Bears,@,Green Bay Packers,boxscore,27,20,442,0,312,1,2013
@@ -10497,7 +10497,7 @@ WildCard,Sun,1/5/14,4:40PM,San Francisco 49ers,@,Green Bay Packers,boxscore,23,2
 10,Sun,11/9/14,1:04PM,Atlanta Falcons,@,Tampa Bay Buccaneers,boxscore,27,17,322,0,373,3,2014
 10,Sun,11/9/14,1:03PM,Baltimore Ravens,,Tennessee Titans,boxscore,21,7,312,0,210,2,2014
 10,Thu,11/6/14,8:29PM,Cleveland Browns,@,Cincinnati Bengals,boxscore,24,3,368,1,165,4,2014
-10,Sun,11/9/14,1:06PM,Dallas Cowboys,@,Jacksonville Jaguars,boxscore,31,17,399,1,333,3,2014
+10,Sun,11/9/14,1:06PM,Dallas Cowboys,N,Jacksonville Jaguars,boxscore,31,17,399,1,333,3,2014
 10,Sun,11/9/14,4:05PM,Denver Broncos,@,Oakland Raiders,boxscore,41,17,471,2,222,3,2014
 10,Sun,11/9/14,1:02PM,Detroit Lions,,Miami Dolphins,boxscore,20,16,351,1,228,2,2014
 10,Sun,11/9/14,8:30PM,Green Bay Packers,,Chicago Bears,boxscore,55,14,451,1,311,3,2014
@@ -10521,7 +10521,7 @@ WildCard,Sun,1/5/14,4:40PM,San Francisco 49ers,@,Green Bay Packers,boxscore,23,2
 11,Sun,11/16/14,1:00PM,St. Louis Rams,,Denver Broncos,boxscore,22,7,337,0,397,2,2014
 11,Sun,11/16/14,1:03PM,Tampa Bay Buccaneers,@,Washington Redskins,boxscore,27,7,329,1,322,3,2014
 12,Mon,11/24/14,8:30PM,Baltimore Ravens,@,New Orleans Saints,boxscore,34,27,449,1,525,1,2014
-12,Mon,11/24/14,7:05PM,Buffalo Bills,,New York Jets,boxscore,38,3,336,0,218,1,2014
+12,Mon,11/24/14,7:05PM,Buffalo Bills,N,New York Jets,boxscore,38,3,336,0,218,1,2014
 12,Sun,11/23/14,1:02PM,Chicago Bears,,Tampa Bay Buccaneers,boxscore,21,13,204,1,367,4,2014
 12,Sun,11/23/14,1:02PM,Cincinnati Bengals,@,Houston Texans,boxscore,22,13,372,1,248,1,2014
 12,Sun,11/23/14,1:02PM,Cleveland Browns,@,Atlanta Falcons,boxscore,26,24,475,3,315,2,2014
@@ -10654,7 +10654,7 @@ WildCard,Sun,1/5/14,4:40PM,San Francisco 49ers,@,Green Bay Packers,boxscore,23,2
 4,Sun,9/28/14,1:02PM,Houston Texans,,Buffalo Bills,boxscore,23,17,301,3,316,2,2014
 4,Sun,9/28/14,1:03PM,Indianapolis Colts,,Tennessee Titans,boxscore,41,17,498,1,261,3,2014
 4,Mon,9/29/14,8:31PM,Kansas City Chiefs,,New England Patriots,boxscore,41,14,443,0,290,3,2014
-4,Sun,9/28/14,1:06PM,Miami Dolphins,@,Oakland Raiders,boxscore,38,14,435,3,317,4,2014
+4,Sun,9/28/14,1:06PM,Miami Dolphins,N,Oakland Raiders,boxscore,38,14,435,3,317,4,2014
 4,Sun,9/28/14,4:25PM,Minnesota Vikings,,Atlanta Falcons,boxscore,41,28,558,0,411,2,2014
 4,Thu,9/25/14,8:26PM,New York Giants,@,Washington Redskins,boxscore,45,14,449,1,329,6,2014
 4,Sun,9/28/14,4:05PM,San Diego Chargers,,Jacksonville Jaguars,boxscore,33,14,407,0,320,3,2014
@@ -10710,7 +10710,7 @@ WildCard,Sun,1/5/14,4:40PM,San Francisco 49ers,@,Green Bay Packers,boxscore,23,2
 8,Sun,10/26/14,1:02PM,Cincinnati Bengals,,Baltimore Ravens,boxscore,27,24,350,2,294,2,2014
 8,Sun,10/26/14,4:25PM,Cleveland Browns,,Oakland Raiders,boxscore,23,13,306,0,387,3,2014
 8,Thu,10/23/14,8:26PM,Denver Broncos,,San Diego Chargers,boxscore,35,21,425,0,306,2,2014
-8,Sun,10/26/14,9:37AM,Detroit Lions,@,Atlanta Falcons,boxscore,22,21,385,1,291,1,2014
+8,Sun,10/26/14,9:37AM,Detroit Lions,N,Atlanta Falcons,boxscore,22,21,385,1,291,1,2014
 8,Sun,10/26/14,1:03PM,Houston Texans,@,Tennessee Titans,boxscore,30,16,405,0,326,2,2014
 8,Sun,10/26/14,1:04PM,Kansas City Chiefs,,St. Louis Rams,boxscore,34,7,355,1,200,1,2014
 8,Sun,10/26/14,1:02PM,Miami Dolphins,@,Jacksonville Jaguars,boxscore,27,13,326,1,377,3,2014
@@ -10928,7 +10928,7 @@ WildCard,Sun,1/4/15,1:05PM,Indianapolis Colts,,Cincinnati Bengals,boxscore,26,10
 4,Sun,10/4/15,1:02PM,Indianapolis Colts,,Jacksonville Jaguars,boxscore,16,13,326,2,431,0,2015
 4,Sun,10/4/15,8:30PM,New Orleans Saints,,Dallas Cowboys,boxscore,26,20,438,0,335,0,2015
 4,Sun,10/4/15,1:02PM,New York Giants,@,Buffalo Bills,boxscore,24,10,303,1,313,2,2015
-4,Sun,10/4/15,9:37AM,New York Jets,@,Miami Dolphins,boxscore,27,14,425,1,226,2,2015
+4,Sun,10/4/15,9:37AM,New York Jets,N,Miami Dolphins,boxscore,27,14,425,1,226,2,2015
 4,Sun,10/4/15,4:05PM,San Diego Chargers,,Cleveland Browns,boxscore,30,27,438,0,432,1,2015
 4,Mon,10/5/15,8:31PM,Seattle Seahawks,,Detroit Lions,boxscore,13,10,345,3,256,1,2015
 4,Sun,10/4/15,4:25PM,St. Louis Rams,@,Arizona Cardinals,boxscore,24,22,328,0,447,3,2015
@@ -10964,7 +10964,7 @@ WildCard,Sun,1/4/15,1:05PM,Indianapolis Colts,,Cincinnati Bengals,boxscore,26,10
 7,Mon,10/26/15,8:30PM,Arizona Cardinals,,Baltimore Ravens,boxscore,26,18,414,0,276,2,2015
 7,Sun,10/25/15,1:02PM,Atlanta Falcons,@,Tennessee Titans,boxscore,10,7,378,2,256,2,2015
 7,Sun,10/25/15,8:31PM,Carolina Panthers,,Philadelphia Eagles,boxscore,27,16,394,3,349,1,2015
-7,Sun,10/25/15,8:35AM,Jacksonville Jaguars,,Buffalo Bills,boxscore,34,31,295,1,375,4,2015
+7,Sun,10/25/15,8:35AM,Jacksonville Jaguars,N,Buffalo Bills,boxscore,34,31,295,1,375,4,2015
 7,Sun,10/25/15,1:03PM,Kansas City Chiefs,,Pittsburgh Steelers,boxscore,23,13,377,0,339,3,2015
 7,Sun,10/25/15,1:02PM,Miami Dolphins,,Houston Texans,boxscore,44,26,503,1,322,1,2015
 7,Sun,10/25/15,1:02PM,Minnesota Vikings,@,Detroit Lions,boxscore,28,19,425,1,274,0,2015
@@ -10981,7 +10981,7 @@ WildCard,Sun,1/4/15,1:05PM,Indianapolis Colts,,Cincinnati Bengals,boxscore,26,10
 8,Sun,11/1/15,1:02PM,Cincinnati Bengals,@,Pittsburgh Steelers,boxscore,16,10,296,2,356,3,2015
 8,Sun,11/1/15,8:30PM,Denver Broncos,,Green Bay Packers,boxscore,29,10,500,1,140,0,2015
 8,Sun,11/1/15,1:02PM,Houston Texans,,Tennessee Titans,boxscore,20,6,270,0,211,3,2015
-8,Sun,11/1/15,9:36AM,Kansas City Chiefs,,Detroit Lions,boxscore,45,10,340,0,276,2,2015
+8,Sun,11/1/15,9:36AM,Kansas City Chiefs,N,Detroit Lions,boxscore,45,10,340,0,276,2,2015
 8,Sun,11/1/15,1:00PM,Minnesota Vikings,@,Chicago Bears,boxscore,23,20,327,1,305,0,2015
 8,Thu,10/29/15,8:26PM,New England Patriots,,Miami Dolphins,boxscore,36,7,437,0,270,2,2015
 8,Sun,11/1/15,1:02PM,New Orleans Saints,,New York Giants,boxscore,52,49,608,2,416,1,2015
@@ -11054,7 +11054,7 @@ WildCard,Sun,1/10/16,1:05PM,Seattle Seahawks,@,Minnesota Vikings,boxscore,10,9,2
 11,Sun,11/20/16,1:00PM,Minnesota Vikings,,Arizona Cardinals,boxscore,30,24,217,1,290,2,2016
 11,Sun,11/20/16,4:25PM,New England Patriots,@,San Francisco 49ers,boxscore,30,17,444,0,299,0,2016
 11,Sun,11/20/16,1:00PM,New York Giants,,Chicago Bears,boxscore,22,16,329,0,315,1,2016
-11,Mon,11/21/16,8:30PM,Oakland Raiders,,Houston Texans,boxscore,27,20,325,1,354,2,2016
+11,Mon,11/21/16,8:30PM,Oakland Raiders,N,Houston Texans,boxscore,27,20,325,1,354,2,2016
 11,Sun,11/20/16,1:00PM,Pittsburgh Steelers,@,Cleveland Browns,boxscore,24,9,313,0,209,2,2016
 11,Sun,11/20/16,4:25PM,Seattle Seahawks,,Philadelphia Eagles,boxscore,26,15,439,0,308,2,2016
 11,Sun,11/20/16,1:00PM,Tampa Bay Buccaneers,@,Kansas City Chiefs,boxscore,19,17,442,1,343,2,2016
@@ -11193,7 +11193,7 @@ WildCard,Sun,1/10/16,1:05PM,Seattle Seahawks,@,Minnesota Vikings,boxscore,10,9,2
 4,Sun,10/2/16,4:25PM,Dallas Cowboys,@,San Francisco 49ers,boxscore,24,17,428,0,295,1,2016
 4,Sun,10/2/16,4:05PM,Denver Broncos,@,Tampa Bay Buccaneers,boxscore,27,7,307,0,215,3,2016
 4,Sun,10/2/16,1:02PM,Houston Texans,,Tennessee Titans,boxscore,27,20,359,2,320,1,2016
-4,Sun,10/2/16,9:35AM,Jacksonville Jaguars,,Indianapolis Colts,boxscore,30,27,331,0,284,1,2016
+4,Sun,10/2/16,9:35AM,Jacksonville Jaguars,N,Indianapolis Colts,boxscore,30,27,331,0,284,1,2016
 4,Sun,10/2/16,4:25PM,Los Angeles Rams,@,Arizona Cardinals,boxscore,17,13,288,1,420,5,2016
 4,Mon,10/3/16,8:35PM,Minnesota Vikings,,New York Giants,boxscore,24,10,366,0,339,2,2016
 4,Sun,10/2/16,4:25PM,New Orleans Saints,@,San Diego Chargers,boxscore,35,34,275,2,346,3,2016
@@ -11238,7 +11238,7 @@ WildCard,Sun,1/10/16,1:05PM,Seattle Seahawks,@,Minnesota Vikings,boxscore,10,9,2
 7,Sun,10/23/16,1:03PM,Kansas City Chiefs,,New Orleans Saints,boxscore,27,21,326,0,463,2,2016
 7,Sun,10/23/16,1:02PM,Miami Dolphins,,Buffalo Bills,boxscore,28,25,454,0,267,0,2016
 7,Sun,10/23/16,4:25PM,New England Patriots,@,Pittsburgh Steelers,boxscore,27,16,362,2,375,1,2016
-7,Sun,10/23/16,9:31AM,New York Giants,@,Los Angeles Rams,boxscore,17,10,232,1,345,4,2016
+7,Sun,10/23/16,9:31AM,New York Giants,N,Los Angeles Rams,boxscore,17,10,232,1,345,4,2016
 7,Sun,10/23/16,1:04PM,New York Jets,,Baltimore Ravens,boxscore,24,16,344,2,245,3,2016
 7,Sun,10/23/16,1:02PM,Oakland Raiders,@,Jacksonville Jaguars,boxscore,33,16,344,0,344,3,2016
 7,Sun,10/23/16,1:02PM,Philadelphia Eagles,,Minnesota Vikings,boxscore,21,10,239,4,282,4,2016
@@ -11257,7 +11257,7 @@ WildCard,Sun,1/10/16,1:05PM,Seattle Seahawks,@,Minnesota Vikings,boxscore,10,9,2
 8,Sun,10/30/16,1:02PM,New York Jets,@,Cleveland Browns,boxscore,31,28,393,0,407,2,2016
 8,Sun,10/30/16,1:02PM,Oakland Raiders,@,Tampa Bay Buccaneers,boxscore,30,24,626,1,270,0,2016
 8,Thu,10/27/16,8:26PM,Tennessee Titans,,Jacksonville Jaguars,boxscore,36,22,494,0,370,1,2016
-8,Sun,10/30/16,8:36AM,Washington Redskins,@,Cincinnati Bengals,boxscore,27,27,546,1,415,2,2016
+8,Sun,10/30/16,8:36AM,Washington Redskins,N,Cincinnati Bengals,boxscore,27,27,546,1,415,2,2016
 9,Thu,11/3/16,8:25PM,Atlanta Falcons,@,Tampa Bay Buccaneers,boxscore,43,28,461,1,396,2,2016
 9,Sun,11/6/16,1:00PM,Baltimore Ravens,,Pittsburgh Steelers,boxscore,21,14,274,1,277,1,2016
 9,Sun,11/6/16,4:05PM,Carolina Panthers,@,Los Angeles Rams,boxscore,13,10,244,0,339,1,2016
@@ -11321,7 +11321,7 @@ WildCard,Sat,1/7/17,8:15PM,Seattle Seahawks,,Detroit Lions,boxscore,26,6,387,0,2
 11,Sun,11/19/17,1:00PM,Jacksonville Jaguars,@,Cleveland Browns,boxscore,19,7,284,1,184,5,2017
 11,Sun,11/19/17,4:05PM,Los Angeles Chargers,,Buffalo Bills,boxscore,54,24,429,0,393,6,2017
 11,Sun,11/19/17,1:00PM,Minnesota Vikings,,Los Angeles Rams,boxscore,24,7,451,0,254,1,2017
-11,Sun,11/19/17,4:25PM,New England Patriots,@,Oakland Raiders,boxscore,33,8,421,0,344,2,2017
+11,Sun,11/19/17,4:25PM,New England Patriots,N,Oakland Raiders,boxscore,33,8,421,0,344,2,2017
 11,Sun,11/19/17,1:00PM,New Orleans Saints,,Washington Redskins,boxscore,34,31,535,1,456,0,2017
 11,Sun,11/19/17,1:00PM,New York Giants,,Kansas City Chiefs,boxscore,12,9,317,1,363,3,2017
 11,Sun,11/19/17,8:30PM,Philadelphia Eagles,@,Dallas Cowboys,boxscore,37,9,383,0,225,4,2017
@@ -11445,7 +11445,7 @@ WildCard,Sat,1/7/17,8:15PM,Seattle Seahawks,,Detroit Lions,boxscore,26,6,387,0,2
 3,Mon,9/25/17,8:30PM,Dallas Cowboys,@,Arizona Cardinals,boxscore,28,17,273,0,332,0,2017
 3,Sun,9/24/17,4:25PM,Green Bay Packers,,Cincinnati Bengals,boxscore,27,24,344,1,301,1,2017
 3,Sun,9/24/17,1:00PM,Indianapolis Colts,,Cleveland Browns,boxscore,31,28,335,1,346,3,2017
-3,Sun,9/24/17,9:30AM,Jacksonville Jaguars,,Baltimore Ravens,boxscore,44,7,410,0,186,3,2017
+3,Sun,9/24/17,9:30AM,Jacksonville Jaguars,N,Baltimore Ravens,boxscore,44,7,410,0,186,3,2017
 3,Sun,9/24/17,4:25PM,Kansas City Chiefs,@,Los Angeles Chargers,boxscore,24,10,311,0,330,3,2017
 3,Thu,9/21/17,8:25PM,Los Angeles Rams,@,San Francisco 49ers,boxscore,41,39,418,2,421,2,2017
 3,Sun,9/24/17,1:00PM,Minnesota Vikings,,Tampa Bay Buccaneers,boxscore,34,17,494,0,342,3,2017
@@ -11465,7 +11465,7 @@ WildCard,Sat,1/7/17,8:15PM,Seattle Seahawks,,Detroit Lions,boxscore,26,6,387,0,2
 4,Sun,10/1/17,1:00PM,Houston Texans,,Tennessee Titans,boxscore,57,14,445,1,195,5,2017
 4,Mon,10/2/17,8:30PM,Kansas City Chiefs,,Washington Redskins,boxscore,29,20,429,0,331,1,2017
 4,Sun,10/1/17,1:00PM,Los Angeles Rams,@,Dallas Cowboys,boxscore,35,30,412,0,440,2,2017
-4,Sun,10/1/17,9:30AM,New Orleans Saints,@,Miami Dolphins,boxscore,20,0,347,0,186,1,2017
+4,Sun,10/1/17,9:30AM,New Orleans Saints,N,Miami Dolphins,boxscore,20,0,347,0,186,1,2017
 4,Sun,10/1/17,1:00PM,New York Jets,,Jacksonville Jaguars,boxscore,23,20,471,2,311,1,2017
 4,Sun,10/1/17,4:05PM,Philadelphia Eagles,@,Los Angeles Chargers,boxscore,26,24,454,0,400,1,2017
 4,Sun,10/1/17,1:00PM,Pittsburgh Steelers,@,Baltimore Ravens,boxscore,26,9,381,1,288,3,2017
@@ -11504,7 +11504,7 @@ WildCard,Sat,1/7/17,8:15PM,Seattle Seahawks,,Detroit Lions,boxscore,26,6,387,0,2
 7,Sun,10/22/17,4:05PM,Dallas Cowboys,@,San Francisco 49ers,boxscore,40,10,501,0,290,3,2017
 7,Sun,10/22/17,1:00PM,Jacksonville Jaguars,@,Indianapolis Colts,boxscore,27,0,518,2,232,0,2017
 7,Sun,10/22/17,4:25PM,Los Angeles Chargers,,Denver Broncos,boxscore,21,0,242,0,251,3,2017
-7,Sun,10/22/17,1:00PM,Los Angeles Rams,,Arizona Cardinals,boxscore,33,0,425,1,196,2,2017
+7,Sun,10/22/17,1:00PM,Los Angeles Rams,N,Arizona Cardinals,boxscore,33,0,425,1,196,2,2017
 7,Sun,10/22/17,1:00PM,Miami Dolphins,,New York Jets,boxscore,31,28,357,2,272,2,2017
 7,Sun,10/22/17,1:00PM,Minnesota Vikings,,Baltimore Ravens,boxscore,24,16,357,1,208,0,2017
 7,Sun,10/22/17,8:30PM,New England Patriots,,Atlanta Falcons,boxscore,23,7,403,0,343,0,2017
@@ -11521,7 +11521,7 @@ WildCard,Sat,1/7/17,8:15PM,Seattle Seahawks,,Detroit Lions,boxscore,26,6,387,0,2
 8,Sun,10/29/17,1:00PM,Cincinnati Bengals,,Indianapolis Colts,boxscore,24,23,276,2,331,1,2017
 8,Sun,10/29/17,4:25PM,Dallas Cowboys,@,Washington Redskins,boxscore,33,19,307,1,285,3,2017
 8,Mon,10/30/17,8:30PM,Kansas City Chiefs,,Denver Broncos,boxscore,29,19,276,2,364,5,2017
-8,Sun,10/29/17,9:30AM,Minnesota Vikings,@,Cleveland Browns,boxscore,33,16,375,1,276,2,2017
+8,Sun,10/29/17,9:30AM,Minnesota Vikings,N,Cleveland Browns,boxscore,33,16,375,1,276,2,2017
 8,Sun,10/29/17,1:00PM,New England Patriots,,Los Angeles Chargers,boxscore,21,13,414,0,349,1,2017
 8,Sun,10/29/17,1:00PM,New Orleans Saints,,Chicago Bears,boxscore,20,12,387,2,307,1,2017
 8,Sun,10/29/17,1:00PM,Philadelphia Eagles,,San Francisco 49ers,boxscore,33,10,304,1,238,2,2017
@@ -11766,7 +11766,7 @@ WildCard,Sat,1/6/18,4:35PM,Tennessee Titans,@,Kansas City Chiefs,boxscore,22,21,
 6,Sun,10/14/18,1:00PM,New York Jets,,Indianapolis Colts,boxscore,42,34,374,2,428,4,2018
 6,Thu,10/11/18,8:20PM,Philadelphia Eagles,@,New York Giants,boxscore,34,13,379,0,401,1,2018
 6,Sun,10/14/18,1:00PM,Pittsburgh Steelers,@,Cincinnati Bengals,boxscore,28,21,481,0,275,0,2018
-6,Sun,10/14/18,1:00PM,Seattle Seahawks,@,Oakland Raiders,boxscore,27,3,369,1,185,2,2018
+6,Sun,10/14/18,1:00PM,Seattle Seahawks,N,Oakland Raiders,boxscore,27,3,369,1,185,2,2018
 6,Sun,10/14/18,1:00PM,Washington Redskins,,Carolina Panthers,boxscore,23,17,288,0,350,3,2018
 7,Mon,10/22/18,8:15PM,Atlanta Falcons,,New York Giants,boxscore,23,20,423,1,433,0,2018
 7,Sun,10/21/18,1:00PM,Carolina Panthers,@,Philadelphia Eagles,boxscore,21,17,371,0,342,1,2018
@@ -11775,7 +11775,7 @@ WildCard,Sat,1/6/18,4:35PM,Tennessee Titans,@,Kansas City Chiefs,boxscore,22,21,
 7,Sun,10/21/18,1:00PM,Houston Texans,@,Jacksonville Jaguars,boxscore,20,7,272,0,259,3,2018
 7,Sun,10/21/18,1:00PM,Indianapolis Colts,,Buffalo Bills,boxscore,37,5,376,0,303,5,2018
 7,Sun,10/21/18,8:20PM,Kansas City Chiefs,,Cincinnati Bengals,boxscore,45,10,551,1,239,1,2018
-7,Sun,10/21/18,9:30AM,Los Angeles Chargers,,Tennessee Titans,boxscore,20,19,344,0,390,1,2018
+7,Sun,10/21/18,9:30AM,Los Angeles Chargers,N,Tennessee Titans,boxscore,20,19,344,0,390,1,2018
 7,Sun,10/21/18,4:25PM,Los Angeles Rams,@,San Francisco 49ers,boxscore,39,10,339,0,228,4,2018
 7,Sun,10/21/18,1:00PM,Minnesota Vikings,@,New York Jets,boxscore,37,17,316,0,263,4,2018
 7,Sun,10/21/18,1:00PM,New England Patriots,@,Chicago Bears,boxscore,38,31,381,3,453,2,2018
@@ -11792,7 +11792,7 @@ WildCard,Sat,1/6/18,4:35PM,Tennessee Titans,@,Kansas City Chiefs,boxscore,22,21,
 8,Sun,10/28/18,4:25PM,Los Angeles Rams,,Green Bay Packers,boxscore,29,27,416,0,359,1,2018
 8,Mon,10/29/18,8:15PM,New England Patriots,@,Buffalo Bills,boxscore,25,6,387,0,333,2,2018
 8,Sun,10/28/18,8:20PM,New Orleans Saints,@,Minnesota Vikings,boxscore,30,20,270,1,423,2,2018
-8,Sun,10/28/18,9:30AM,Philadelphia Eagles,@,Jacksonville Jaguars,boxscore,24,18,395,2,335,1,2018
+8,Sun,10/28/18,9:30AM,Philadelphia Eagles,N,Jacksonville Jaguars,boxscore,24,18,395,2,335,1,2018
 8,Sun,10/28/18,1:00PM,Pittsburgh Steelers,,Cleveland Browns,boxscore,33,18,421,2,237,1,2018
 8,Sun,10/28/18,1:00PM,Seattle Seahawks,@,Detroit Lions,boxscore,28,14,413,0,331,3,2018
 8,Sun,10/28/18,1:00PM,Washington Redskins,@,New York Giants,boxscore,20,13,360,1,303,2,2018
@@ -11857,7 +11857,7 @@ WildCard,Sun,1/6/19,4:40PM,Philadelphia Eagles,@,Chicago Bears,boxscore,16,15,30
 11,Thu,11/14/19,8:20PM,Cleveland Browns,,Pittsburgh Steelers,boxscore,21,7,293,0,236,4,2019
 11,Sun,11/17/19,1:00PM,Dallas Cowboys,@,Detroit Lions,boxscore,35,27,509,1,312,0,2019
 11,Sun,11/17/19,1:00PM,Indianapolis Colts,,Jacksonville Jaguars,boxscore,33,13,389,2,308,1,2019
-11,Mon,11/18/19,8:15PM,Kansas City Chiefs,@,Los Angeles Chargers,boxscore,24,17,310,1,438,4,2019
+11,Mon,11/18/19,8:15PM,Kansas City Chiefs,N,Los Angeles Chargers,boxscore,24,17,310,1,438,4,2019
 11,Sun,11/17/19,8:20PM,Los Angeles Rams,,Chicago Bears,boxscore,17,7,283,2,267,1,2019
 11,Sun,11/17/19,1:00PM,Minnesota Vikings,,Denver Broncos,boxscore,27,23,321,2,394,1,2019
 11,Sun,11/17/19,4:25PM,New England Patriots,@,Philadelphia Eagles,boxscore,17,10,298,0,255,1,2019
@@ -12017,13 +12017,13 @@ WildCard,Sun,1/6/19,4:40PM,Philadelphia Eagles,@,Chicago Bears,boxscore,16,15,30
 5,Sun,10/6/19,1:00PM,Minnesota Vikings,@,New York Giants,boxscore,28,10,490,1,211,1,2019
 5,Sun,10/6/19,1:00PM,New England Patriots,@,Washington Redskins,boxscore,33,7,442,1,223,2,2019
 5,Sun,10/6/19,1:00PM,New Orleans Saints,,Tampa Bay Buccaneers,boxscore,31,24,457,1,252,0,2019
-5,Sun,10/6/19,1:00PM,Oakland Raiders,,Chicago Bears,boxscore,24,21,398,2,236,2,2019
+5,Sun,10/6/19,1:00PM,Oakland Raiders,N,Chicago Bears,boxscore,24,21,398,2,236,2,2019
 5,Sun,10/6/19,1:00PM,Philadelphia Eagles,,New York Jets,boxscore,31,6,265,1,128,3,2019
 5,Mon,10/7/19,8:15PM,San Francisco 49ers,,Cleveland Browns,boxscore,31,3,446,0,180,4,2019
 5,Thu,10/3/19,8:20PM,Seattle Seahawks,,Los Angeles Rams,boxscore,30,29,429,1,477,2,2019
 6,Sun,10/13/19,4:05PM,Arizona Cardinals,,Atlanta Falcons,boxscore,34,33,442,0,444,0,2019
 6,Sun,10/13/19,1:00PM,Baltimore Ravens,,Cincinnati Bengals,boxscore,23,17,497,1,250,1,2019
-6,Sun,10/13/19,9:30AM,Carolina Panthers,@,Tampa Bay Buccaneers,boxscore,37,26,268,1,407,7,2019
+6,Sun,10/13/19,9:30AM,Carolina Panthers,N,Tampa Bay Buccaneers,boxscore,37,26,268,1,407,7,2019
 6,Sun,10/13/19,4:25PM,Denver Broncos,,Tennessee Titans,boxscore,16,0,270,1,204,3,2019
 6,Mon,10/14/19,8:15PM,Green Bay Packers,,Detroit Lions,boxscore,23,22,447,3,299,0,2019
 6,Sun,10/13/19,1:00PM,Houston Texans,@,Kansas City Chiefs,boxscore,31,24,472,3,309,2,2019
@@ -12055,7 +12055,7 @@ WildCard,Sun,1/6/19,4:40PM,Philadelphia Eagles,@,Chicago Bears,boxscore,16,15,30
 8,Sun,10/27/19,1:00PM,Indianapolis Colts,,Denver Broncos,boxscore,15,13,318,1,279,0,2019
 8,Sun,10/27/19,1:00PM,Jacksonville Jaguars,,New York Jets,boxscore,29,15,389,1,213,3,2019
 8,Sun,10/27/19,1:00PM,Los Angeles Chargers,@,Chicago Bears,boxscore,17,16,231,1,388,2,2019
-8,Sun,10/27/19,1:00PM,Los Angeles Rams,,Cincinnati Bengals,boxscore,24,10,470,0,401,0,2019
+8,Sun,10/27/19,1:00PM,Los Angeles Rams,N,Cincinnati Bengals,boxscore,24,10,470,0,401,0,2019
 8,Thu,10/24/19,8:20PM,Minnesota Vikings,,Washington Redskins,boxscore,19,9,434,1,216,2,2019
 8,Sun,10/27/19,4:25PM,New England Patriots,,Cleveland Browns,boxscore,27,13,318,0,310,3,2019
 8,Sun,10/27/19,1:00PM,New Orleans Saints,,Arizona Cardinals,boxscore,31,9,510,1,237,0,2019
@@ -12069,7 +12069,7 @@ WildCard,Sun,1/6/19,4:40PM,Philadelphia Eagles,@,Chicago Bears,boxscore,16,15,30
 9,Sun,11/3/19,1:00PM,Carolina Panthers,,Tennessee Titans,boxscore,30,20,370,1,431,3,2019
 9,Mon,11/4/19,8:15PM,Dallas Cowboys,@,New York Giants,boxscore,37,18,429,2,271,3,2019
 9,Sun,11/3/19,4:25PM,Denver Broncos,,Cleveland Browns,boxscore,24,19,302,1,351,0,2019
-9,Sun,11/3/19,9:30AM,Houston Texans,@,Jacksonville Jaguars,boxscore,26,3,410,1,356,4,2019
+9,Sun,11/3/19,9:30AM,Houston Texans,N,Jacksonville Jaguars,boxscore,26,3,410,1,356,4,2019
 9,Sun,11/3/19,1:00PM,Kansas City Chiefs,,Minnesota Vikings,boxscore,26,23,377,1,308,0,2019
 9,Sun,11/3/19,4:25PM,Los Angeles Chargers,,Green Bay Packers,boxscore,26,11,442,0,184,0,2019
 9,Sun,11/3/19,1:00PM,Miami Dolphins,,New York Jets,boxscore,26,18,316,0,321,1,2019
@@ -12152,7 +12152,7 @@ WildCard,Sat,1/4/20,8:15PM,Tennessee Titans,@,New England Patriots,boxscore,20,1
 12,Sun,11/29/20,1:00PM,Tennessee Titans,@,Indianapolis Colts,boxscore,45,26,449,0,336,1,2020
 12,Thu,11/26/20,4:30PM,Washington Football Team,@,Dallas Cowboys,boxscore,41,16,338,1,247,2,2020
 13,Tue,12/8/20,8:05PM,Baltimore Ravens,,Dallas Cowboys,boxscore,34,17,401,1,388,1,2020
-13,Mon,12/7/20,8:15PM,Buffalo Bills,@,San Francisco 49ers,boxscore,34,24,449,1,402,2,2020
+13,Mon,12/7/20,8:15PM,Buffalo Bills,N,San Francisco 49ers,boxscore,34,24,449,1,402,2,2020
 13,Sun,12/6/20,1:00PM,Cleveland Browns,@,Tennessee Titans,boxscore,41,35,458,1,431,3,2020
 13,Sun,12/6/20,1:00PM,Detroit Lions,@,Chicago Bears,boxscore,34,30,460,1,389,1,2020
 13,Sun,12/6/20,4:25PM,Green Bay Packers,,Philadelphia Eagles,boxscore,30,16,437,0,278,1,2020
@@ -12181,7 +12181,7 @@ WildCard,Sat,1/4/20,8:15PM,Tennessee Titans,@,New England Patriots,boxscore,20,1
 14,Sun,12/13/20,4:05PM,Seattle Seahawks,,New York Jets,boxscore,40,3,410,1,185,1,2020
 14,Sun,12/13/20,1:00PM,Tampa Bay Buccaneers,,Minnesota Vikings,boxscore,26,14,303,0,335,1,2020
 14,Sun,12/13/20,1:00PM,Tennessee Titans,@,Jacksonville Jaguars,boxscore,31,10,454,1,354,1,2020
-14,Sun,12/13/20,4:25PM,Washington Football Team,@,San Francisco 49ers,boxscore,23,15,193,1,344,3,2020
+14,Sun,12/13/20,4:25PM,Washington Football Team,N,San Francisco 49ers,boxscore,23,15,193,1,344,3,2020
 15,Sun,12/20/20,4:05PM,Arizona Cardinals,,Philadelphia Eagles,boxscore,33,26,526,3,422,0,2020
 15,Sun,12/20/20,1:00PM,Baltimore Ravens,,Jacksonville Jaguars,boxscore,40,14,409,1,267,1,2020
 15,Sat,12/19/20,4:30PM,Buffalo Bills,@,Denver Broncos,boxscore,48,19,534,1,255,1,2020
@@ -12226,7 +12226,7 @@ WildCard,Sat,1/4/20,8:15PM,Tennessee Titans,@,New England Patriots,boxscore,20,1
 17,Sun,1/3/21,1:00PM,New England Patriots,,New York Jets,boxscore,28,14,404,0,350,2,2020
 17,Sun,1/3/21,4:25PM,New Orleans Saints,@,Carolina Panthers,boxscore,33,7,347,0,320,5,2020
 17,Sun,1/3/21,1:00PM,New York Giants,,Dallas Cowboys,boxscore,23,19,336,2,307,1,2020
-17,Sun,1/3/21,4:25PM,Seattle Seahawks,@,San Francisco 49ers,boxscore,26,23,280,0,328,1,2020
+17,Sun,1/3/21,4:25PM,Seattle Seahawks,N,San Francisco 49ers,boxscore,26,23,280,0,328,1,2020
 17,Sun,1/3/21,1:00PM,Tampa Bay Buccaneers,,Atlanta Falcons,boxscore,44,27,485,1,385,2,2020
 17,Sun,1/3/21,4:25PM,Tennessee Titans,@,Houston Texans,boxscore,41,38,492,1,457,1,2020
 17,Sun,1/3/21,8:20PM,Washington Football Team,@,Philadelphia Eagles,boxscore,20,14,248,2,216,3,2020
@@ -12372,7 +12372,7 @@ WildCard,Sat,1/9/21,8:15PM,Tampa Bay Buccaneers,@,Washington Football Team,boxsc
 1,Sun,9/12/21,1:00PM,Los Angeles Chargers,@,Washington Football Team,boxscore,20,16,424,2,259,1,2021
 1,Sun,9/12/21,8:20PM,Los Angeles Rams,,Chicago Bears,boxscore,34,14,386,0,322,2,2021
 1,Sun,9/12/21,4:25PM,Miami Dolphins,@,New England Patriots,boxscore,17,16,259,1,393,2,2021
-1,Sun,9/12/21,4:25PM,New Orleans Saints,,Green Bay Packers,boxscore,38,3,322,0,229,3,2021
+1,Sun,9/12/21,4:25PM,New Orleans Saints,N,Green Bay Packers,boxscore,38,3,322,0,229,3,2021
 1,Sun,9/12/21,1:00PM,Philadelphia Eagles,@,Atlanta Falcons,boxscore,32,6,434,0,260,0,2021
 1,Sun,9/12/21,1:00PM,Pittsburgh Steelers,@,Buffalo Bills,boxscore,23,16,252,0,371,1,2021
 1,Sun,9/12/21,1:00PM,San Francisco 49ers,@,Detroit Lions,boxscore,41,33,442,2,430,1,2021
@@ -12563,7 +12563,7 @@ WildCard,Sat,1/9/21,8:15PM,Tampa Bay Buccaneers,@,Washington Football Team,boxsc
 4,Sun,10/3/21,8:20PM,Tampa Bay Buccaneers,@,New England Patriots,boxscore,19,17,381,0,294,2,2021
 4,Sun,10/3/21,1:00PM,Washington Football Team,@,Atlanta Falcons,boxscore,34,30,412,0,374,0,2021
 5,Sun,10/10/21,4:25PM,Arizona Cardinals,,San Francisco 49ers,boxscore,17,10,304,1,338,1,2021
-5,Sun,10/10/21,9:30AM,Atlanta Falcons,,New York Jets,boxscore,27,20,450,2,230,1,2021
+5,Sun,10/10/21,9:30AM,Atlanta Falcons,N,New York Jets,boxscore,27,20,450,2,230,1,2021
 5,Mon,10/11/21,8:15PM,Baltimore Ravens,,Indianapolis Colts,boxscore,31,25,523,1,513,1,2021
 5,Sun,10/10/21,8:20PM,Buffalo Bills,@,Kansas City Chiefs,boxscore,38,20,436,0,392,4,2021
 5,Sun,10/10/21,4:05PM,Chicago Bears,@,Las Vegas Raiders,boxscore,20,9,252,0,259,1,2021
@@ -12584,7 +12584,7 @@ WildCard,Sat,1/9/21,8:15PM,Tampa Bay Buccaneers,@,Washington Football Team,boxsc
 6,Sun,10/17/21,4:25PM,Dallas Cowboys,@,New England Patriots,boxscore,35,29,567,2,335,2,2021
 6,Sun,10/17/21,1:00PM,Green Bay Packers,@,Chicago Bears,boxscore,24,14,323,0,277,1,2021
 6,Sun,10/17/21,1:00PM,Indianapolis Colts,,Houston Texans,boxscore,31,3,388,0,353,3,2021
-6,Sun,10/17/21,9:30AM,Jacksonville Jaguars,,Miami Dolphins,boxscore,23,20,396,1,431,1,2021
+6,Sun,10/17/21,9:30AM,Jacksonville Jaguars,N,Miami Dolphins,boxscore,23,20,396,1,431,1,2021
 6,Sun,10/17/21,1:00PM,Kansas City Chiefs,@,Washington Football Team,boxscore,31,13,499,3,276,2,2021
 6,Sun,10/17/21,4:25PM,Las Vegas Raiders,@,Denver Broncos,boxscore,34,24,426,0,421,4,2021
 6,Sun,10/17/21,1:00PM,Los Angeles Rams,@,New York Giants,boxscore,38,11,365,2,261,4,2021
@@ -12676,12 +12676,12 @@ WildCard,Sun,1/16/22,1:00PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 10,Sun,11/13/22,1:00PM,New York Giants,,Houston Texans,boxscore,24,16,367,0,387,2,2022
 10,Sun,11/13/22,1:00PM,Pittsburgh Steelers,,New Orleans Saints,boxscore,20,10,379,0,186,2,2022
 10,Sun,11/13/22,8:20PM,San Francisco 49ers,,Los Angeles Chargers,boxscore,22,16,387,1,238,1,2022
-10,Sun,11/13/22,9:30AM,Tampa Bay Buccaneers,,Seattle Seahawks,boxscore,21,16,419,2,283,1,2022
+10,Sun,11/13/22,9:30AM,Tampa Bay Buccaneers,N,Seattle Seahawks,boxscore,21,16,419,2,283,1,2022
 10,Sun,11/13/22,1:00PM,Tennessee Titans,,Denver Broncos,boxscore,17,10,307,1,313,1,2022
 10,Mon,11/14/22,8:15PM,Washington Commanders,@,Philadelphia Eagles,boxscore,32,21,330,2,264,4,2022
 11,Sun,11/20/22,1:00PM,Atlanta Falcons,,Chicago Bears,boxscore,27,24,280,2,288,1,2022
 11,Sun,11/20/22,1:00PM,Baltimore Ravens,,Carolina Panthers,boxscore,13,3,308,1,205,3,2022
-11,Sun,11/20/22,1:00PM,Buffalo Bills,,Cleveland Browns,boxscore,31,23,357,0,396,1,2022
+11,Sun,11/20/22,1:00PM,Buffalo Bills,N,Cleveland Browns,boxscore,31,23,357,0,396,1,2022
 11,Sun,11/20/22,4:25PM,Cincinnati Bengals,@,Pittsburgh Steelers,boxscore,37,30,408,2,351,0,2022
 11,Sun,11/20/22,4:25PM,Dallas Cowboys,@,Minnesota Vikings,boxscore,40,3,458,0,183,1,2022
 11,Sun,11/20/22,1:00PM,Detroit Lions,@,New York Giants,boxscore,31,18,325,0,413,3,2022
@@ -12690,7 +12690,7 @@ WildCard,Sun,1/16/22,1:00PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 11,Sun,11/20/22,1:00PM,New England Patriots,,New York Jets,boxscore,10,3,297,0,103,0,2022
 11,Sun,11/20/22,1:00PM,New Orleans Saints,,Los Angeles Rams,boxscore,27,20,323,0,336,0,2022
 11,Sun,11/20/22,1:00PM,Philadelphia Eagles,@,Indianapolis Colts,boxscore,17,16,314,2,284,1,2022
-11,Mon,11/21/22,8:15PM,San Francisco 49ers,@,Arizona Cardinals,boxscore,38,10,387,0,314,2,2022
+11,Mon,11/21/22,8:15PM,San Francisco 49ers,N,Arizona Cardinals,boxscore,38,10,387,0,314,2,2022
 11,Thu,11/17/22,8:15PM,Tennessee Titans,@,Green Bay Packers,boxscore,27,17,408,1,271,0,2022
 11,Sun,11/20/22,1:00PM,Washington Commanders,@,Houston Texans,boxscore,23,10,344,0,148,2,2022
 12,Thu,11/24/22,12:30PM,Buffalo Bills,@,Detroit Lions,boxscore,28,25,401,1,326,2,2022
@@ -12841,7 +12841,7 @@ WildCard,Sun,1/16/22,1:00PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 4,Sun,10/2/22,8:20PM,Kansas City Chiefs,@,Tampa Bay Buccaneers,boxscore,41,31,417,1,376,2,2022
 4,Sun,10/2/22,4:25PM,Las Vegas Raiders,,Denver Broncos,boxscore,32,23,385,0,299,1,2022
 4,Sun,10/2/22,1:00PM,Los Angeles Chargers,@,Houston Texans,boxscore,34,24,419,1,346,2,2022
-4,Sun,10/2/22,9:30AM,Minnesota Vikings,@,New Orleans Saints,boxscore,28,25,344,1,338,2,2022
+4,Sun,10/2/22,9:30AM,Minnesota Vikings,N,New Orleans Saints,boxscore,28,25,344,1,338,2,2022
 4,Sun,10/2/22,1:00PM,New York Giants,,Chicago Bears,boxscore,20,12,333,2,304,3,2022
 4,Sun,10/2/22,1:00PM,New York Jets,@,Pittsburgh Steelers,boxscore,24,20,348,2,297,4,2022
 4,Sun,10/2/22,1:00PM,Philadelphia Eagles,,Jacksonville Jaguars,boxscore,29,21,401,1,219,5,2022
@@ -12858,7 +12858,7 @@ WildCard,Sun,1/16/22,1:00PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 5,Sun,10/9/22,1:00PM,Minnesota Vikings,,Chicago Bears,boxscore,29,22,429,1,271,1,2022
 5,Sun,10/9/22,1:00PM,New England Patriots,,Detroit Lions,boxscore,29,0,364,1,312,2,2022
 5,Sun,10/9/22,1:00PM,New Orleans Saints,,Seattle Seahawks,boxscore,39,32,438,2,396,1,2022
-5,Sun,10/9/22,9:30AM,New York Giants,@,Green Bay Packers,boxscore,27,22,338,0,301,0,2022
+5,Sun,10/9/22,9:30AM,New York Giants,N,Green Bay Packers,boxscore,27,22,338,0,301,0,2022
 5,Sun,10/9/22,1:00PM,New York Jets,,Miami Dolphins,boxscore,40,17,322,0,295,2,2022
 5,Sun,10/9/22,4:25PM,Philadelphia Eagles,@,Arizona Cardinals,boxscore,20,17,357,0,363,1,2022
 5,Sun,10/9/22,4:05PM,San Francisco 49ers,@,Carolina Panthers,boxscore,37,15,397,1,308,1,2022
@@ -12897,7 +12897,7 @@ WildCard,Sun,1/16/22,1:00PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 8,Sun,10/30/22,8:20PM,Buffalo Bills,,Green Bay Packers,boxscore,27,17,369,2,398,1,2022
 8,Mon,10/31/22,8:15PM,Cleveland Browns,,Cincinnati Bengals,boxscore,32,13,440,2,229,2,2022
 8,Sun,10/30/22,1:00PM,Dallas Cowboys,,Chicago Bears,boxscore,49,29,442,1,371,1,2022
-8,Sun,10/30/22,9:30AM,Denver Broncos,@,Jacksonville Jaguars,boxscore,21,17,331,1,305,2,2022
+8,Sun,10/30/22,9:30AM,Denver Broncos,N,Jacksonville Jaguars,boxscore,21,17,331,1,305,2,2022
 8,Sun,10/30/22,1:00PM,Miami Dolphins,@,Detroit Lions,boxscore,31,27,476,1,393,0,2022
 8,Sun,10/30/22,1:00PM,Minnesota Vikings,,Arizona Cardinals,boxscore,34,26,381,1,375,3,2022
 8,Sun,10/30/22,1:00PM,New England Patriots,@,New York Jets,boxscore,22,17,288,1,387,3,2022
@@ -12958,7 +12958,7 @@ WildCard,Sat,1/14/23,4:30PM,San Francisco 49ers,,Seattle Seahawks,boxscore,41,23
 10,Mon,11/13/23,8:15PM,Denver Broncos,@,Buffalo Bills,boxscore,24,22,300,1,369,4,2023
 10,Sun,11/12/23,4:05PM,Detroit Lions,@,Los Angeles Chargers,boxscore,41,38,533,0,421,1,2023
 10,Sun,11/12/23,1:00PM,Houston Texans,@,Cincinnati Bengals,boxscore,30,27,544,3,380,2,2023
-10,Sun,11/12/23,9:30AM,Indianapolis Colts,@,New England Patriots,boxscore,10,6,264,1,340,2,2023
+10,Sun,11/12/23,9:30AM,Indianapolis Colts,N,New England Patriots,boxscore,10,6,264,1,340,2,2023
 10,Sun,11/12/23,8:20PM,Las Vegas Raiders,,New York Jets,boxscore,16,12,274,2,365,1,2023
 10,Sun,11/12/23,1:00PM,Minnesota Vikings,,New Orleans Saints,boxscore,27,19,388,0,280,2,2023
 10,Sun,11/12/23,1:00PM,Pittsburgh Steelers,,Green Bay Packers,boxscore,23,19,324,0,399,2,2023
@@ -13125,7 +13125,7 @@ WildCard,Sat,1/14/23,4:30PM,San Francisco 49ers,,Seattle Seahawks,boxscore,41,23
 4,Sun,10/1/23,1:00PM,Denver Broncos,@,Chicago Bears,boxscore,31,28,311,0,471,2,2023
 4,Thu,9/28/23,8:15PM,Detroit Lions,@,Green Bay Packers,boxscore,34,20,401,1,230,2,2023
 4,Sun,10/1/23,1:00PM,Houston Texans,,Pittsburgh Steelers,boxscore,30,6,451,0,225,1,2023
-4,Sun,10/1/23,9:30AM,Jacksonville Jaguars,,Atlanta Falcons,boxscore,23,7,300,0,287,3,2023
+4,Sun,10/1/23,9:30AM,Jacksonville Jaguars,N,Atlanta Falcons,boxscore,23,7,300,0,287,3,2023
 4,Sun,10/1/23,8:20PM,Kansas City Chiefs,@,New York Jets,boxscore,23,20,401,2,336,1,2023
 4,Sun,10/1/23,4:05PM,Los Angeles Chargers,,Las Vegas Raiders,boxscore,24,17,305,1,264,3,2023
 4,Sun,10/1/23,1:00PM,Los Angeles Rams,@,Indianapolis Colts,boxscore,29,23,467,1,329,1,2023
@@ -13140,7 +13140,7 @@ WildCard,Sat,1/14/23,4:30PM,San Francisco 49ers,,Seattle Seahawks,boxscore,41,23
 5,Sun,10/8/23,4:05PM,Cincinnati Bengals,@,Arizona Cardinals,boxscore,34,20,380,1,294,3,2023
 5,Sun,10/8/23,1:00PM,Detroit Lions,,Carolina Panthers,boxscore,42,24,377,0,342,3,2023
 5,Sun,10/8/23,1:00PM,Indianapolis Colts,,Tennessee Titans,boxscore,23,16,429,0,348,1,2023
-5,Sun,10/8/23,9:30AM,Jacksonville Jaguars,@,Buffalo Bills,boxscore,25,20,474,2,388,2,2023
+5,Sun,10/8/23,9:30AM,Jacksonville Jaguars,N,Buffalo Bills,boxscore,25,20,474,2,388,2,2023
 5,Sun,10/8/23,4:25PM,Kansas City Chiefs,@,Minnesota Vikings,boxscore,27,20,333,0,329,1,2023
 5,Mon,10/9/23,8:15PM,Las Vegas Raiders,,Green Bay Packers,boxscore,17,13,279,1,285,3,2023
 5,Sun,10/8/23,1:00PM,Miami Dolphins,,New York Giants,boxscore,31,16,524,3,268,0,2023
@@ -13149,7 +13149,7 @@ WildCard,Sat,1/14/23,4:30PM,San Francisco 49ers,,Seattle Seahawks,boxscore,41,23
 5,Sun,10/8/23,4:05PM,Philadelphia Eagles,@,Los Angeles Rams,boxscore,23,14,454,1,249,0,2023
 5,Sun,10/8/23,1:00PM,Pittsburgh Steelers,,Baltimore Ravens,boxscore,17,10,289,1,335,3,2023
 5,Sun,10/8/23,8:20PM,San Francisco 49ers,,Dallas Cowboys,boxscore,42,10,421,1,197,4,2023
-6,Sun,10/15/23,9:30AM,Baltimore Ravens,@,Tennessee Titans,boxscore,24,16,360,1,233,2,2023
+6,Sun,10/15/23,9:30AM,Baltimore Ravens,N,Tennessee Titans,boxscore,24,16,360,1,233,2,2023
 6,Sun,10/15/23,8:20PM,Buffalo Bills,,New York Giants,boxscore,14,9,297,2,317,0,2023
 6,Sun,10/15/23,1:00PM,Cincinnati Bengals,,Seattle Seahawks,boxscore,17,13,214,1,384,2,2023
 6,Sun,10/15/23,1:00PM,Cleveland Browns,,San Francisco 49ers,boxscore,19,17,334,2,215,1,2023
@@ -13199,7 +13199,7 @@ WildCard,Sat,1/14/23,4:30PM,San Francisco 49ers,,Seattle Seahawks,boxscore,41,23
 9,Sun,11/5/23,1:00PM,Green Bay Packers,,Los Angeles Rams,boxscore,20,3,391,2,187,2,2023
 9,Sun,11/5/23,1:00PM,Houston Texans,,Tampa Bay Buccaneers,boxscore,39,37,496,1,332,1,2023
 9,Sun,11/5/23,4:05PM,Indianapolis Colts,@,Carolina Panthers,boxscore,27,13,198,1,275,3,2023
-9,Sun,11/5/23,9:30AM,Kansas City Chiefs,,Miami Dolphins,boxscore,21,14,267,1,292,1,2023
+9,Sun,11/5/23,9:30AM,Kansas City Chiefs,N,Miami Dolphins,boxscore,21,14,267,1,292,1,2023
 9,Sun,11/5/23,4:25PM,Las Vegas Raiders,,New York Giants,boxscore,30,6,334,0,277,2,2023
 9,Mon,11/6/23,8:15PM,Los Angeles Chargers,@,New York Jets,boxscore,27,6,191,0,270,3,2023
 9,Sun,11/5/23,1:00PM,Minnesota Vikings,@,Atlanta Falcons,boxscore,31,28,363,2,370,2,2023
@@ -13233,7 +13233,7 @@ WildCard,Mon,1/15/24,8:15PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 1,Sun,2024-09-08,1:00PM,Minnesota Vikings,@,New York Giants,boxscore,28,6,312,2,240,2,2024
 1,Sun,2024-09-08,1:00PM,New England Patriots,@,Cincinnati Bengals,boxscore,16,10,290,0,224,2,2024
 1,Sun,2024-09-08,1:00PM,New Orleans Saints,,Carolina Panthers,boxscore,47,10,379,1,193,3,2024
-1,Fri,2024-09-06,8:15PM,Philadelphia Eagles,,Green Bay Packers,boxscore,34,29,410,3,414,1,2024
+1,Fri,2024-09-06,8:15PM,Philadelphia Eagles,N,Green Bay Packers,boxscore,34,29,410,3,414,1,2024
 1,Sun,2024-09-08,1:00PM,Pittsburgh Steelers,@,Atlanta Falcons,boxscore,18,10,270,0,226,3,2024
 1,Mon,2024-09-09,8:15PM,San Francisco 49ers,,New York Jets,boxscore,32,19,401,0,266,2,2024
 1,Sun,2024-09-08,4:05PM,Seattle Seahawks,,Denver Broncos,boxscore,26,20,304,2,231,3,2024
@@ -13242,7 +13242,7 @@ WildCard,Mon,1/15/24,8:15PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 10,Sun,2024-11-10,1:00PM,Atlanta Falcons,@,New Orleans Saints,preview,,,,,,,2024
 10,Thu,2024-11-07,8:15PM,Baltimore Ravens,,Cincinnati Bengals,boxscore,35,34,389,0,470,1,2024
 10,Sun,2024-11-10,1:00PM,Buffalo Bills,@,Indianapolis Colts,boxscore,30,20,415,2,361,4,2024
-10,Sun,2024-11-10,9:30AM,Carolina Panthers,,New York Giants,boxscore,20,17,306,1,342,3,2024
+10,Sun,2024-11-10,9:30AM,Carolina Panthers,N,New York Giants,boxscore,20,17,306,1,342,3,2024
 10,Thu,2024-11-07,8:15PM,Cincinnati Bengals,@,Baltimore Ravens,preview,,,,,,,2024
 10,Sun,2024-11-10,1:00PM,Denver Broncos,@,Kansas City Chiefs,preview,,,,,,,2024
 10,Sun,2024-11-10,8:20PM,Detroit Lions,@,Houston Texans,boxscore,26,23,345,5,248,2,2024
@@ -13516,7 +13516,7 @@ WildCard,Mon,1/15/24,8:15PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 5,Mon,2024-10-07,8:15PM,Kansas City Chiefs,,New Orleans Saints,boxscore,26,13,460,1,220,1,2024
 5,Sun,2024-10-06,4:05PM,Las Vegas Raiders,@,Denver Broncos,preview,,,,,,,2024
 5,Sun,2024-10-06,1:00PM,Miami Dolphins,@,New England Patriots,boxscore,15,10,372,2,299,0,2024
-5,Sun,2024-10-06,9:30AM,Minnesota Vikings,,New York Jets,boxscore,23,17,253,2,254,3,2024
+5,Sun,2024-10-06,9:30AM,Minnesota Vikings,N,New York Jets,boxscore,23,17,253,2,254,3,2024
 5,Mon,2024-10-07,8:15PM,New Orleans Saints,@,Kansas City Chiefs,preview,,,,,,,2024
 5,Sun,2024-10-06,4:25PM,New York Giants,@,Seattle Seahawks,boxscore,29,20,420,1,333,1,2024
 5,Sun,2024-10-06,9:30AM,New York Jets,@,Minnesota Vikings,preview,,,,,,,2024
@@ -13526,7 +13526,7 @@ WildCard,Mon,1/15/24,8:15PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 6,Sun,2024-10-13,4:25PM,Atlanta Falcons,@,Carolina Panthers,boxscore,38,20,423,1,335,2,2024
 6,Sun,2024-10-13,1:00PM,Baltimore Ravens,,Washington Commanders,boxscore,30,23,484,1,305,0,2024
 6,Mon,2024-10-14,8:15PM,Buffalo Bills,@,New York Jets,boxscore,23,20,359,0,393,1,2024
-6,Sun,2024-10-13,9:30AM,Chicago Bears,,Jacksonville Jaguars,boxscore,35,16,373,1,278,2,2024
+6,Sun,2024-10-13,9:30AM,Chicago Bears,N,Jacksonville Jaguars,boxscore,35,16,373,1,278,2,2024
 6,Sun,2024-10-13,8:20PM,Cincinnati Bengals,@,New York Giants,boxscore,17,7,304,1,309,1,2024
 6,Sun,2024-10-13,1:00PM,Cleveland Browns,@,Philadelphia Eagles,preview,,,,,,,2024
 6,Sun,2024-10-13,4:25PM,Detroit Lions,@,Dallas Cowboys,boxscore,47,9,492,0,251,5,2024
@@ -13550,7 +13550,7 @@ WildCard,Mon,1/15/24,8:15PM,Tampa Bay Buccaneers,,Philadelphia Eagles,boxscore,3
 7,Sun,2024-10-20,1:00PM,Green Bay Packers,,Houston Texans,boxscore,24,22,277,3,197,0,2024
 7,Sun,2024-10-20,1:00PM,Houston Texans,@,Green Bay Packers,preview,,,,,,,2024
 7,Sun,2024-10-20,1:00PM,Indianapolis Colts,,Miami Dolphins,boxscore,16,10,284,1,337,2,2024
-7,Sun,2024-10-20,9:30AM,Jacksonville Jaguars,,New England Patriots,boxscore,32,16,364,0,295,0,2024
+7,Sun,2024-10-20,9:30AM,Jacksonville Jaguars,N,New England Patriots,boxscore,32,16,364,0,295,0,2024
 7,Sun,2024-10-20,4:25PM,Kansas City Chiefs,@,San Francisco 49ers,boxscore,28,18,329,2,310,3,2024
 7,Sun,2024-10-20,4:05PM,Las Vegas Raiders,@,Los Angeles Rams,preview,,,,,,,2024
 7,Mon,2024-10-21,9:00PM,Los Angeles Chargers,@,Arizona Cardinals,preview,,,,,,,2024
@@ -13650,7 +13650,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 1,Sun,2025-09-07,1:00PM,Indianapolis Colts,,Miami Dolphins,boxscore,33,8,418,0,211,3,2025
 1,Sun,2025-09-07,1:00PM,Jacksonville Jaguars,,Carolina Panthers,boxscore,26,10,378,1,255,3,2025
 1,Sun,2025-09-07,1:00PM,Las Vegas Raiders,@,New England Patriots,boxscore,20,13,389,1,336,1,2025
-1,Fri,2025-09-05,8:00PM,Los Angeles Chargers,,Kansas City Chiefs,boxscore,27,21,394,0,347,0,2025
+1,Fri,2025-09-05,8:00PM,Los Angeles Chargers,N,Kansas City Chiefs,boxscore,27,21,394,0,347,0,2025
 1,Sun,2025-09-07,4:25PM,Los Angeles Rams,,Houston Texans,boxscore,14,9,296,1,265,2,2025
 1,Mon,2025-09-08,8:15PM,Minnesota Vikings,@,Chicago Bears,boxscore,27,24,254,1,317,1,2025
 1,Thu,2025-09-04,8:20PM,Philadelphia Eagles,,Dallas Cowboys,boxscore,24,20,302,0,307,1,2025
@@ -13667,7 +13667,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 10,Thu,2025-11-06,8:15PM,Denver Broncos,,Las Vegas Raiders,boxscore,10,7,220,2,188,1,2025
 10,Sun,2025-11-09,4:25PM,Detroit Lions,@,Washington Commanders,boxscore,44,22,546,0,288,0,2025
 10,Sun,2025-11-09,1:00PM,Houston Texans,,Jacksonville Jaguars,boxscore,36,29,412,2,213,2,2025
-10,Sun,2025-11-09,9:30AM,Indianapolis Colts,,Atlanta Falcons,boxscore,31,25,519,2,290,1,2025
+10,Sun,2025-11-09,9:30AM,Indianapolis Colts,N,Atlanta Falcons,boxscore,31,25,519,2,290,1,2025
 10,Sun,2025-11-09,1:00PM,Jacksonville Jaguars,@,Houston Texans,preview,,,,,,,2025
 10,Thu,2025-11-06,8:15PM,Las Vegas Raiders,@,Denver Broncos,preview,,,,,,,2025
 10,Sun,2025-11-09,8:20PM,Los Angeles Chargers,,Pittsburgh Steelers,boxscore,25,10,314,0,221,3,2025
@@ -13694,7 +13694,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 11,Sun,2025-11-16,4:25PM,Kansas City Chiefs,@,Denver Broncos,preview,,,,,,,2025
 11,Sun,2025-11-16,1:00PM,Los Angeles Chargers,@,Jacksonville Jaguars,preview,,,,,,,2025
 11,Sun,2025-11-16,4:05PM,Los Angeles Rams,,Seattle Seahawks,boxscore,21,19,249,1,414,4,2025
-11,Sun,2025-11-16,9:30AM,Miami Dolphins,,Washington Commanders,boxscore,16,13,311,0,379,2,2025
+11,Sun,2025-11-16,9:30AM,Miami Dolphins,N,Washington Commanders,boxscore,16,13,311,0,379,2,2025
 11,Thu,2025-11-13,8:15PM,New England Patriots,,New York Jets,boxscore,27,14,336,0,245,1,2025
 11,Thu,2025-11-13,8:15PM,New York Jets,@,New England Patriots,preview,,,,,,,2025
 11,Sun,2025-11-16,8:20PM,Philadelphia Eagles,,Detroit Lions,boxscore,16,9,272,0,317,1,2025
@@ -13942,7 +13942,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 4,Sun,2025-09-28,1:00PM,New York Giants,,Los Angeles Chargers,boxscore,21,18,250,0,338,2,2025
 4,Mon,2025-09-29,7:15PM,New York Jets,@,Miami Dolphins,preview,,,,,,,2025
 4,Sun,2025-09-28,1:00PM,Philadelphia Eagles,@,Tampa Bay Buccaneers,boxscore,31,25,200,0,376,2,2025
-4,Sun,2025-09-28,9:30AM,Pittsburgh Steelers,,Minnesota Vikings,boxscore,24,21,313,0,372,2,2025
+4,Sun,2025-09-28,9:30AM,Pittsburgh Steelers,N,Minnesota Vikings,boxscore,24,21,313,0,372,2,2025
 4,Thu,2025-09-25,8:15PM,Seattle Seahawks,@,Arizona Cardinals,boxscore,23,20,384,1,253,2,2025
 4,Sun,2025-09-28,1:00PM,Tennessee Titans,@,Houston Texans,preview,,,,,,,2025
 4,Sun,2025-09-28,1:00PM,Washington Commanders,@,Atlanta Falcons,preview,,,,,,,2025
@@ -13956,7 +13956,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 5,Mon,2025-10-06,8:15PM,Kansas City Chiefs,@,Jacksonville Jaguars,preview,,,,,,,2025
 5,Sun,2025-10-05,1:00PM,Las Vegas Raiders,@,Indianapolis Colts,preview,,,,,,,2025
 5,Sun,2025-10-05,1:00PM,Miami Dolphins,@,Carolina Panthers,preview,,,,,,,2025
-5,Sun,2025-10-05,9:30AM,Minnesota Vikings,@,Cleveland Browns,boxscore,21,17,349,2,322,0,2025
+5,Sun,2025-10-05,9:30AM,Minnesota Vikings,N,Cleveland Browns,boxscore,21,17,349,2,322,0,2025
 5,Sun,2025-10-05,8:20PM,New England Patriots,@,Buffalo Bills,boxscore,23,20,338,1,363,3,2025
 5,Sun,2025-10-05,1:00PM,New Orleans Saints,,New York Giants,boxscore,26,14,332,0,335,5,2025
 5,Sun,2025-10-05,1:00PM,New York Giants,@,New Orleans Saints,preview,,,,,,,2025
@@ -13972,7 +13972,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 6,Sun,2025-10-12,4:25PM,Cincinnati Bengals,@,Green Bay Packers,preview,,,,,,,2025
 6,Sun,2025-10-12,1:00PM,Cleveland Browns,@,Pittsburgh Steelers,preview,,,,,,,2025
 6,Sun,2025-10-12,1:00PM,Dallas Cowboys,@,Carolina Panthers,preview,,,,,,,2025
-6,Sun,2025-10-12,9:30AM,Denver Broncos,@,New York Jets,boxscore,13,11,246,1,82,0,2025
+6,Sun,2025-10-12,9:30AM,Denver Broncos,N,New York Jets,boxscore,13,11,246,1,82,0,2025
 6,Sun,2025-10-12,8:20PM,Detroit Lions,@,Kansas City Chiefs,preview,,,,,,,2025
 6,Sun,2025-10-12,4:25PM,Green Bay Packers,,Cincinnati Bengals,boxscore,27,18,409,1,268,0,2025
 6,Sun,2025-10-12,1:00PM,Indianapolis Colts,,Arizona Cardinals,boxscore,31,27,355,1,400,1,2025
@@ -14001,7 +14001,7 @@ WildCard,Sun,2025-01-12,8:00PM,Washington Commanders,@,Tampa Bay Buccaneers,boxs
 7,Sun,2025-10-19,4:05PM,Indianapolis Colts,@,Los Angeles Chargers,boxscore,38,24,401,0,445,2,2025
 7,Sun,2025-10-19,1:00PM,Kansas City Chiefs,,Las Vegas Raiders,boxscore,31,0,434,0,95,1,2025
 7,Sun,2025-10-19,1:00PM,Las Vegas Raiders,@,Kansas City Chiefs,preview,,,,,,,2025
-7,Sun,2025-10-19,9:30AM,Los Angeles Rams,@,Jacksonville Jaguars,boxscore,35,7,271,0,358,0,2025
+7,Sun,2025-10-19,9:30AM,Los Angeles Rams,N,Jacksonville Jaguars,boxscore,35,7,271,0,358,0,2025
 7,Sun,2025-10-19,1:00PM,Miami Dolphins,@,Cleveland Browns,preview,,,,,,,2025
 7,Sun,2025-10-19,1:00PM,New England Patriots,@,Tennessee Titans,boxscore,31,13,387,0,255,2,2025
 7,Sun,2025-10-19,1:00PM,New Orleans Saints,@,Chicago Bears,preview,,,,,,,2025
@@ -14107,35 +14107,3 @@ WildCard,Sun,2026-01-11,4:30PM,San Francisco 49ers,@,Philadelphia Eagles,boxscor
 2,,2026-09-20,,San Francisco 49ers,,Miami Dolphins,,35.0,13.0,,,,,2026
 2,,2026-09-20,,Seattle Seahawks,@,Arizona Cardinals,,31.0,7.0,,,,,2026
 3,,2026-09-24,,Atlanta Falcons,@,Green Bay Packers,,35.0,14.0,,,,,2026
-1,,2026-09-13,,Arizona Cardinals,@,Los Angeles Chargers,,26.0,14.0,,,,,2026
-1,,2026-09-13,,Baltimore Ravens,@,Indianapolis Colts,,41.0,23.0,,,,,2026
-1,,2026-09-13,,Buffalo Bills,@,Houston Texans,,36.0,31.0,,,,,2026
-1,,2026-09-13,,Chicago Bears,@,Carolina Panthers,,59.0,37.0,,,,,2026
-1,,2026-09-13,,Cincinnati Bengals,,Tampa Bay Buccaneers,,33.0,27.0,,,,,2026
-1,,2026-09-13,,Detroit Lions,,New Orleans Saints,,31.0,30.0,,,,,2026
-1,,2026-09-13,,Jacksonville Jaguars,,Cleveland Browns,,34.0,10.0,,,,,2026
-1,,2026-09-14,,Kansas City Chiefs,,Denver Broncos,,31.0,10.0,,,,,2026
-1,,2026-09-13,,Las Vegas Raiders,,Miami Dolphins,,27.0,13.0,,,,,2026
-1,,2026-09-13,,Minnesota Vikings,,Green Bay Packers,,39.0,22.0,,,,,2026
-1,,2026-09-13,,New York Giants,,Dallas Cowboys,,28.0,20.0,,,,,2026
-1,,2026-09-13,,New York Jets,@,Tennessee Titans,,23.0,10.0,,,,,2026
-1,,2026-09-13,,Philadelphia Eagles,,Washington Commanders,,24.0,22.0,,,,,2026
-1,,2026-09-13,,Pittsburgh Steelers,,Atlanta Falcons,,20.0,13.0,,,,,2026
-1,,2026-09-10,,San Francisco 49ers,N,Los Angeles Rams,,27.0,7.0,,,,,2026
-1,,2026-09-09,,Seattle Seahawks,,New England Patriots,,13.0,10.0,,,,,2026
-2,,2026-09-17,,Buffalo Bills,,Detroit Lions,,41.0,31.0,,,,,2026
-2,,2026-09-20,,Carolina Panthers,@,Atlanta Falcons,,34.0,3.0,,,,,2026
-2,,2026-09-20,,Cincinnati Bengals,@,Houston Texans,,20.0,6.0,,,,,2026
-2,,2026-09-20,,Cleveland Browns,@,Tampa Bay Buccaneers,,23.0,19.0,,,,,2026
-2,,2026-09-20,,Dallas Cowboys,,Washington Commanders,,37.0,20.0,,,,,2026
-2,,2026-09-20,,Denver Broncos,,Jacksonville Jaguars,,20.0,13.0,,,,,2026
-2,,2026-09-20,,Green Bay Packers,@,New York Jets,,20.0,17.0,,,,,2026
-2,,2026-09-20,,Kansas City Chiefs,,Indianapolis Colts,,33.0,30.0,,,,,2026
-2,,2026-09-20,,Las Vegas Raiders,@,Los Angeles Chargers,,26.0,14.0,,,,,2026
-2,,2026-09-21,,Los Angeles Rams,,New York Giants,,28.0,6.0,,,,,2026
-2,,2026-09-20,,Minnesota Vikings,@,Chicago Bears,,9.0,3.0,,,,,2026
-2,,2026-09-20,,New England Patriots,,Pittsburgh Steelers,,20.0,3.0,,,,,2026
-2,,2026-09-20,,New Orleans Saints,@,Baltimore Ravens,,24.0,17.0,,,,,2026
-2,,2026-09-20,,Philadelphia Eagles,@,Tennessee Titans,,24.0,20.0,,,,,2026
-2,,2026-09-20,,San Francisco 49ers,,Miami Dolphins,,35.0,13.0,,,,,2026
-2,,2026-09-20,,Seattle Seahawks,@,Arizona Cardinals,,31.0,7.0,,,,,2026

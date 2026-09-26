@@ -122,7 +122,9 @@ def scrape_nflverse_season(year):
             ptsw, ptsl = home_pts, away_pts
             marker = 'N' if neutral else np.nan  # winner (home team) at home
 
-        week = NFLVERSE_WEEK_LABELS.get(g['game_type'], g['week'])
+        # Week as text, like the PFR-era rows: an int here made the
+        # (Season, Week, Winner, Loser) de-dup miss and duplicated 2026 rows.
+        week = NFLVERSE_WEEK_LABELS.get(g['game_type'], str(int(g['week'])))
 
         rows.append({
             'Week': week, 'Day': np.nan, 'Date': g['gameday'], 'Time': np.nan,
