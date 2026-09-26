@@ -7,8 +7,10 @@ Stakes come from the season sim (playoff_sim.py): one run of 100k simulations
 from the snapshot before the week, split by each game's simulated result.
 
 Line and projected score (fit on 1999-2025 games, leave-one-season-out):
-    margin = LINE_LAM * (home rating - away rating) + LINE_HOME (not neutral)
-        (ratings over-extrapolate big mismatches: raw differences overshoot)
+    margin = LINE_LAM * (home rating - away rating + home edge)
+        home edge = the sim's era home-field value (0 at neutral sites), so the
+        line and the win probability always name the same favorite; LINE_LAM
+        because ratings over-extrapolate big mismatches
     total  = 2 * league points per team-game last season
              + TOTAL_B * (both offenses - both defenses)
     projected score = (total +/- margin) / 2
@@ -21,7 +23,7 @@ import pandas as pd
 import playoff_sim
 
 N_SIMS = 100_000                  # fleet standard for settled odds
-LINE_LAM, LINE_HOME = 0.63, 2.31
+LINE_LAM = 0.63
 TOTAL_B = 0.545
 
 
@@ -112,7 +114,7 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
                                  'sb_loss': 0.0}
             neutral = int(getattr(x, 'is_neutral', 0) or 0) == 1
             rh, ra = rt.loc[h], rt.loc[a]
-            margin = LINE_LAM * (rh['rating'] - ra['rating']) + (0.0 if neutral else LINE_HOME)
+            margin = LINE_LAM * (rh['rating'] - ra['rating'] + (0.0 if neutral else sim.hp))
             total = 2 * mu + TOTAL_B * ((rh['rating_o'] + ra['rating_o']) - (rh['rating_d'] + ra['rating_d']))
             game = {
                 'home': h, 'away': a, 'neutral': neutral,
@@ -130,3 +132,37 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
         weeks_out.append({'week': int(week), 'games': games_out})
         log(f'  {season} week {week}: {len(games_out)} games')
     return weeks_out
+
+
+# ── Juice: Quality x Stakes ──────────────────────────────────────────────────
+# Quality = 60% the worse team's rating, 40% closeness (how near a toss-up);
+# Stakes  = both teams' playoff-odds swing + K x their Super Bowl-odds swing,
+#           K ramping 4 -> 8 over the regular season (seeding and title odds
+#           matter more late); playoff games: Super Bowl swing only, K = 8.
+# Each is ranked (0-100) against every game in the pool, then
+# Juice = sqrt(Quality x Stakes): a game has to deliver on both.
+SB_K_START, SB_K_END = 4.0, 8.0
+
+
+def add_juice(seasons):
+    """seasons: {season: weeks (build_season output)}. Adds 'quality',
+    'stakes' and 'juice' (0-100) to every game, ranked against all of them."""
+    rows = []
+    for season, weeks in seasons.items():
+        last = max((w['week'] for w in weeks if w['week'] < 100), default=18)
+        for w in weeks:
+            ps = w['week'] >= 100
+            k = SB_K_END if ps else SB_K_START + (SB_K_END - SB_K_START) * (w['week'] - 1) / max(last - 1, 1)
+            for g in w['games']:
+                st = list(g['stakes'].values())
+                po = 0.0 if ps else sum((s['po_win'] or 0) - (s['po_loss'] or 0) for s in st)
+                sb = sum((s['sb_win'] or 0) - (s['sb_loss'] or 0) for s in st)
+                rows.append((g, min(g['home_rating'], g['away_rating']), 1 - abs(2 * g['p_home'] - 1), po + k * sb))
+    if not rows:
+        return
+    df = pd.DataFrame([r[1:] for r in rows], columns=['qmin', 'close', 'stake'])
+    q = (0.6 * df['qmin'].rank(pct=True) + 0.4 * df['close'].rank(pct=True)).rank(pct=True) * 100
+    s = df['stake'].rank(pct=True) * 100
+    for (g, *_), qq, ss in zip(rows, q, s):
+        g['quality'], g['stakes_score'] = int(round(qq)), int(round(ss))
+        g['juice'] = int(round(np.sqrt(qq * ss)))

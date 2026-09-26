@@ -1497,9 +1497,11 @@ print("Writing weekly_matchups/...")
 os.makedirs('docs/data/weekly_matchups', exist_ok=True)
 _wm_ratings = pd.read_csv('dillon_react_ratings.csv').rename(columns={'ranking_id': 'week_id'})[
     ['season', 'week_id', 'name', 'rating', 'rating_o', 'rating_d']]
-for _s in WM_SEASONS:
-    _weeks = weekly_matchups.build_season(_s, _sim_games, _wm_ratings, _conf_div_for,
-                                          _schedule if _s == _cur_season else None, log=lambda *a: None)
+_wm_all = {_s: weekly_matchups.build_season(_s, _sim_games, _wm_ratings, _conf_div_for,
+                                            _schedule if _s == _cur_season else None, log=lambda *a: None)
+           for _s in WM_SEASONS}
+weekly_matchups.add_juice(_wm_all)          # ranked against every game in the pool
+for _s, _weeks in _wm_all.items():
     for _w in _weeks:
         for _g in _w['games']:
             _g['stakes'] = {'home': _g['stakes'][_g['home']], 'away': _g['stakes'][_g['away']]}
