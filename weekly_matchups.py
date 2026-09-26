@@ -33,7 +33,7 @@ def _record(w, l, t):
 
 def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS, log=print):
     """games: all NFL games (season, week, week_id, home, away, home_pts,
-    visitor_pts, is_neutral). ratings: (season, week_id, name, rating,
+    visitor_pts, is_neutral). ratings: (season, week_id, name, rating, rank,
     rating_o, rating_d). Returns the season's weeks (list of dicts)."""
     g = games[games['season'] == season].copy()
     if schedule is not None and len(schedule):
@@ -120,6 +120,7 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
                 'home': h, 'away': a, 'neutral': neutral,
                 'home_record': _record(*rec.get(h, (0, 0, 0))), 'away_record': _record(*rec.get(a, (0, 0, 0))),
                 'home_rating': round(float(rh['rating']), 2), 'away_rating': round(float(ra['rating']), 2),
+                'home_rank': int(rh['rank']), 'away_rank': int(ra['rank']),
                 'p_home': round(p_home, 4),
                 'line': round(float(margin) * 2) / 2,           # home by this many (negative = away)
                 'proj_home': int(round((total + margin) / 2)), 'proj_away': int(round((total - margin) / 2)),
