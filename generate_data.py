@@ -1484,3 +1484,29 @@ with open('docs/data/playoff_odds/index.json', 'w') as f:
     json.dump({'n_sims': playoff_sim.N_SIMS, 'current_season': _cur_season,
                'seasons': [x['season'] for x in _po_seasons]}, f, separators=(',', ':'))
 print(f"  {len(_po_seasons)} seasons of playoff odds written")
+
+
+# ── 7. Weekly Matchups tab (docs/data/weekly_matchups/) ─────────────────────
+# Every game of a week previewed from the ratings going into it (win
+# probability, line, projected score) plus its stakes: each team's playoff
+# and Super Bowl odds with a win vs a loss, from 100k sims split by that
+# game's result. Pilot: 2025 only, for review before backfilling to 1999.
+import weekly_matchups
+WM_SEASONS = [2025]
+print("Writing weekly_matchups/...")
+os.makedirs('docs/data/weekly_matchups', exist_ok=True)
+_wm_ratings = pd.read_csv('dillon_react_ratings.csv').rename(columns={'ranking_id': 'week_id'})[
+    ['season', 'week_id', 'name', 'rating', 'rating_o', 'rating_d']]
+for _s in WM_SEASONS:
+    _weeks = weekly_matchups.build_season(_s, _sim_games, _wm_ratings, _conf_div_for,
+                                          _schedule if _s == _cur_season else None, log=lambda *a: None)
+    for _w in _weeks:
+        for _g in _w['games']:
+            _g['stakes'] = {'home': _g['stakes'][_g['home']], 'away': _g['stakes'][_g['away']]}
+            _g['home'], _g['away'] = display_name(_g['home'], _s), display_name(_g['away'], _s)
+    with open(f'docs/data/weekly_matchups/{_s}.json', 'w') as f:
+        json.dump({'season': _s, 'weeks': _weeks}, f, separators=(',', ':'))
+with open('docs/data/weekly_matchups/index.json', 'w') as f:
+    json.dump({'seasons': sorted(WM_SEASONS, reverse=True), 'current_season': int(_cur_season),
+               'n_sims': weekly_matchups.N_SIMS}, f, separators=(',', ':'))
+print(f"  {len(WM_SEASONS)} season(s) of weekly matchups written")

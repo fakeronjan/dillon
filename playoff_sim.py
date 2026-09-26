@@ -34,10 +34,17 @@ ERA_PARAMS = [             # (first season, A, home pts)
 
 # Ratings aren't fixed for the rest of the season: a week-2 rating is mostly
 # last year's team. Each simulation gives every team a random offset for the
-# remaining games, SD = DRIFT_SD0 * (share of regular season left)**DRIFT_K,
-# fit to how far NFL ratings actually moved from each week to season's end
-# (1971-2025). Zero once the regular season is over.
-DRIFT_SD0, DRIFT_K = 6.70, 0.62
+# remaining games, SD = drift_sd(share of regular season left): the rating
+# error that best explains how the rest of each 1972-2025 season actually
+# went, given that week's ratings. (Fitting how far ratings later MOVE, as
+# before, understated early error by half and kept drift going past midseason
+# when the ratings had already caught up.)
+DRIFT_LEFT = [0.0, 0.43, 0.59, 0.72, 0.88, 1.0]
+DRIFT_SD = [0.0, 0.0, 2.97, 7.45, 11.88, 14.44]
+
+
+def drift_sd(frac_left):
+    return float(np.interp(frac_left, DRIFT_LEFT, DRIFT_SD))
 
 _TB = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'nfl_tiebreak_orders.json')
 # Standings ties the NFL broke differently from our simplified tiebreak
@@ -182,7 +189,10 @@ class SeasonSim:
                 score[self.idx[t]] += 1e6 * (len(order) - k)
         return score
 
-    def odds_at(self, wid, n_sims=N_SIMS):
+    def odds_at(self, wid, n_sims=N_SIMS, capture=None):
+        """capture: optional dict, filled with per-simulation results for the
+        Weekly Matchups tab (remaining games' home wins, playoff games still
+        to play, who made the playoffs / won it all)."""
         season, f = self.season, fmt(self.season)
         T = len(self.teams)
         rng = np.random.default_rng(int(season * 1000 + (wid % 1000)))
@@ -193,7 +203,7 @@ class SeasonSim:
         played = self.rs['home_pts'].notna() & (self.rs['week_id'] <= wid)
         done, rest = self.rs[played], self.rs[~played]
         frac_left = len(rest) / max(len(self.rs), 1)
-        sd = DRIFT_SD0 * frac_left ** DRIFT_K if frac_left > 0 else 0.0
+        sd = drift_sd(frac_left)
         Rs = R[None, :] + rng.normal(0.0, sd, (n_sims, T)) if sd > 0 else R  # per-sim strength
         w0, g0, _ = self._standings(done)
         W = np.tile(w0, (n_sims, 1)); G = np.tile(g0, (n_sims, 1))
@@ -206,6 +216,9 @@ class SeasonSim:
             Am = np.zeros((len(rest), T), np.float32); Am[np.arange(len(rest)), a] = 1
             W += hw @ Hm + (1 - hw) @ Am
             G += (Hm + Am).sum(0)
+            if capture is not None:
+                capture['rest'] = rest.reset_index(drop=True)
+                capture['hw'] = hw.astype(bool)
         pct = W / np.maximum(G, 1)
         static = self._static_tiebreak(done) if rest.empty else np.zeros(T)
         noise = rng.random((n_sims, T))
@@ -257,6 +270,8 @@ class SeasonSim:
                 for k, t in enumerate(arr[0]):
                     self.seeds[self.teams[t]] = f"{c[0]}{k + 1}"
         self.matchups = []
+        if capture is not None:
+            capture['ps_games'] = []
         reach = np.zeros((self.n_rounds + 2, T))
         entered = np.zeros((n_sims, T), dtype=bool)
 
@@ -278,6 +293,8 @@ class SeasonSim:
                 ra = Rs[sim_ix, a] if np.ndim(Rs) == 2 else R[a]
                 rb = Rs[sim_ix, b] if np.ndim(Rs) == 2 else R[b]
                 won = rng.random(n_sims) < ndtr(A * (ra - rb + edge))
+                if capture is not None and fixed:
+                    capture['ps_games'].append((rnd, self.teams[a[0]], self.teams[b[0]], won))
             if fixed and self.rs_complete:
                 ta, tb = self.teams[a[0]], self.teams[b[0]]
                 self.matchups.append((rnd, 1, ta, tb, actual[:1], actual[0] if actual else None))
@@ -353,6 +370,10 @@ class SeasonSim:
         (ea, es), (na, ns) = champs['AFC'], champs['NFC']
         champ, _ = play(ea, es, na, ns, self.n_rounds, neutral=True)
         np.add.at(reach[-1], champ, 1)
+        if capture is not None:
+            capture['made'] = entered.copy()
+            capture['champ'] = champ
+            capture['teams'] = self.teams
         reach /= n_sims
         cols = ['playoffs'] + [f'r{k}' for k in range(2, self.n_rounds + 1)] + ['champ']
         rows = np.vstack([reach[0]] + [reach[k] for k in range(2, self.n_rounds + 1)] + [reach[-1]])
