@@ -148,7 +148,10 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
 
 
 # ── Juice: Quality x Stakes ──────────────────────────────────────────────────
-# Quality = 60% the worse team's rating, 40% closeness (how near a toss-up);
+# Quality = 35% the worse team's rating, 35% the better team's, 30% closeness
+#           (how near a toss-up). Before 2026-09-27 it was 60% worse team +
+#           40% closeness, which only saw the better team through closeness
+#           (so a stronger favorite LOWERED quality: #16 vs #17 beat #1 vs #16);
 # Stakes  = both teams' playoff-odds swing + K x their Super Bowl-odds swing,
 #           K ramping 4 -> 8 over the regular season (seeding and title odds
 #           matter more late); playoff games: Super Bowl swing only, K = 8.
@@ -170,11 +173,13 @@ def add_juice(seasons):
                 st = list(g['stakes'].values())
                 po = 0.0 if ps else sum((s['po_win'] or 0) - (s['po_loss'] or 0) for s in st)
                 sb = sum((s['sb_win'] or 0) - (s['sb_loss'] or 0) for s in st)
-                rows.append((g, min(g['home_rating'], g['away_rating']), 1 - abs(2 * g['p_home'] - 1), po + k * sb))
+                rows.append((g, min(g['home_rating'], g['away_rating']), max(g['home_rating'], g['away_rating']),
+                             1 - abs(2 * g['p_home'] - 1), po + k * sb))
     if not rows:
         return
-    df = pd.DataFrame([r[1:] for r in rows], columns=['qmin', 'close', 'stake'])
-    q = (0.6 * df['qmin'].rank(pct=True) + 0.4 * df['close'].rank(pct=True)).rank(pct=True) * 100
+    df = pd.DataFrame([r[1:] for r in rows], columns=['qmin', 'qmax', 'close', 'stake'])
+    q = (0.35 * df['qmin'].rank(pct=True) + 0.35 * df['qmax'].rank(pct=True)
+         + 0.3 * df['close'].rank(pct=True)).rank(pct=True) * 100
     s = df['stake'].rank(pct=True) * 100
     for (g, *_), qq, ss in zip(rows, q, s):
         g['quality'], g['stakes_score'] = int(round(qq)), int(round(ss))
