@@ -910,6 +910,33 @@ for rid, pairs in _sb_pairs_by_rid.items():
     _sb_odds_rank_cache[rid] = rank_map
 
 
+# Playoff odds (share of sims where the team makes the playoffs), same
+# snapshots; ranked the same way (0% = unranked).
+_po_odds_cache = {(int(w), tm): float(p) for w, tm, p in
+                  _playoff_odds[['week_id', 'team', 'playoffs']].itertuples(index=False) if p > 0}
+_po_odds_rank_cache = {}
+_po_pairs_by_rid = {}
+for (rid, team), odds in _po_odds_cache.items():
+    _po_pairs_by_rid.setdefault(rid, []).append((team, odds))
+for rid, pairs in _po_pairs_by_rid.items():
+    pairs.sort(key=lambda x: -x[1])
+    rank_map, prev_odds, prev_rank = {}, None, 0
+    for i, (team, odds) in enumerate(pairs, start=1):
+        if odds != prev_odds:
+            prev_rank, prev_odds = i, odds
+        rank_map[team] = prev_rank
+    _po_odds_rank_cache[rid] = rank_map
+
+
+def _po_odds_val(ranking_id, team):
+    return _po_odds_cache.get((int(ranking_id), team))
+
+
+def _po_odds_rk(ranking_id, team):
+    rm = _po_odds_rank_cache.get(int(ranking_id))
+    return rm.get(team) if rm else None
+
+
 def _sb_odds_val(ranking_id, team):
     """Return SB odds as float 0-1, or None if no prediction at this snapshot."""
     return _sb_odds_cache.get((int(ranking_id), team))
@@ -942,6 +969,8 @@ standings_data = {
             'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
             'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
             'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
+            'playoff_odds':    _po_odds_val(r['ranking_id'], r['name']),
+            'playoff_odds_rank': _po_odds_rk(r['ranking_id'], r['name']),
             'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
             'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
             'record':          clean(r['record']),
@@ -1086,6 +1115,8 @@ for team in all_teams:
                 'rating_d':          round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':            int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':            int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
+                'playoff_odds':      _po_odds_val(r['ranking_id'], team),
+                'playoff_odds_rank': _po_odds_rk(r['ranking_id'], team),
                 'sb_odds':           _sb_odds_val(r['ranking_id'], team),
                 'sb_odds_rank':      _sb_odds_rk(r['ranking_id'], team),
                 'record':            clean(r['record']),
@@ -1153,6 +1184,8 @@ for season in all_seasons:
                 'rating_d':        round(float(r['rating_d']), 3) if 'rating_d' in r and not pd.isna(r['rating_d']) else None,
                 'rank_o':          int(r['rank_o']) if 'rank_o' in r and not pd.isna(r['rank_o']) else None,
                 'rank_d':          int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
+                'playoff_odds':    _po_odds_val(r['ranking_id'], r['name']),
+                'playoff_odds_rank': _po_odds_rk(r['ranking_id'], r['name']),
                 'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
                 'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
                 'record':          clean(r['record']),
@@ -1490,9 +1523,9 @@ print(f"  {len(_po_seasons)} seasons of playoff odds written")
 # Every game of a week previewed from the ratings going into it (win
 # probability, line, O/U) plus its stakes: each team's playoff
 # and Super Bowl odds with a win vs a loss, from 100k sims split by that
-# game's result. 1999 on; finished seasons are cached (weekly_matchups.py).
+# game's result. 1971 on; finished seasons are cached (weekly_matchups.py).
 import weekly_matchups
-WM_SEASONS = list(range(1999, int(_cur_season) + 1))   # 1999: first season with every game's data
+WM_SEASONS = list(range(1971, int(_cur_season) + 1))   # 1971: first season with ratings (from Week 4)
 print("Writing weekly_matchups/...")
 os.makedirs('docs/data/weekly_matchups', exist_ok=True)
 _wm_ratings = pd.read_csv('dillon_react_ratings.csv').rename(columns={'ranking_id': 'week_id'})[
