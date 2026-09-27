@@ -86,10 +86,19 @@ NFLVERSE_WEEK_LABELS = {
 # these 15 columns feed the ratings pipeline (season/week/date/winner/loser/
 # ptsw/ptsl/home-marker) - the rest (day, time, boxscore, yards, turnovers)
 # are scraped from PFR but dropped immediately and unavailable from
-# nflverse's games.csv, so they're left blank here.
+# nflverse's games.csv, so they're left blank here (Day and Time are filled:
+# they feed the Weekly Matchups kickoff times).
 PFR_RAW_COLUMNS = ['Week', 'Day', 'Date', 'Time', 'Winner/tie', 'Unnamed: 5',
                     'Loser/tie', 'Unnamed: 7', 'PtsW', 'PtsL', 'YdsW', 'TOW',
                     'YdsL', 'TOL', 'Season']
+
+
+def _pfr_time(hhmm):
+    """nflverse '20:20' (Eastern) -> PFR-style '8:20PM'; NaN stays NaN."""
+    if pd.isna(hhmm):
+        return np.nan
+    h, m = (int(x) for x in str(hhmm).split(':')[:2])
+    return f"{(h - 1) % 12 + 1}:{m:02d}{'AM' if h < 12 else 'PM'}"
 
 
 def scrape_nflverse_season(year):
@@ -127,7 +136,8 @@ def scrape_nflverse_season(year):
         week = NFLVERSE_WEEK_LABELS.get(g['game_type'], str(int(g['week'])))
 
         rows.append({
-            'Week': week, 'Day': np.nan, 'Date': g['gameday'], 'Time': np.nan,
+            'Week': week, 'Day': str(g['weekday'])[:3] if pd.notna(g['weekday']) else np.nan,
+            'Date': g['gameday'], 'Time': _pfr_time(g['gametime']),
             'Winner/tie': winner, 'Unnamed: 5': marker, 'Loser/tie': loser,
             'Unnamed: 7': np.nan, 'PtsW': ptsw, 'PtsL': ptsl,
             'YdsW': np.nan, 'TOW': np.nan, 'YdsL': np.nan, 'TOL': np.nan,
@@ -138,6 +148,7 @@ def scrape_nflverse_season(year):
 
 
 SCHEDULE_CSV = 'nfl_schedule.csv'
+KICKOFFS_CSV = 'nfl_upcoming_kickoffs.csv'
 
 
 def fetch_nfl_schedule(season):
@@ -154,6 +165,15 @@ def fetch_nfl_schedule(season):
         raise RuntimeError(f"unmapped nflverse team codes in the {season} schedule")
     df.to_csv(SCHEDULE_CSV, index=False)
     print(f"  {len(df)} scheduled regular-season games left in {season} -> {SCHEDULE_CSV}")
+
+    # Kickoffs of every unplayed game this season, playoffs included (Weekly
+    # Matchups previews). Eastern date + PFR-style time, like loaded_NFL_games.
+    up = all_games[(all_games['season'] == season) & all_games['home_score'].isna()]
+    week = up['game_type'].map({'WC': 101, 'DIV': 102, 'CON': 103, 'SB': 104}).fillna(up['week'])
+    pd.DataFrame({'season': season, 'week': week.astype(int),
+                  'home': up['home_team'].map(NFLVERSE_TEAM_NAMES),
+                  'away': up['away_team'].map(NFLVERSE_TEAM_NAMES),
+                  'date': up['gameday'], 'time': up['gametime'].map(_pfr_time)}).to_csv(KICKOFFS_CSV, index=False)
     return df
 
 

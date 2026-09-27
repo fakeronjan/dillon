@@ -1533,6 +1533,59 @@ _wm_ratings = pd.read_csv('dillon_react_ratings.csv').rename(columns={'ranking_i
 _wm_all = weekly_matchups.build_cached(WM_SEASONS, _sim_games, _wm_ratings, _conf_div_for,
                                       _cur_season, _schedule)
 weekly_matchups.add_juice(_wm_all)          # ranked against every game in the pool
+
+# Kickoffs: Eastern date + time (PFR and nflverse both list Eastern) -> UTC,
+# so the page shows each viewer's local time. zoneinfo applies the DST rules
+# in force on that date (incl. 1974-75 winter DST). Keyed by season, week and
+# the pair of teams; games with no listed time keep just the date.
+from datetime import datetime as _dt, timezone as _tz
+from zoneinfo import ZoneInfo as _ZI
+from dillon import TEAM_ALIASES as _ALIASES, KICKOFFS_CSV as _KO_CSV
+_ET = _ZI('America/New_York')
+_PO_WEEKS = {'WildCard': 101, 'Division': 102, 'ConfChamp': 103, 'SuperBowl': 104}
+
+
+def _kickoff(date, time):
+    if pd.isna(date):
+        return None, None
+    d = None
+    for fmt in ('%Y-%m-%d', '%m/%d/%y'):
+        try:
+            d = _dt.strptime(str(date), fmt)
+            break
+        except ValueError:
+            pass
+    if d is None:
+        return None, None
+    if pd.isna(time):
+        return None, d.strftime('%Y-%m-%d')
+    t = _dt.strptime(str(time), '%I:%M%p')
+    local = d.replace(hour=t.hour, minute=t.minute, tzinfo=_ET)
+    return local.astimezone(_tz.utc).strftime('%Y-%m-%dT%H:%MZ'), None
+
+
+_ko = {}
+_lg = pd.read_csv('loaded_NFL_games.csv', dtype=str)
+_lg = _lg[~_lg['Date'].isin(['Date', 'Playoffs'])]
+for _r in _lg.itertuples(index=False):
+    _wk = _PO_WEEKS.get(_r.Week) or (int(_r.Week) if str(_r.Week).isdigit() else None)
+    if _wk is None:
+        continue
+    _pair = frozenset((_ALIASES.get(_r[4], _r[4]), _ALIASES.get(_r[6], _r[6])))
+    _ko[(int(_r.Season), _wk, _pair)] = _kickoff(_r.Date, _r.Time)
+if os.path.exists(_KO_CSV):
+    for _r in pd.read_csv(_KO_CSV).itertuples(index=False):
+        _ko[(int(_r.season), int(_r.week), frozenset((_r.home, _r.away)))] = _kickoff(_r.date, _r.time)
+
+_ko_miss = 0
+for _s, _weeks in _wm_all.items():
+    for _w in _weeks:
+        for _g in _w['games']:
+            _k, _d = _ko.get((int(_s), int(_w['week']), frozenset((_g['home'], _g['away']))), (None, None))
+            _g['kickoff'], _g['date'] = _k, _d
+            _ko_miss += _k is None and _d is None
+print(f"  kickoffs: {_ko_miss} matchup(s) with no date")
+
 for _s, _weeks in _wm_all.items():
     for _w in _weeks:
         for _g in _w['games']:

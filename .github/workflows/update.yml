@@ -31,7 +31,7 @@ jobs:
 
       # matchups_cache/ holds per-season Weekly Matchups (weekly_matchups.py),
       # fingerprinted by engine code + that season's games and ratings, so a
-      # stale entry recomputes itself. A miss rebuilds 1999 on (~5 min).
+      # stale entry recomputes itself. A miss rebuilds 1971 on (~10 min).
       - name: Restore matchups cache
         uses: actions/cache/restore@v4
         with:
