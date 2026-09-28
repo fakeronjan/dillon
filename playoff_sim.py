@@ -13,8 +13,11 @@ Home field shrank from ~5.5 pts (1990s) to ~1.9 (2020s). Super Bowls (and
 other neutral-site games) have no home edge. Regular-season ties count as
 half a win.
 """
+import hashlib
 import json as _json
+import multiprocessing as _mp
 import os as _os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -404,3 +407,77 @@ def compute(games, ratings_df, conf_div, current_season, schedule=None, log=prin
             out.append(o)
         log(f"  {season}: {len(ratings)} snapshots")
     return pd.concat(out, ignore_index=True), brackets
+
+
+# ---------------------------------------------------------------------------
+# Per-season cache. Every snapshot seeds its own RNG from its season/week, so
+# a season's odds depend only on the engine and that season's inputs;
+# finished seasons are reused until one of those changes. Fingerprint = the
+# engine files + the season's games (full sort key, so tie order can't change
+# the hash) + its ratings to 3dp + its teams' conference/division + the
+# remaining schedule when current.
+_ENGINE_FILES = ('playoff_sim.py', 'nfl_tiebreak_orders.json', 'nfl_wc_opponents.json')
+_JOB = {}
+
+
+def _fingerprint(season, games, ratings_df, conf_div, current_season, schedule):
+    h = hashlib.sha256()
+    here = _os.path.dirname(_os.path.abspath(__file__))
+    for f in _ENGINE_FILES:
+        p = _os.path.join(here, f)
+        if _os.path.exists(p):
+            h.update(open(p, 'rb').read())
+    g = games[games['season'] == season]
+    h.update(g.sort_values(list(g.columns), kind='stable').to_csv(index=False).encode())
+    r = ratings_df[ratings_df['season'] == season].sort_values(['week_id', 'name']).copy()
+    r['rating'] = r['rating'].round(3)
+    h.update(r.to_csv(index=False).encode())
+    teams = sorted(set(g['home']) | set(g['away']))
+    h.update(repr([(t, conf_div(t, season)) for t in teams]).encode())
+    if season == current_season and schedule is not None:
+        h.update(schedule.sort_values(list(schedule.columns), kind='stable').to_csv(index=False).encode())
+    return h.hexdigest()
+
+
+def _one(season):
+    j = _JOB
+    return season, compute(j['games'][j['games']['season'] == season],
+                           j['ratings'][j['ratings']['season'] == season],
+                           j['conf_div'], j['current'], j['schedule'], log=lambda *_: None)
+
+
+def compute_cached(games, ratings_df, conf_div, current_season, schedule=None,
+                   cache_dir='title_odds_cache', workers=None, log=print):
+    """compute() over every season, reusing cached seasons whose fingerprint
+    still matches and recomputing the rest in parallel."""
+    _os.makedirs(cache_dir, exist_ok=True)
+    seasons = sorted(int(s) for s in games['season'].unique()
+                     if (ratings_df['season'] == s).any())
+    results, todo, sigs = {}, [], {}
+    for s in seasons:
+        sigs[s] = _fingerprint(s, games, ratings_df, conf_div, current_season, schedule)
+        path = _os.path.join(cache_dir, f'{s}.pkl')
+        if _os.path.exists(path):
+            try:
+                sig, payload = pickle.load(open(path, 'rb'))
+                if sig == sigs[s]:
+                    results[s] = payload
+                    continue
+            except Exception:
+                pass
+        todo.append(s)
+    log(f"  {len(results)} seasons from cache, computing {len(todo)}: {todo}")
+    if todo:
+        _JOB.update(games=games, ratings=ratings_df, conf_div=conf_div,
+                    current=current_season, schedule=schedule)
+        ctx = _mp.get_context('fork')   # workers inherit _JOB; no re-import of the caller
+        with ctx.Pool(workers or _os.cpu_count()) as pool:
+            for s, payload in pool.imap_unordered(_one, todo):
+                results[s] = payload
+                pickle.dump((sigs[s], payload), open(_os.path.join(cache_dir, f'{s}.pkl'), 'wb'))
+                log(f"  {s} done")
+    odds = pd.concat([results[s][0] for s in seasons], ignore_index=True)
+    brackets = {}
+    for s in seasons:
+        brackets.update(results[s][1])
+    return odds, brackets

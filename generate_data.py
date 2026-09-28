@@ -874,7 +874,8 @@ print(f"  {len(_division_winners)} division winners flagged.")
 # playoff-field lock-in) 2026-09-26, ported from LOBO/DUNCAN/GRIFFEY. Every
 # weekly snapshot simulates the rest of the regular season, qualifies and
 # seeds each conference under that season's format, and plays the bracket;
-# played games are fixed. NFL history is small, so no cache is needed.
+# played games are fixed. Finished seasons come from a per-season cache
+# (title_odds_cache/, Actions cache).
 print("Computing Super Bowl odds (season + playoff Monte Carlo)...")
 import playoff_sim
 
@@ -891,7 +892,7 @@ if os.path.exists('nfl_schedule.csv'):
     # drop fixtures already in the results (nflverse can lag on posting scores)
     _schedule = _schedule[[k not in _played_keys for k in zip(_schedule['week'], _schedule['home'], _schedule['away'])]]
 _sim_ratings = df[['ranking_id', 'season', 'name', 'rating']].rename(columns={'ranking_id': 'week_id'})
-_playoff_odds, _brackets = playoff_sim.compute(_sim_games, _sim_ratings, _conf_div_for, _cur_season, _schedule)
+_playoff_odds, _brackets = playoff_sim.compute_cached(_sim_games, _sim_ratings, _conf_div_for, _cur_season, _schedule)
 _sb_odds_cache = {}  # (ranking_id, team) -> sb_odds (float, 0-1); only non-zero
 for wid, team, p in _playoff_odds[['week_id', 'team', 'champ']].itertuples(index=False):
     if p > 0:

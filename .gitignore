@@ -13,3 +13,4 @@ loaded_NFL_games_archive_*.csv
 nfl_schedule.csv
 nfl_upcoming_kickoffs.csv
 matchups_cache/
+title_odds_cache/
