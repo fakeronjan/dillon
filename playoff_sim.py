@@ -52,9 +52,21 @@ _TB = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'nfl_tiebreak_
 # Standings ties the NFL broke differently from our simplified tiebreak
 # (head-to-head, then point differential). Per season, tied teams in the
 # order they were actually seeded; earlier wins. From search_tiebreaks.py.
+# Only 1970-74 now: from 1975 the real seeds (REAL_SEEDS) take over once the
+# regular season ends, which is the only time these orders apply.
 TIEBREAK_WINNERS = ({int(k): v for k, v in _json.load(open(_TB)).items()}
                     if _os.path.exists(_TB) else {})
 
+
+_SEEDS = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'nfl_playoff_seeds.json')
+# The real playoff seeds, 1975 on (the first season the better seed hosted):
+# {season: {conf: [seed 1, seed 2, ...]}}. From each season's Wikipedia
+# playoffs page, cross-checked against nflverse standings 2002-2025 (all
+# agree). Once the regular season is over these ARE the seeds; the tie
+# orders below can't always recover them (two orders can give the same
+# games and hosts: 2017 AFC 3/4 and 5/6). Add each season after it ends.
+REAL_SEEDS = ({int(k): v for k, v in _json.load(open(_SEEDS)).items()}
+              if _os.path.exists(_SEEDS) else {})
 
 _WC = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'nfl_wc_opponents.json')
 # Early divisional-round matchups followed a rotation, not seeding: the wild
@@ -252,6 +264,8 @@ class SeasonSim:
                 mem = m[self.div[m] == dv]
                 is_dw[six, mem[np.argmin(pos[:, mem], axis=1)]] = True
             seeds[c] = ranked(m, is_dw[:, m].astype(float))[:, :n_seeds(season)]
+        if rest.empty and season in REAL_SEEDS:
+            seeds = {c: np.array([[self.idx[t] for t in REAL_SEEDS[season][c]]]) for c in seeds}
         if S == 1:
             seeds = {k: np.broadcast_to(v, (n_sims, v.shape[1])) for k, v in seeds.items()}
 
@@ -263,6 +277,12 @@ class SeasonSim:
         ps_by_pair = {}
         for r in self.ps[self.ps['week_id'] <= wid].itertuples(index=False):
             ps_by_pair.setdefault((frozenset((r.home, r.away)), int(r.week) - first_week + 1), []).append(r.winner)
+        # Who actually hosted each real playoff game (played or not as of
+        # wid: the venue was set by the seeding, not the result). Before 1975
+        # hosts rotated by division, so the better seed didn't always host.
+        ps_host = {(frozenset((r.home, r.away)), int(r.week) - first_week + 1): (r.home, int(r.is_neutral or 0) == 1)
+                   for r in self.ps.itertuples(index=False)}
+        self.host_miss = 0     # real games (1975+) the better seed didn't host: a seeding error
 
         self.used_actual = 0
         self.rs_complete = rest.empty
@@ -287,11 +307,20 @@ class SeasonSim:
                     np.add.at(reach[k], t[new], 1)
                 np.add.at(reach[rnd], t, 1)
             fixed = np.all(a == a[0]) and np.all(b == b[0])
-            actual = ps_by_pair.get((frozenset((self.teams[a[0]], self.teams[b[0]])), rnd), []) if fixed else []
+            key = (frozenset((self.teams[a[0]], self.teams[b[0]])), rnd)
+            actual = ps_by_pair.get(key, []) if fixed else []
+            real = ps_host.get(key) if fixed else None
+            if real is not None:
+                host_a = real[0] == self.teams[a[0]]
+                if season >= 1975 and not real[1] and not neutral and (sa[0] < sb[0]) != host_a:
+                    self.host_miss += 1
             if actual:
                 won = np.full(n_sims, actual[0] == self.teams[a[0]]); self.used_actual += 1
             else:
-                edge = 0.0 if neutral else np.where(sa < sb, hp, -hp)
+                if real is not None:
+                    edge = 0.0 if (neutral or real[1]) else (hp if host_a else -hp)
+                else:
+                    edge = 0.0 if neutral else np.where(sa < sb, hp, -hp)
                 ra = Rs[sim_ix, a] if np.ndim(Rs) == 2 else R[a]
                 rb = Rs[sim_ix, b] if np.ndim(Rs) == 2 else R[b]
                 won = rng.random(n_sims) < ndtr(A * (ra - rb + edge))
@@ -433,6 +462,7 @@ def _fingerprint(season, games, ratings_df, conf_div, current_season, schedule):
     h.update(r.to_csv(index=False).encode())
     teams = sorted(set(g['home']) | set(g['away']))
     h.update(repr([(t, conf_div(t, season)) for t in teams]).encode())
+    h.update(repr(REAL_SEEDS.get(season)).encode())     # this season's real seeds only
     if season == current_season and schedule is not None:
         h.update(schedule.sort_values(list(schedule.columns), kind='stable').to_csv(index=False).encode())
     return h.hexdigest()

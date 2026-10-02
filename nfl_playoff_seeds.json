@@ -1,0 +1,902 @@
+{
+ "1975": {
+  "AFC": [
+   "Pittsburgh Steelers",
+   "Oakland Raiders",
+   "Baltimore Colts",
+   "Cincinnati Bengals"
+  ],
+  "NFC": [
+   "Minnesota Vikings",
+   "Los Angeles Rams",
+   "St. Louis Cardinals",
+   "Dallas Cowboys"
+  ]
+ },
+ "1976": {
+  "AFC": [
+   "Oakland Raiders",
+   "Baltimore Colts",
+   "Pittsburgh Steelers",
+   "New England Patriots"
+  ],
+  "NFC": [
+   "Minnesota Vikings",
+   "Dallas Cowboys",
+   "Los Angeles Rams",
+   "Washington Commanders"
+  ]
+ },
+ "1977": {
+  "AFC": [
+   "Denver Broncos",
+   "Baltimore Colts",
+   "Pittsburgh Steelers",
+   "Oakland Raiders"
+  ],
+  "NFC": [
+   "Dallas Cowboys",
+   "Los Angeles Rams",
+   "Minnesota Vikings",
+   "Chicago Bears"
+  ]
+ },
+ "1978": {
+  "AFC": [
+   "Pittsburgh Steelers",
+   "New England Patriots",
+   "Denver Broncos",
+   "Miami Dolphins",
+   "Houston Oilers"
+  ],
+  "NFC": [
+   "Los Angeles Rams",
+   "Dallas Cowboys",
+   "Minnesota Vikings",
+   "Atlanta Falcons",
+   "Philadelphia Eagles"
+  ]
+ },
+ "1979": {
+  "AFC": [
+   "San Diego Chargers",
+   "Pittsburgh Steelers",
+   "Miami Dolphins",
+   "Houston Oilers",
+   "Denver Broncos"
+  ],
+  "NFC": [
+   "Dallas Cowboys",
+   "Tampa Bay Buccaneers",
+   "Los Angeles Rams",
+   "Philadelphia Eagles",
+   "Chicago Bears"
+  ]
+ },
+ "1980": {
+  "AFC": [
+   "San Diego Chargers",
+   "Cleveland Browns",
+   "Buffalo Bills",
+   "Oakland Raiders",
+   "Houston Oilers"
+  ],
+  "NFC": [
+   "Atlanta Falcons",
+   "Philadelphia Eagles",
+   "Minnesota Vikings",
+   "Dallas Cowboys",
+   "Los Angeles Rams"
+  ]
+ },
+ "1981": {
+  "AFC": [
+   "Cincinnati Bengals",
+   "Miami Dolphins",
+   "San Diego Chargers",
+   "New York Jets",
+   "Buffalo Bills"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Dallas Cowboys",
+   "Tampa Bay Buccaneers",
+   "Philadelphia Eagles",
+   "New York Giants"
+  ]
+ },
+ "1982": {
+  "AFC": [
+   "Los Angeles Raiders",
+   "Miami Dolphins",
+   "Cincinnati Bengals",
+   "Pittsburgh Steelers",
+   "San Diego Chargers",
+   "New York Jets",
+   "New England Patriots",
+   "Cleveland Browns"
+  ],
+  "NFC": [
+   "Washington Commanders",
+   "Dallas Cowboys",
+   "Green Bay Packers",
+   "Minnesota Vikings",
+   "Atlanta Falcons",
+   "St. Louis Cardinals",
+   "Tampa Bay Buccaneers",
+   "Detroit Lions"
+  ]
+ },
+ "1983": {
+  "AFC": [
+   "Los Angeles Raiders",
+   "Miami Dolphins",
+   "Pittsburgh Steelers",
+   "Seattle Seahawks",
+   "Denver Broncos"
+  ],
+  "NFC": [
+   "Washington Commanders",
+   "San Francisco 49ers",
+   "Detroit Lions",
+   "Dallas Cowboys",
+   "Los Angeles Rams"
+  ]
+ },
+ "1984": {
+  "AFC": [
+   "Miami Dolphins",
+   "Denver Broncos",
+   "Pittsburgh Steelers",
+   "Seattle Seahawks",
+   "Los Angeles Raiders"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Washington Commanders",
+   "Chicago Bears",
+   "Los Angeles Rams",
+   "New York Giants"
+  ]
+ },
+ "1985": {
+  "AFC": [
+   "Los Angeles Raiders",
+   "Miami Dolphins",
+   "Cleveland Browns",
+   "New York Jets",
+   "New England Patriots"
+  ],
+  "NFC": [
+   "Chicago Bears",
+   "Los Angeles Rams",
+   "Dallas Cowboys",
+   "New York Giants",
+   "San Francisco 49ers"
+  ]
+ },
+ "1986": {
+  "AFC": [
+   "Cleveland Browns",
+   "Denver Broncos",
+   "New England Patriots",
+   "New York Jets",
+   "Kansas City Chiefs"
+  ],
+  "NFC": [
+   "New York Giants",
+   "Chicago Bears",
+   "San Francisco 49ers",
+   "Washington Commanders",
+   "Los Angeles Rams"
+  ]
+ },
+ "1987": {
+  "AFC": [
+   "Denver Broncos",
+   "Cleveland Browns",
+   "Indianapolis Colts",
+   "Houston Oilers",
+   "Seattle Seahawks"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Chicago Bears",
+   "Washington Commanders",
+   "New Orleans Saints",
+   "Minnesota Vikings"
+  ]
+ },
+ "1988": {
+  "AFC": [
+   "Cincinnati Bengals",
+   "Buffalo Bills",
+   "Seattle Seahawks",
+   "Cleveland Browns",
+   "Houston Oilers"
+  ],
+  "NFC": [
+   "Chicago Bears",
+   "San Francisco 49ers",
+   "Philadelphia Eagles",
+   "Minnesota Vikings",
+   "Los Angeles Rams"
+  ]
+ },
+ "1989": {
+  "AFC": [
+   "Denver Broncos",
+   "Cleveland Browns",
+   "Buffalo Bills",
+   "Houston Oilers",
+   "Pittsburgh Steelers"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "New York Giants",
+   "Minnesota Vikings",
+   "Philadelphia Eagles",
+   "Los Angeles Rams"
+  ]
+ },
+ "1990": {
+  "AFC": [
+   "Buffalo Bills",
+   "Los Angeles Raiders",
+   "Cincinnati Bengals",
+   "Miami Dolphins",
+   "Kansas City Chiefs",
+   "Houston Oilers"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "New York Giants",
+   "Chicago Bears",
+   "Philadelphia Eagles",
+   "Washington Commanders",
+   "New Orleans Saints"
+  ]
+ },
+ "1991": {
+  "AFC": [
+   "Buffalo Bills",
+   "Denver Broncos",
+   "Houston Oilers",
+   "Kansas City Chiefs",
+   "Los Angeles Raiders",
+   "New York Jets"
+  ],
+  "NFC": [
+   "Washington Commanders",
+   "Detroit Lions",
+   "New Orleans Saints",
+   "Chicago Bears",
+   "Dallas Cowboys",
+   "Atlanta Falcons"
+  ]
+ },
+ "1992": {
+  "AFC": [
+   "Pittsburgh Steelers",
+   "Miami Dolphins",
+   "San Diego Chargers",
+   "Buffalo Bills",
+   "Houston Oilers",
+   "Kansas City Chiefs"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Dallas Cowboys",
+   "Minnesota Vikings",
+   "New Orleans Saints",
+   "Philadelphia Eagles",
+   "Washington Commanders"
+  ]
+ },
+ "1993": {
+  "AFC": [
+   "Buffalo Bills",
+   "Houston Oilers",
+   "Kansas City Chiefs",
+   "Los Angeles Raiders",
+   "Denver Broncos",
+   "Pittsburgh Steelers"
+  ],
+  "NFC": [
+   "Dallas Cowboys",
+   "San Francisco 49ers",
+   "Detroit Lions",
+   "New York Giants",
+   "Minnesota Vikings",
+   "Green Bay Packers"
+  ]
+ },
+ "1994": {
+  "AFC": [
+   "Pittsburgh Steelers",
+   "San Diego Chargers",
+   "Miami Dolphins",
+   "Cleveland Browns",
+   "New England Patriots",
+   "Kansas City Chiefs"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Dallas Cowboys",
+   "Minnesota Vikings",
+   "Green Bay Packers",
+   "Detroit Lions",
+   "Chicago Bears"
+  ]
+ },
+ "1995": {
+  "AFC": [
+   "Kansas City Chiefs",
+   "Pittsburgh Steelers",
+   "Buffalo Bills",
+   "San Diego Chargers",
+   "Indianapolis Colts",
+   "Miami Dolphins"
+  ],
+  "NFC": [
+   "Dallas Cowboys",
+   "San Francisco 49ers",
+   "Green Bay Packers",
+   "Philadelphia Eagles",
+   "Detroit Lions",
+   "Atlanta Falcons"
+  ]
+ },
+ "1996": {
+  "AFC": [
+   "Denver Broncos",
+   "New England Patriots",
+   "Pittsburgh Steelers",
+   "Buffalo Bills",
+   "Jacksonville Jaguars",
+   "Indianapolis Colts"
+  ],
+  "NFC": [
+   "Green Bay Packers",
+   "Carolina Panthers",
+   "Dallas Cowboys",
+   "San Francisco 49ers",
+   "Philadelphia Eagles",
+   "Minnesota Vikings"
+  ]
+ },
+ "1997": {
+  "AFC": [
+   "Kansas City Chiefs",
+   "Pittsburgh Steelers",
+   "New England Patriots",
+   "Denver Broncos",
+   "Jacksonville Jaguars",
+   "Miami Dolphins"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Green Bay Packers",
+   "New York Giants",
+   "Tampa Bay Buccaneers",
+   "Detroit Lions",
+   "Minnesota Vikings"
+  ]
+ },
+ "1998": {
+  "AFC": [
+   "Denver Broncos",
+   "New York Jets",
+   "Jacksonville Jaguars",
+   "Miami Dolphins",
+   "Buffalo Bills",
+   "New England Patriots"
+  ],
+  "NFC": [
+   "Minnesota Vikings",
+   "Atlanta Falcons",
+   "Dallas Cowboys",
+   "San Francisco 49ers",
+   "Green Bay Packers",
+   "Arizona Cardinals"
+  ]
+ },
+ "1999": {
+  "AFC": [
+   "Jacksonville Jaguars",
+   "Indianapolis Colts",
+   "Seattle Seahawks",
+   "Tennessee Titans",
+   "Buffalo Bills",
+   "Miami Dolphins"
+  ],
+  "NFC": [
+   "St. Louis Rams",
+   "Tampa Bay Buccaneers",
+   "Washington Commanders",
+   "Minnesota Vikings",
+   "Dallas Cowboys",
+   "Detroit Lions"
+  ]
+ },
+ "2000": {
+  "AFC": [
+   "Tennessee Titans",
+   "Oakland Raiders",
+   "Miami Dolphins",
+   "Baltimore Ravens",
+   "Denver Broncos",
+   "Indianapolis Colts"
+  ],
+  "NFC": [
+   "New York Giants",
+   "Minnesota Vikings",
+   "New Orleans Saints",
+   "Philadelphia Eagles",
+   "Tampa Bay Buccaneers",
+   "St. Louis Rams"
+  ]
+ },
+ "2001": {
+  "AFC": [
+   "Pittsburgh Steelers",
+   "New England Patriots",
+   "Oakland Raiders",
+   "Miami Dolphins",
+   "Baltimore Ravens",
+   "New York Jets"
+  ],
+  "NFC": [
+   "St. Louis Rams",
+   "Chicago Bears",
+   "Philadelphia Eagles",
+   "Green Bay Packers",
+   "San Francisco 49ers",
+   "Tampa Bay Buccaneers"
+  ]
+ },
+ "2002": {
+  "AFC": [
+   "Oakland Raiders",
+   "Tennessee Titans",
+   "Pittsburgh Steelers",
+   "New York Jets",
+   "Indianapolis Colts",
+   "Cleveland Browns"
+  ],
+  "NFC": [
+   "Philadelphia Eagles",
+   "Tampa Bay Buccaneers",
+   "Green Bay Packers",
+   "San Francisco 49ers",
+   "New York Giants",
+   "Atlanta Falcons"
+  ]
+ },
+ "2003": {
+  "AFC": [
+   "New England Patriots",
+   "Kansas City Chiefs",
+   "Indianapolis Colts",
+   "Baltimore Ravens",
+   "Tennessee Titans",
+   "Denver Broncos"
+  ],
+  "NFC": [
+   "Philadelphia Eagles",
+   "St. Louis Rams",
+   "Carolina Panthers",
+   "Green Bay Packers",
+   "Seattle Seahawks",
+   "Dallas Cowboys"
+  ]
+ },
+ "2004": {
+  "AFC": [
+   "Pittsburgh Steelers",
+   "New England Patriots",
+   "Indianapolis Colts",
+   "San Diego Chargers",
+   "New York Jets",
+   "Denver Broncos"
+  ],
+  "NFC": [
+   "Philadelphia Eagles",
+   "Atlanta Falcons",
+   "Green Bay Packers",
+   "Seattle Seahawks",
+   "St. Louis Rams",
+   "Minnesota Vikings"
+  ]
+ },
+ "2005": {
+  "AFC": [
+   "Indianapolis Colts",
+   "Denver Broncos",
+   "Cincinnati Bengals",
+   "New England Patriots",
+   "Jacksonville Jaguars",
+   "Pittsburgh Steelers"
+  ],
+  "NFC": [
+   "Seattle Seahawks",
+   "Chicago Bears",
+   "Tampa Bay Buccaneers",
+   "New York Giants",
+   "Carolina Panthers",
+   "Washington Commanders"
+  ]
+ },
+ "2006": {
+  "AFC": [
+   "San Diego Chargers",
+   "Baltimore Ravens",
+   "Indianapolis Colts",
+   "New England Patriots",
+   "New York Jets",
+   "Kansas City Chiefs"
+  ],
+  "NFC": [
+   "Chicago Bears",
+   "New Orleans Saints",
+   "Philadelphia Eagles",
+   "Seattle Seahawks",
+   "Dallas Cowboys",
+   "New York Giants"
+  ]
+ },
+ "2007": {
+  "AFC": [
+   "New England Patriots",
+   "Indianapolis Colts",
+   "San Diego Chargers",
+   "Pittsburgh Steelers",
+   "Jacksonville Jaguars",
+   "Tennessee Titans"
+  ],
+  "NFC": [
+   "Dallas Cowboys",
+   "Green Bay Packers",
+   "Seattle Seahawks",
+   "Tampa Bay Buccaneers",
+   "New York Giants",
+   "Washington Commanders"
+  ]
+ },
+ "2008": {
+  "AFC": [
+   "Tennessee Titans",
+   "Pittsburgh Steelers",
+   "Miami Dolphins",
+   "San Diego Chargers",
+   "Indianapolis Colts",
+   "Baltimore Ravens"
+  ],
+  "NFC": [
+   "New York Giants",
+   "Carolina Panthers",
+   "Minnesota Vikings",
+   "Arizona Cardinals",
+   "Atlanta Falcons",
+   "Philadelphia Eagles"
+  ]
+ },
+ "2009": {
+  "AFC": [
+   "Indianapolis Colts",
+   "San Diego Chargers",
+   "New England Patriots",
+   "Cincinnati Bengals",
+   "New York Jets",
+   "Baltimore Ravens"
+  ],
+  "NFC": [
+   "New Orleans Saints",
+   "Minnesota Vikings",
+   "Dallas Cowboys",
+   "Arizona Cardinals",
+   "Green Bay Packers",
+   "Philadelphia Eagles"
+  ]
+ },
+ "2010": {
+  "AFC": [
+   "New England Patriots",
+   "Pittsburgh Steelers",
+   "Indianapolis Colts",
+   "Kansas City Chiefs",
+   "Baltimore Ravens",
+   "New York Jets"
+  ],
+  "NFC": [
+   "Atlanta Falcons",
+   "Chicago Bears",
+   "Philadelphia Eagles",
+   "Seattle Seahawks",
+   "New Orleans Saints",
+   "Green Bay Packers"
+  ]
+ },
+ "2011": {
+  "AFC": [
+   "New England Patriots",
+   "Baltimore Ravens",
+   "Houston Texans",
+   "Denver Broncos",
+   "Pittsburgh Steelers",
+   "Cincinnati Bengals"
+  ],
+  "NFC": [
+   "Green Bay Packers",
+   "San Francisco 49ers",
+   "New Orleans Saints",
+   "New York Giants",
+   "Atlanta Falcons",
+   "Detroit Lions"
+  ]
+ },
+ "2012": {
+  "AFC": [
+   "Denver Broncos",
+   "New England Patriots",
+   "Houston Texans",
+   "Baltimore Ravens",
+   "Indianapolis Colts",
+   "Cincinnati Bengals"
+  ],
+  "NFC": [
+   "Atlanta Falcons",
+   "San Francisco 49ers",
+   "Green Bay Packers",
+   "Washington Commanders",
+   "Seattle Seahawks",
+   "Minnesota Vikings"
+  ]
+ },
+ "2013": {
+  "AFC": [
+   "Denver Broncos",
+   "New England Patriots",
+   "Cincinnati Bengals",
+   "Indianapolis Colts",
+   "Kansas City Chiefs",
+   "San Diego Chargers"
+  ],
+  "NFC": [
+   "Seattle Seahawks",
+   "Carolina Panthers",
+   "Philadelphia Eagles",
+   "Green Bay Packers",
+   "San Francisco 49ers",
+   "New Orleans Saints"
+  ]
+ },
+ "2014": {
+  "AFC": [
+   "New England Patriots",
+   "Denver Broncos",
+   "Pittsburgh Steelers",
+   "Indianapolis Colts",
+   "Cincinnati Bengals",
+   "Baltimore Ravens"
+  ],
+  "NFC": [
+   "Seattle Seahawks",
+   "Green Bay Packers",
+   "Dallas Cowboys",
+   "Carolina Panthers",
+   "Arizona Cardinals",
+   "Detroit Lions"
+  ]
+ },
+ "2015": {
+  "AFC": [
+   "Denver Broncos",
+   "New England Patriots",
+   "Cincinnati Bengals",
+   "Houston Texans",
+   "Kansas City Chiefs",
+   "Pittsburgh Steelers"
+  ],
+  "NFC": [
+   "Carolina Panthers",
+   "Arizona Cardinals",
+   "Minnesota Vikings",
+   "Washington Commanders",
+   "Green Bay Packers",
+   "Seattle Seahawks"
+  ]
+ },
+ "2016": {
+  "AFC": [
+   "New England Patriots",
+   "Kansas City Chiefs",
+   "Pittsburgh Steelers",
+   "Houston Texans",
+   "Oakland Raiders",
+   "Miami Dolphins"
+  ],
+  "NFC": [
+   "Dallas Cowboys",
+   "Atlanta Falcons",
+   "Seattle Seahawks",
+   "Green Bay Packers",
+   "New York Giants",
+   "Detroit Lions"
+  ]
+ },
+ "2017": {
+  "AFC": [
+   "New England Patriots",
+   "Pittsburgh Steelers",
+   "Jacksonville Jaguars",
+   "Kansas City Chiefs",
+   "Tennessee Titans",
+   "Buffalo Bills"
+  ],
+  "NFC": [
+   "Philadelphia Eagles",
+   "Minnesota Vikings",
+   "Los Angeles Rams",
+   "New Orleans Saints",
+   "Carolina Panthers",
+   "Atlanta Falcons"
+  ]
+ },
+ "2018": {
+  "AFC": [
+   "Kansas City Chiefs",
+   "New England Patriots",
+   "Houston Texans",
+   "Baltimore Ravens",
+   "Los Angeles Chargers",
+   "Indianapolis Colts"
+  ],
+  "NFC": [
+   "New Orleans Saints",
+   "Los Angeles Rams",
+   "Chicago Bears",
+   "Dallas Cowboys",
+   "Seattle Seahawks",
+   "Philadelphia Eagles"
+  ]
+ },
+ "2019": {
+  "AFC": [
+   "Baltimore Ravens",
+   "Kansas City Chiefs",
+   "New England Patriots",
+   "Houston Texans",
+   "Buffalo Bills",
+   "Tennessee Titans"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Green Bay Packers",
+   "New Orleans Saints",
+   "Philadelphia Eagles",
+   "Seattle Seahawks",
+   "Minnesota Vikings"
+  ]
+ },
+ "2020": {
+  "AFC": [
+   "Kansas City Chiefs",
+   "Buffalo Bills",
+   "Pittsburgh Steelers",
+   "Tennessee Titans",
+   "Baltimore Ravens",
+   "Cleveland Browns",
+   "Indianapolis Colts"
+  ],
+  "NFC": [
+   "Green Bay Packers",
+   "New Orleans Saints",
+   "Seattle Seahawks",
+   "Washington Commanders",
+   "Tampa Bay Buccaneers",
+   "Los Angeles Rams",
+   "Chicago Bears"
+  ]
+ },
+ "2021": {
+  "AFC": [
+   "Tennessee Titans",
+   "Kansas City Chiefs",
+   "Buffalo Bills",
+   "Cincinnati Bengals",
+   "Las Vegas Raiders",
+   "New England Patriots",
+   "Pittsburgh Steelers"
+  ],
+  "NFC": [
+   "Green Bay Packers",
+   "Tampa Bay Buccaneers",
+   "Dallas Cowboys",
+   "Los Angeles Rams",
+   "Arizona Cardinals",
+   "San Francisco 49ers",
+   "Philadelphia Eagles"
+  ]
+ },
+ "2022": {
+  "AFC": [
+   "Kansas City Chiefs",
+   "Buffalo Bills",
+   "Cincinnati Bengals",
+   "Jacksonville Jaguars",
+   "Los Angeles Chargers",
+   "Baltimore Ravens",
+   "Miami Dolphins"
+  ],
+  "NFC": [
+   "Philadelphia Eagles",
+   "San Francisco 49ers",
+   "Minnesota Vikings",
+   "Tampa Bay Buccaneers",
+   "Dallas Cowboys",
+   "New York Giants",
+   "Seattle Seahawks"
+  ]
+ },
+ "2023": {
+  "AFC": [
+   "Baltimore Ravens",
+   "Buffalo Bills",
+   "Kansas City Chiefs",
+   "Houston Texans",
+   "Cleveland Browns",
+   "Miami Dolphins",
+   "Pittsburgh Steelers"
+  ],
+  "NFC": [
+   "San Francisco 49ers",
+   "Dallas Cowboys",
+   "Detroit Lions",
+   "Tampa Bay Buccaneers",
+   "Philadelphia Eagles",
+   "Los Angeles Rams",
+   "Green Bay Packers"
+  ]
+ },
+ "2024": {
+  "AFC": [
+   "Kansas City Chiefs",
+   "Buffalo Bills",
+   "Baltimore Ravens",
+   "Houston Texans",
+   "Los Angeles Chargers",
+   "Pittsburgh Steelers",
+   "Denver Broncos"
+  ],
+  "NFC": [
+   "Detroit Lions",
+   "Philadelphia Eagles",
+   "Tampa Bay Buccaneers",
+   "Los Angeles Rams",
+   "Minnesota Vikings",
+   "Washington Commanders",
+   "Green Bay Packers"
+  ]
+ },
+ "2025": {
+  "AFC": [
+   "Denver Broncos",
+   "New England Patriots",
+   "Jacksonville Jaguars",
+   "Pittsburgh Steelers",
+   "Houston Texans",
+   "Buffalo Bills",
+   "Los Angeles Chargers"
+  ],
+  "NFC": [
+   "Seattle Seahawks",
+   "Chicago Bears",
+   "Philadelphia Eagles",
+   "Carolina Panthers",
+   "Los Angeles Rams",
+   "San Francisco 49ers",
+   "Green Bay Packers"
+  ]
+ }
+}

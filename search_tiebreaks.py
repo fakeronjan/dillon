@@ -1,6 +1,9 @@
 """One-off: recover how past NFL standings ties (and 1970s rotation-era
 wild-card matchups) actually went.
 
+Only needed for 1970-74 now: from 1975 playoff_sim uses the real seeds
+(nfl_playoff_seeds.json).
+
 For each season whose simulated bracket doesn't reproduce the real playoff
 games, try every ordering of teams tied on win% at the end of the regular
 season (plausible playoff teams only) and, in the 1970-89 formats, every

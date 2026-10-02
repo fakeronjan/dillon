@@ -93,7 +93,11 @@ def build_season(season, games, ratings, conf_div, schedule=None, n_sims=N_SIMS,
             stakes = None
             if week < 100:
                 rest = cap.get('rest')
-                j = rest.index[(rest['home'] == h) & (rest['away'] == a)] if rest is not None else []
+                # Same week too: a pair can meet twice with the same home team
+                # (2005 49ers-Cardinals, Mexico City then San Francisco).
+                # Unplayed games carry week_id inf; the earliest is this week's.
+                wid_x = x.week_id if not pd.isna(x.week_id) else np.inf
+                j = rest.index[(rest['home'] == h) & (rest['away'] == a) & (rest['week_id'] == wid_x)] if rest is not None else []
                 if not len(j):
                     continue
                 hw = cap['hw'][:, j[0]]
@@ -198,8 +202,9 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 
 def _fingerprint(season, games, ratings, schedule):
     h = hashlib.sha256()
-    for f in ('weekly_matchups.py', 'playoff_sim.py'):
+    for f in ('weekly_matchups.py', 'playoff_sim.py', 'nfl_tiebreak_orders.json', 'nfl_wc_opponents.json'):
         h.update(open(os.path.join(_HERE, f), 'rb').read())
+    h.update(repr(playoff_sim.REAL_SEEDS.get(season)).encode())   # this season's real seeds
     g = games[games['season'].isin([season - 1, season])].sort_values(['week_id', 'home'])
     h.update(g.to_csv(index=False).encode())
     r = ratings[ratings['season'].isin([season - 1, season])].sort_values(['week_id', 'name']).copy()
