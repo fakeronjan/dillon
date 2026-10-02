@@ -23,8 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import ndtr
 
-N_SIMS = 10_000            # fleet standard: regular-season snapshots
-N_SIMS_PLAYOFFS = 100_000  # once the regular season is over
+N_SIMS = 10_000            # every snapshot, playoffs included (fleet standard since 2026-10-02)
 
 ERA_PARAMS = [             # (first season, A, home pts)
     (1970, 0.0584, 3.83),
@@ -396,7 +395,7 @@ def compute(games, ratings_df, conf_div, current_season, schedule=None, log=prin
             continue
         sim = SeasonSim(season, g, conf_div, ratings, schedule if season == current_season else None)
         for wid in sorted(ratings):
-            n = N_SIMS_PLAYOFFS if sim.rs_over(wid) else N_SIMS
+            n = N_SIMS
             o = sim.odds_at(wid, n_sims=n)
             if sim.rs_complete:
                 brackets.setdefault(season, {})[wid] = (dict(sim.seeds), list(sim.matchups), n)

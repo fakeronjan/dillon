@@ -1536,7 +1536,7 @@ print(f"  {len(_po_seasons)} seasons of playoff odds written")
 # ── 7. Weekly Matchups tab (docs/data/weekly_matchups/) ─────────────────────
 # Every game of a week previewed from the ratings going into it (win
 # probability, line, O/U) plus its stakes: each team's playoff
-# and Super Bowl odds with a win vs a loss, from 100k sims split by that
+# and Super Bowl odds with a win vs a loss, from 10k sims split by that
 # game's result. 1971 on; finished seasons are cached (weekly_matchups.py).
 import weekly_matchups
 WM_SEASONS = list(range(1971, int(_cur_season) + 1))   # 1971: first season with ratings (from Week 4)

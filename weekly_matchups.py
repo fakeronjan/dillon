@@ -3,7 +3,7 @@ into it - win probability, DILLON's line and O/U (projected total), and the stak
 (each team's playoff and Super Bowl odds with a win vs with a loss). After
 the games: the final score and whether DILLON's pick was right.
 
-Stakes come from the season sim (playoff_sim.py): one run of 100k simulations
+Stakes come from the season sim (playoff_sim.py): one run of 10k simulations
 from the snapshot before the week, split by each game's simulated result.
 
 Line and O/U (fit on 1999-2025 games, leave-one-season-out):
@@ -25,7 +25,7 @@ import pandas as pd
 
 import playoff_sim
 
-N_SIMS = 100_000                  # fleet standard for settled odds
+N_SIMS = 10_000                   # fleet standard since 2026-10-02
 LINE_LAM = 0.63
 TOTAL_B = 0.545
 
