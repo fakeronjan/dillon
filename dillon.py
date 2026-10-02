@@ -2,6 +2,8 @@
 # DILLON NFL POWER RATINGS
 # =========================================================
 
+import json
+import os
 import requests
 import pandas as pd
 import numpy as np
@@ -175,6 +177,63 @@ def fetch_nfl_schedule(season):
                   'away': up['away_team'].map(NFLVERSE_TEAM_NAMES),
                   'date': up['gameday'], 'time': up['gametime'].map(_pfr_time)}).to_csv(KICKOFFS_CSV, index=False)
     return df
+
+
+# Real playoff seeds (playoff_sim.REAL_SEEDS: once the regular season is over
+# the sim seeds with these, never its own tiebreak estimate). nflverse's
+# standings.csv carries each season's seeds once the NFL sets them.
+NFLVERSE_STANDINGS_URL = 'https://raw.githubusercontent.com/nflverse/nfldata/master/data/standings.csv'
+SEEDS_JSON = 'nfl_playoff_seeds.json'
+SEEDS_PER_CONF = 7                # 2020+ format; update if the NFL changes it
+SEEDS_GRACE_DAYS = 2              # after the last regular-season game, then fail
+
+
+def fetch_nfl_seeds(season, games_url=NFLVERSE_GAMES_URL, standings_url=NFLVERSE_STANDINGS_URL,
+                    path=SEEDS_JSON, today=None):
+    """Once `season`'s regular season is over, write its real seeds into
+    SEEDS_JSON. Checks: every seed 1-7 filled once per conference, codes
+    map to DILLON names, and every Wild Card game nflverse lists is the
+    right pairing (2v7, 3v6, 4v5) hosted by the better seed. Seeds missing
+    or failing a check: a warning for SEEDS_GRACE_DAYS, then the run fails
+    (the playoff odds must not run on estimated seeds)."""
+    games = pd.read_csv(games_url)
+    reg = games[(games['season'] == season) & (games['game_type'] == 'REG')]
+    if not len(reg) or reg['home_score'].isna().any():
+        return None                                   # regular season still going
+    seeds, problem = {}, None
+    st = pd.read_csv(standings_url)
+    st = st[(st['season'] == season) & st['seed'].notna()]
+    for conf in ('AFC', 'NFC'):
+        x = st[st['conf'] == conf].sort_values('seed')
+        names = x['team'].map(NFLVERSE_TEAM_NAMES).tolist()
+        if problem is not None:
+            pass
+        elif x['seed'].astype(int).tolist() != list(range(1, SEEDS_PER_CONF + 1)):
+            problem = f"{conf} seeds are {x['seed'].tolist()}, expected 1-{SEEDS_PER_CONF}"
+        elif any(pd.isna(n) for n in names):
+            problem = f"unmapped nflverse team code in the {conf} seeds: {x['team'].tolist()}"
+        seeds[conf] = names
+    if problem is None:
+        rank = {t: (c, k + 1) for c, ts in seeds.items() for k, t in enumerate(ts)}
+        wc = games[(games['season'] == season) & (games['game_type'] == 'WC')].dropna(subset=['home_team', 'away_team'])
+        for h, a in zip(wc['home_team'].map(NFLVERSE_TEAM_NAMES), wc['away_team'].map(NFLVERSE_TEAM_NAMES)):
+            (ch, sh), (ca, sa) = rank.get(h, ('?', 0)), rank.get(a, ('?', 0))
+            if problem is None and (ch != ca or sh + sa != 9 or sh > sa):
+                problem = f"Wild Card game {a} @ {h} doesn't match the seeds ({ch}{sh} vs {ca}{sa})"
+    if problem is not None:
+        last = pd.to_datetime(reg['gameday']).max()
+        days = ((today or pd.Timestamp.now()).normalize() - last.normalize()).days
+        msg = f"{season} playoff seeds not usable yet: {problem}"
+        if days > SEEDS_GRACE_DAYS:
+            raise RuntimeError(msg + f" ({days} days after the regular season)")
+        print(f"::warning::{msg}")
+        return None
+    data = json.load(open(path)) if os.path.exists(path) else {}
+    if data.get(str(season)) != seeds:
+        data[str(season)] = seeds
+        json.dump(dict(sorted(data.items())), open(path, 'w'), indent=1)
+        print(f"  {season} playoff seeds -> {path}: AFC {seeds['AFC']}, NFC {seeds['NFC']}")
+    return seeds
 
 
 # =========================================================
@@ -780,6 +839,7 @@ if __name__ == '__main__':
     # 2. Prepare game data
     master_df = prepare_game_data(raw_df)
     fetch_nfl_schedule(int(master_df['season'].max()))   # a failure should fail the run
+    fetch_nfl_seeds(int(master_df['season'].max()))      # real seeds once the regular season ends
 
     # 3. REACT ratings
     try:
