@@ -1147,6 +1147,7 @@ for team in all_teams:
                 'rank_d':            int(r['rank_d']) if 'rank_d' in r and not pd.isna(r['rank_d']) else None,
                 'playoff_odds':      _po_odds_val(r['ranking_id'], team),
                 'playoff_odds_rank': _po_odds_rk(r['ranking_id'], team),
+                **_proj(r['ranking_id'], team),
                 'sb_odds':           _sb_odds_val(r['ranking_id'], team),
                 'sb_odds_rank':      _sb_odds_rk(r['ranking_id'], team),
                 'record':            clean(r['record']),
