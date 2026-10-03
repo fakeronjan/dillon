@@ -945,12 +945,12 @@ def _po_odds_val(ranking_id, team):
     return _po_odds_cache.get((int(ranking_id), team))
 
 
-# Projected record (Standings' Proj Record bar): the 20th/50th/80th
+# Projected record (Standings' Proj Record bar): the 10th/50th/90th
 # percentile of simulated final wins, plus games and real ties, for every
 # snapshot while the regular season is still going (none afterwards).
 _proj_cache = {}
-if 'proj_w50' in _playoff_odds.columns:
-    for wid, team, a, b, c, gms, ties in _playoff_odds[['week_id', 'team', 'proj_w20', 'proj_w50', 'proj_w80',
+if 'proj_mid' in _playoff_odds.columns:
+    for wid, team, a, b, c, gms, ties in _playoff_odds[['week_id', 'team', 'proj_lo', 'proj_mid', 'proj_hi',
                                                        'proj_games', 'proj_ties']].itertuples(index=False):
         if not pd.isna(b):
             _proj_cache[(int(wid), team)] = {'proj': [int(a), int(b), int(c)], 'proj_games': int(gms),
