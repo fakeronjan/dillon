@@ -945,6 +945,22 @@ def _po_odds_val(ranking_id, team):
     return _po_odds_cache.get((int(ranking_id), team))
 
 
+# Projected record (Standings' Proj Record bar): the 20th/50th/80th
+# percentile of simulated final wins, plus games and real ties, for every
+# snapshot while the regular season is still going (none afterwards).
+_proj_cache = {}
+if 'proj_w50' in _playoff_odds.columns:
+    for wid, team, a, b, c, gms, ties in _playoff_odds[['week_id', 'team', 'proj_w20', 'proj_w50', 'proj_w80',
+                                                       'proj_games', 'proj_ties']].itertuples(index=False):
+        if not pd.isna(b):
+            _proj_cache[(int(wid), team)] = {'proj': [int(a), int(b), int(c)], 'proj_games': int(gms),
+                                             'proj_ties': int(ties)}
+
+
+def _proj(ranking_id, team):
+    return _proj_cache.get((int(ranking_id), team), {})
+
+
 def _po_odds_rk(ranking_id, team):
     rm = _po_odds_rank_cache.get(int(ranking_id))
     return rm.get(team) if rm else None
@@ -986,6 +1002,7 @@ standings_data = {
             'playoff_odds_rank': _po_odds_rk(r['ranking_id'], r['name']),
             'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
             'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
+            **_proj(r['ranking_id'], r['name']),
             'record':          clean(r['record']),
             'last_match':      era_aware_last_match(clean(r['lastgame']) if _played(r['lastgame']) else last_game_as_of(r['name'], r['season_week'], r['season']), r['season']),
             'sb_status':       int(r['sb_status']) if not pd.isna(r['sb_status']) else 0,
@@ -1202,6 +1219,7 @@ for season in all_seasons:
                 'playoff_odds_rank': _po_odds_rk(r['ranking_id'], r['name']),
                 'sb_odds':         _sb_odds_val(r['ranking_id'], r['name']),
                 'sb_odds_rank':    _sb_odds_rk(r['ranking_id'], r['name']),
+                **_proj(r['ranking_id'], r['name']),
                 'record':          clean(r['record']),
                 'regular_record':  reg,
                 'playoff_record':  po,

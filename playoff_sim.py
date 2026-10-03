@@ -408,7 +408,18 @@ class SeasonSim:
         reach /= n_sims
         cols = ['playoffs'] + [f'r{k}' for k in range(2, self.n_rounds + 1)] + ['champ']
         rows = np.vstack([reach[0]] + [reach[k] for k in range(2, self.n_rounds + 1)] + [reach[-1]])
-        return pd.DataFrame(rows.T, index=self.teams, columns=cols)
+        out = pd.DataFrame(rows.T, index=self.teams, columns=cols)
+        # Projected record (Standings): the 20th/50th/80th percentile of each
+        # team's simulated final wins while the regular season is still going.
+        # Real ties count half a win in W, so they're taken out and reported
+        # separately; quantiles are actual simulated outcomes (inverted CDF).
+        if len(rest):
+            tied = done['home_pts'] == done['visitor_pts']
+            ties = np.bincount(np.concatenate([done.loc[tied, 'h'], done.loc[tied, 'a']]).astype(int), minlength=T)
+            q = np.quantile(W - 0.5 * ties, [0.2, 0.5, 0.8], axis=0, method='inverted_cdf')
+            out['proj_w20'], out['proj_w50'], out['proj_w80'] = q
+            out['proj_games'], out['proj_ties'] = G[0], ties
+        return out
 
 
 def compute(games, ratings_df, conf_div, current_season, schedule=None, log=print):
