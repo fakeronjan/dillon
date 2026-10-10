@@ -103,6 +103,23 @@ def _pfr_time(hhmm):
     return f"{(h - 1) % 12 + 1}:{m:02d}{'AM' if h < 12 else 'PM'}"
 
 
+# International venues. nflverse occasionally tags a game played at one as
+# location 'Home' (2026_05_PHI_JAX at Tottenham), so the stadium name backs up
+# the location flag. Rogers Centre (Bills in Toronto, 2008-13) is deliberately
+# absent: those were treated as Buffalo home games.
+INTERNATIONAL_STADIUMS = ('Wembley', 'Tottenham', 'Twickenham', 'Azteca', 'Allianz',
+                          'Deutsche Bank', 'Frankfurt', 'Corinthians', 'Bernab',
+                          'Stade de France', 'Croke', 'Olympiastadion', 'Melbourne',
+                          'Maracan')
+
+
+def _is_neutral(location, stadium):
+    """nflverse location flag, plus known international venues."""
+    if location == 'Neutral':
+        return True
+    return isinstance(stadium, str) and any(v in stadium for v in INTERNATIONAL_STADIUMS)
+
+
 def scrape_nflverse_season(year):
     """Build a PFR-shaped raw games DataFrame for one season from nflverse's
     games.csv. Returns None if the season has no played games yet."""
@@ -117,7 +134,7 @@ def scrape_nflverse_season(year):
         home_name = NFLVERSE_TEAM_NAMES[g['home_team']]
         away_name = NFLVERSE_TEAM_NAMES[g['away_team']]
         home_pts, away_pts = g['home_score'], g['away_score']
-        neutral = g['location'] == 'Neutral'
+        neutral = _is_neutral(g['location'], g['stadium'])
 
         # Winner/tie is always the higher-scoring team (home team on a tie);
         # the marker column then records whether THAT team was home, away,
@@ -162,7 +179,7 @@ def fetch_nfl_schedule(season):
     df = pd.DataFrame({'home': left['home_team'].map(NFLVERSE_TEAM_NAMES),
                        'away': left['away_team'].map(NFLVERSE_TEAM_NAMES),
                        'week': left['week'],
-                       'is_neutral': (left['location'] == 'Neutral').astype(int)})
+                       'is_neutral': [int(_is_neutral(l, st)) for l, st in zip(left['location'], left['stadium'])]})
     if df[['home', 'away']].isna().any().any():
         raise RuntimeError(f"unmapped nflverse team codes in the {season} schedule")
     df.to_csv(SCHEDULE_CSV, index=False)
